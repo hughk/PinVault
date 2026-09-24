@@ -5,10 +5,10 @@ plugins {
 }
 
 android {
-    namespace = "com.example.pinkeeper"
+    namespace = "eu.hughkennedy.pinvault"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.example.pinkeeper"
+        applicationId = "eu.hughkennedy.pinvault"
         minSdk = 26
         targetSdk = 36
         versionCode = 99
