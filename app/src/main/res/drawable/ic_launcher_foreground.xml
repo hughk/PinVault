@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Soft Ambient Drop Shadow under circular token -->
+    <path
+        android:pathData="M54,29 A26,26 0 1,1 53.99,29 Z"
+        android:fillColor="#3D000000" />
+
+    <!-- Circular Token Base with Rich Gradient -->
+    <path android:pathData="M54,27 A26,26 0 1,1 53.99,27 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54"
+                android:startY="27"
+                android:endX="54"
+                android:endY="79"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#2563EB" />
+                <item android:offset="1.0" android:color="#1D4ED8" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Top Highlight Crescent for Tactile 3D Depth -->
+    <path
+        android:pathData="M40,35 C44,31 50,29 54,29 C58,29 64,31 68,35 C63,33 58,32 54,32 C50,32 45,33 40,35 Z"
+        android:fillColor="#4DFFFFFF" />
+
+    <!-- Outer Rim Stroke / Bezel -->
+    <path
+        android:pathData="M54,27 A26,26 0 1,1 53.99,27 Z"
+        android:fillColor="#00000000"
+        android:strokeColor="#93C5FD"
+        android:strokeWidth="1.8" />
+
+    <!-- Bold, Clean Question Mark '?' Path (Stem & Hook) -->
+    <path
+        android:pathData="M 45.5,43.5 C 45.5,38.5 49,35.5 54,35.5 C 59,35.5 62.5,38.5 62.5,43 C 62.5,47.5 54,49.5 54,57"
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Question Mark '?' Dot -->
+    <path
+        android:pathData="M 54,66.5 L 54,66.6"
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+</vector>
