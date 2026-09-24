@@ -55,7 +55,7 @@ fun AboutDialog(
     val context = LocalContext.current
     val authorName = "Hugh Kennedy"
     val authorEmail = "hughk.projects@gmail.com"
-    val appVersion = "0.99 (Pre-release)"
+    val appVersion = "0.992 (Pre-release)"
 
     AlertDialog(
         onDismissRequest = onDismiss,

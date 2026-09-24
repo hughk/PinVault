@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Lock
@@ -229,21 +230,37 @@ fun HelpScreen(
             HelpSectionCard(
                 icon = Icons.Default.Fingerprint,
                 title = "Emergency Pattern Peeker",
-                subtitle = "Biometric hold-to-reveal fallback"
+                subtitle = "Biometric timed reveal with instant extinguish"
             ) {
                 Text(
                     text = "If you ever forget your path or need immediate verification:\n\n" +
-                            "1. Press and hold the \"Press & Hold with Biometric Reveal\" button.\n" +
+                            "1. Tap the \"Tap for Biometric Reveal\" button.\n" +
                             "2. Authenticate with your fingerprint, face, or device PIN.\n" +
-                            "3. While your finger remains held down, the real secret tiles glow clearly with their genuine color, while decoys dim.\n" +
-                            "4. Releasing your finger instantly scrambles the matrix back into secure decoy mode.",
+                            "3. The secret tiles illuminate in their genuine color for a 12-second window with a live countdown timer.\n" +
+                            "4. Tap the button again at any time to immediately extinguish the reveal and return to decoy camouflage mode.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 19.sp
                 )
             }
 
-            // Section 4: Encrypted Offline Backup
+            // Section 4: Folders, Filtering & Management
+            HelpSectionCard(
+                icon = Icons.Default.Folder,
+                title = "Folders, Filtering & Deletion",
+                subtitle = "Organize matrices by type or custom group"
+            ) {
+                Text(
+                    text = "• Category & Folder Chips: Use the horizontal filter bar on the main screen to filter by Credit Cards, Debit Cards, Banking, Access Safes, or custom folders.\n\n" +
+                            "• Custom Folders: Assign cards to custom folders (e.g. \"Personal\", \"Work\", \"Travel\") in the card editor.\n\n" +
+                            "• Deleting Cards: Tap the trash icon in the matrix detail screen or select \"Delete Matrix\" from the card's 3-dot menu. Deletions always require explicit confirmation.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 19.sp
+                )
+            }
+
+            // Section 5: Encrypted Offline Backup
             HelpSectionCard(
                 icon = Icons.Default.Sync,
                 title = "Encrypted Backup & Migration",
@@ -261,7 +278,7 @@ fun HelpScreen(
                 )
             }
 
-            // Section 5: Device Hardening
+            // Section 6: Device Hardening
             HelpSectionCard(
                 icon = Icons.Default.Lock,
                 title = "Device Security Architecture",
@@ -292,7 +309,7 @@ fun HelpScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Pin Vault v0.99",
+                            text = "Pin Vault v0.992",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )

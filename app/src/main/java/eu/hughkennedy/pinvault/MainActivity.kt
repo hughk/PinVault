@@ -100,6 +100,8 @@ fun PinVaultAppRoot(
                 VaultScreen(
                     cards = cards,
                     onCardSelected = { cardId -> currentScreen = AppScreen.Detail(cardId) },
+                    onEditCard = { cardId -> currentScreen = AppScreen.Editor(cardId) },
+                    onDeleteCard = { cardId -> repository.deleteCard(cardId) },
                     onAddCard = { currentScreen = AppScreen.Editor(null) },
                     onLockApp = { isLocked = true },
                     onOpenBackup = { showBackupDialog = true },
@@ -116,6 +118,10 @@ fun PinVaultAppRoot(
                         card = card,
                         onBack = { currentScreen = AppScreen.Vault },
                         onEditCard = { currentScreen = AppScreen.Editor(card.id) },
+                        onDeleteCard = {
+                            repository.deleteCard(card.id)
+                            currentScreen = AppScreen.Vault
+                        },
                         onBiometricAuthRequested = { revealCallback ->
                             onBiometricAuth("Reveal Secret Pattern") {
                                 revealCallback()
@@ -126,8 +132,10 @@ fun PinVaultAppRoot(
             }
             is AppScreen.Editor -> {
                 val initialCard = screen.cardId?.let { repository.getCardById(it) }
+                val existingFolders = cards.map { it.folder.trim() }.filter { it.isNotBlank() }.distinct()
                 MatrixEditorScreen(
                     initialCard = initialCard,
+                    existingFolders = existingFolders,
                     onSaveCard = { savedCard ->
                         if (initialCard == null) {
                             repository.addCard(savedCard)

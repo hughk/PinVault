@@ -1,8 +1,8 @@
 package eu.hughkennedy.pinvault.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,13 +15,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -32,6 +33,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -66,6 +68,7 @@ import eu.hughkennedy.pinvault.ui.components.MatrixGridView
 @Composable
 fun MatrixEditorScreen(
     initialCard: CardEntity?,
+    existingFolders: List<String> = emptyList(),
     onSaveCard: (CardEntity) -> Unit,
     onDeleteCard: ((String) -> Unit)?,
     onCancel: () -> Unit,
@@ -75,6 +78,7 @@ fun MatrixEditorScreen(
 
     var name by remember { mutableStateOf(initialCard?.name ?: "") }
     var category by remember { mutableStateOf(initialCard?.category ?: CardCategory.CREDIT) }
+    var folder by remember { mutableStateOf(initialCard?.folder ?: "") }
     var cols by remember { mutableStateOf(initialCard?.cols ?: 6) }
     var rows by remember { mutableStateOf(initialCard?.rows ?: 7) }
     var secretColor by remember { mutableStateOf(initialCard?.secretColor ?: "blue") }
@@ -89,6 +93,39 @@ fun MatrixEditorScreen(
     var selectedTileForEdit by remember { mutableStateOf<TileData?>(null) }
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
     var gridSizeDropdownExpanded by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+
+    if (showDeleteConfirmDialog && initialCard != null && onDeleteCard != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.DeleteOutline,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(32.dp)
+                )
+            },
+            title = { Text("Delete PIN Matrix?", fontWeight = FontWeight.Bold) },
+            text = { Text("Are you sure you want to permanently delete \"${name.ifBlank { "this matrix" }}\"? This action cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteConfirmDialog = false
+                        onDeleteCard(initialCard.id)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -114,6 +151,7 @@ fun MatrixEditorScreen(
                             val updatedCard = (initialCard ?: CardEntity(name = name)).copy(
                                 name = name.trim(),
                                 category = category,
+                                folder = folder.trim(),
                                 cols = cols,
                                 rows = rows,
                                 secretColor = secretColor,
@@ -227,6 +265,46 @@ fun MatrixEditorScreen(
                             }
                         }
                     }
+
+                    // Folder / Group Input
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        OutlinedTextField(
+                            value = folder,
+                            onValueChange = { folder = it },
+                            label = { Text("Folder / Group (Optional)") },
+                            placeholder = { Text("e.g. Personal, Work, Banking, Travel") },
+                            leadingIcon = {
+                                Icon(Icons.Default.Folder, contentDescription = null, modifier = Modifier.size(18.dp))
+                            },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        // Quick folder suggestion chips
+                        val suggested = existingFolders.filter { it.isNotBlank() && !it.equals(folder, ignoreCase = true) }
+                        if (suggested.isNotEmpty()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Suggestions:",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                suggested.take(6).forEach { f ->
+                                    FilterChip(
+                                        selected = false,
+                                        onClick = { folder = f },
+                                        label = { Text(f, fontSize = 11.sp) }
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -238,40 +316,32 @@ fun MatrixEditorScreen(
             ) {
                 Column(
                     modifier = Modifier.padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    val palette = PaletteColor.find(secretColor)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Secret PIN Color:",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = palette.displayName,
-                            color = palette.color,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                    }
+                    Text(
+                        text = "Secret Token Color",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Your actual PIN digits will be camouflaged using this secret color.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
 
                     ColorPickerRow(
                         selectedColorId = secretColor,
-                        onColorSelected = { selected ->
-                            secretColor = selected
-                            tiles = tiles.map {
-                                if (it.isPinTile) it.copy(colorId = selected) else it
+                        onColorSelected = { newColor ->
+                            secretColor = newColor
+                            tiles = tiles.map { tile ->
+                                if (tile.isPinTile) tile.copy(colorId = newColor) else tile
                             }
                         }
                     )
                 }
             }
 
-            // Interactive Matrix Editor
+            // Interactive Matrix Designer
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
@@ -286,17 +356,24 @@ fun MatrixEditorScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Tap any tile to set PIN digit:",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Column {
+                            Text(
+                                text = "PIN Placement Grid",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Tap tiles to place your real PIN digits",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
 
-                        Button(
+                        OutlinedButton(
                             onClick = {
                                 tiles = DecoyRandomizer.randomizeDecoys(tiles, secretColor)
                             },
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.height(34.dp)
                         ) {
                             Icon(Icons.Default.Casino, contentDescription = null, modifier = Modifier.size(14.dp))
@@ -343,7 +420,7 @@ fun MatrixEditorScreen(
             // Delete Card Button (if editing existing card)
             if (!isNew && onDeleteCard != null) {
                 OutlinedButton(
-                    onClick = { onDeleteCard(initialCard!!.id) },
+                    onClick = { showDeleteConfirmDialog = true },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                     modifier = Modifier.fillMaxWidth()
                 ) {

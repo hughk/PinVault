@@ -16,6 +16,7 @@ class BackupMigrationTest {
             CardEntity(
                 name = "Barclays Visa Debit",
                 category = CardCategory.DEBIT,
+                folder = "Personal",
                 cols = 6,
                 rows = 7,
                 secretColor = "blue",
@@ -25,6 +26,7 @@ class BackupMigrationTest {
             CardEntity(
                 name = "Telephone Banking PIN",
                 category = CardCategory.BANKING,
+                folder = "Finance",
                 cols = 5,
                 rows = 6,
                 secretColor = "emerald",
@@ -47,6 +49,8 @@ class BackupMigrationTest {
         assertEquals(2, restoredCards.size)
         assertEquals(sampleCards[0].name, restoredCards[0].name)
         assertEquals(sampleCards[1].name, restoredCards[1].name)
+        assertEquals(sampleCards[0].folder, restoredCards[0].folder)
+        assertEquals(sampleCards[1].folder, restoredCards[1].folder)
         assertEquals(sampleCards[0].cols, restoredCards[0].cols)
 
         // Attempt decryption with wrong passphrase -> must fail with authentication tag error

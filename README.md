@@ -1,6 +1,6 @@
 # Pin Vault
 
-[![Version](https://img.shields.io/badge/Version-0.99%20(Pre--release)-blue.svg)](https://github.com/)
+[![Version](https://img.shields.io/badge/Version-0.992%20(Pre--release)-blue.svg)](https://github.com/)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026%2B)-orange.svg)](https://android.com)
 [![Language](https://img.shields.io/badge/Kotlin-2.0%2B-purple.svg)](https://kotlinlang.org)
@@ -51,13 +51,16 @@ Observers see: A vibrant matrix of digits with decoy lines in multiple direction
 ## ✨ Key Features
 
 - 🛡️ **Visual Steganography Engine**: Configure custom matrix dimensions (from 4×4 up to 8×8) tailored for cards, doors, safes, and phone banking codes.
+- 📁 **Folders & Category Filtering**: Organize your PIN matrices by category (Credit, Debit, Banking, Safes, Other) or group them into custom folders (e.g. *Personal*, *Work*, *Travel*). Quickly filter your vault with instant horizontal chips.
+- 🗑️ **Delete Unwanted Matrices**: Safely delete expired or unwanted PIN cards from the matrix detail screen or vault list with explicit confirmation prompts.
+- 🎨 **High-Contrast Dark Mode Icons**: Rich, vibrant glowing category badges engineered for maximum contrast and readability on OLED dark themes.
 - 📐 **Linear Decoy PINs**: The algorithm automatically synthesizes straight lines (horizontal, vertical, diagonal) of identical colors across the matrix to create plausible false trails that mislead onlookers.
 - 🧩 **Strict Non-Adjacency Defense**: Decoy tiles sharing your secret color are strategically dispersed so they never touch your genuine PIN tiles, preventing clustering analysis.
-- 👁️ **Emergency Biometric Peeker (Hold-to-Reveal)**: Forgot your traversal rule? Press and hold the biometric peeker button and verify with fingerprint, face unlock, or device PIN. While held, your genuine PIN tiles glow with their true color and decoys dim. Releasing immediately re-scrambles and disguises the matrix.
+- 👁️ **Biometric Timed Reveal & Instant Extinguish**: Tap to authenticate via fingerprint, face unlock, or device PIN. Secret tokens illuminate for a 12-second countdown window. Tap the button again at any time to immediately extinguish and re-camouflage. Fully compatible with onscreen under-display optical and ultrasonic fingerprint sensors!
 - 🔒 **100% Offline & Zero Network Permissions**: Pin Vault does not declare the `android.permission.INTERNET` permission. No telemetry, no external SDKs, no cloud servers, and no tracking.
 - 📦 **Encrypted Vault Migration**: Safely transfer your vault between phones without cloud reliance. Exports are protected with **PBKDF2** (100,000 rounds) and **AES-256-GCM** authenticated encryption into a portable `.pinvault` file.
 - 🚫 **Screen Capture Defense (`FLAG_SECURE`)**: The app prevents screenshots, screen recording, and hides window contents when switching tasks in Android Recents.
-- 🎨 **Modern Jetpack Compose UI**: Dynamic Material 3 design, custom circular number tokens (`1:1` aspect-ratio locked), search filtering, card categorization, and dark theme support.
+- 🎨 **Modern Jetpack Compose UI**: Dynamic Material 3 design, custom circular number tokens (`1:1` aspect-ratio locked), search filtering, and dark theme support.
 
 ---
 
@@ -127,10 +130,15 @@ Pin Vault includes comprehensive unit test suites verifying decoy non-adjacency,
    - The matrix renders with circular number tokens. Your secret color is hidden to ensure nobody looking at your screen can identify your digits.
    - Follow your personal mental path to read your PIN.
 3. **Emergency Reveal**:
-   - If you need immediate confirmation, press and hold the **Press & Hold with Biometric Reveal** button.
-   - Authenticate via fingerprint or device credential.
-   - Your secret tiles illuminate. Release your finger to immediately re-mask the matrix.
-4. **Backup & Transfer**:
+   - If you need immediate confirmation, tap the **Tap for Biometric Reveal** button.
+   - Authenticate via fingerprint, face unlock, or device PIN.
+   - Your secret tiles illuminate for a 12-second window with a live countdown timer.
+   - Tap the button again at any time to immediately extinguish the reveal and return to camouflage mode.
+4. **Organize with Folders & Categories**:
+   - Use the horizontal filter bar on the vault screen to view specific types or folders (e.g. *Personal*, *Work*).
+5. **Delete Unwanted PINs**:
+   - Delete expired or unwanted cards from the matrix detail view (trash icon) or the card menu in the vault list, with full confirmation.
+6. **Backup & Transfer**:
    - Tap the **Sync** icon on the Vault screen.
    - Switch to **Export**, choose a passphrase, and share or copy the `.pinvault` payload.
    - On your new device, open Pin Vault -> **Import**, paste the payload, enter the passphrase, and restore.
@@ -139,15 +147,18 @@ Pin Vault includes comprehensive unit test suites verifying decoy non-adjacency,
 
 ## 🗺️ Roadmap to v1.0
 
-Pin Vault is currently at **Version 0.99 (Beta / Pre-release)**. The core engine, visual steganography, decoy algorithms, and cryptographic export are complete and thoroughly tested.
+Pin Vault is currently at **Version 0.992 (Beta / Pre-release)**.
 
-Before declaring version 1.0 production ready:
+Completed:
 - [x] Visual steganography matrix with dynamic rows/columns
 - [x] Strict non-adjacency decoy algorithm
 - [x] Linear decoy generation (horizontal, vertical, diagonal)
-- [x] Emergency biometric hold-to-reveal peeker
+- [x] Biometric timed reveal window (12s) with instant extinguish (compatible with onscreen fingerprint sensors)
+- [x] Folder organization & category filtering with instant filter chips
+- [x] Card deletion with confirmation modal
+- [x] High-contrast glowing category icons for Dark Mode
 - [x] Offline AES-256-GCM + PBKDF2 backup & migration
-- [x] Adaptive app icon and screen capture defense
+- [x] Adaptive app icon and screen capture defense (`FLAG_SECURE`)
 - [x] In-app Help & User Guide
 - [x] In-app About dialog with author credits and contact
 - [ ] Community feedback on device compatibility and screen densities

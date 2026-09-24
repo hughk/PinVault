@@ -8,6 +8,7 @@ data class CardEntity(
     val id: String = UUID.randomUUID().toString(),
     val name: String,
     val category: CardCategory = CardCategory.CREDIT,
+    val folder: String = "",
     val cols: Int = 6,
     val rows: Int = 7,
     val secretColor: String = "blue",
