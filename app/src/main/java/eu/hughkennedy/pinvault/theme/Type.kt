@@ -6,7 +6,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Scaled Typography for Pin Vault v0.993 (+15% to +20% for high mobile legibility)
+// Scaled Typography for Pin Vault v0.994 (+15% to +20% for high mobile legibility)
 val Typography =
   Typography(
     titleLarge = TextStyle(

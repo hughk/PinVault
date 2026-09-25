@@ -1,6 +1,6 @@
 # Pin Vault
 
-[![Version](https://img.shields.io/badge/Version-0.993%20(Beta)-blue.svg)](https://github.com/hughk/PinVault)
+[![Version](https://img.shields.io/badge/Version-0.994%20(Beta)-blue.svg)](https://github.com/hughk/PinVault)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://github.com/hughk/PinVault/blob/main/LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026%2B)-orange.svg)](https://android.com)
 [![Language](https://img.shields.io/badge/Kotlin-2.0%2B-purple.svg)](https://kotlinlang.org)
@@ -147,7 +147,7 @@ Pin Vault includes comprehensive unit test suites verifying decoy non-adjacency,
 
 ## 🗺️ Roadmap to v1.0
 
-Pin Vault is currently at **Version 0.993 (Beta / Pre-release)**.
+Pin Vault is currently at **Version 0.994 (Beta / Pre-release)**.
 
 Completed:
 - [x] Visual steganography matrix with dynamic rows/columns
@@ -160,6 +160,7 @@ Completed:
 - [x] Enlarged, high-legibility app typography across Help, About, and cards
 - [x] Bold glanceable matrix digits (`~20px` / `25.sp`)
 - [x] Discreet anti-snoop decryption rule hint
+- [x] German language support (`de`) with Android 13+ per-app language preferences
 - [x] Offline AES-256-GCM + PBKDF2 backup & migration
 - [x] Adaptive app icon and screen capture defense (`FLAG_SECURE`)
 - [x] In-app Help & User Guide

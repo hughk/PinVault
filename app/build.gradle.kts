@@ -11,8 +11,8 @@ android {
         applicationId = "eu.hughkennedy.pinvault"
         minSdk = 26
         targetSdk = 36
-        versionCode = 993
-        versionName = "0.993"
+        versionCode = 994
+        versionName = "0.994"
     }
 
     buildTypes {

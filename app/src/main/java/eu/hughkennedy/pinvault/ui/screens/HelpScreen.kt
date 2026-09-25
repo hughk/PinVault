@@ -299,7 +299,7 @@ fun HelpScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = stringResource(R.string.help_about_card_version, "0.993"),
+                            text = stringResource(R.string.help_about_card_version, "0.994"),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
