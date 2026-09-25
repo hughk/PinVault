@@ -176,6 +176,19 @@
         </button>
       </div>
 
+      <!-- Language Selector (EN / DE) -->
+      <div class="bg-slate-900 border border-emerald-500/40 rounded-xl p-1 flex items-center gap-1 shadow-md">
+        <span class="text-[11px] font-bold text-slate-400 px-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-language text-emerald-400"></i> Lang:
+        </span>
+        <button id="toggleLangEn" onclick="setLanguage('en')" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold transition shadow">
+          🇬🇧 EN
+        </button>
+        <button id="toggleLangDe" onclick="setLanguage('de')" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white text-xs font-medium transition">
+          🇩🇪 DE
+        </button>
+      </div>
+
       <!-- Quick Screen Navigators -->
       <div class="flex items-center gap-1.5">
         <button onclick="switchView('list')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700">
@@ -1107,6 +1120,96 @@
       }
     }
 
+    // INTERNATIONALIZATION (I18N) SYSTEM: ENGLISH & GERMAN
+    let currentLang = 'en';
+
+    const I18N = {
+      en: {
+        appTitle: "Pin Vault",
+        appSubtitle: "Visual Steganography",
+        searchPlaceholder: "Search card, folder, account, or rule...",
+        storedCount: (count) => `${count} ${count === 1 ? 'Matrix' : 'Matrices'} Stored`,
+        noCardsFound: "No PIN matrices found",
+        noCardsDesc: "Try adjusting your search query or folder filter.",
+        all: "All",
+        camouflageGrid: "Camouflage Grid",
+        categories: {
+          credit: "Credit Card",
+          debit: "Debit Card",
+          banking: "Telephone Banking",
+          safe: "Safe & Door Access",
+          other: "Other PIN"
+        },
+        btnRevealConcealed: "Tap for Biometric Reveal",
+        btnRevealConcealedSub: "12s timed window • Tap again to extinguish",
+        btnRevealPeeking: (sec) => `Pattern Revealed (${sec}s) • Tap to Conceal`,
+        btnRevealPeekingSub: "Tap anywhere on this button to extinguish immediately",
+        secretDecryptionRule: "Secret Decryption Rule:",
+        discreetHint: "Discreet Decryption Hint:",
+        lowVisibility: "Low-Visibility",
+        helpTitle: "Help & Guide",
+        aboutTitle: "About Pin Vault",
+        hardwareKeystore: "Hardware Keystore Protected"
+      },
+      de: {
+        appTitle: "PIN-Tresor",
+        appSubtitle: "Visuelle Steganographie",
+        searchPlaceholder: "Karte, Ordner, Konto oder Regel suchen...",
+        storedCount: (count) => `${count} ${count === 1 ? 'Matrix' : 'Matrizen'} gespeichert`,
+        noCardsFound: "Keine PIN-Matrizen gefunden",
+        noCardsDesc: "Versuchen Sie, den Suchbegriff oder den Ordnerfilter anzupassen.",
+        all: "Alle",
+        camouflageGrid: "Tarnungs-Matrix",
+        categories: {
+          credit: "Kreditkarte",
+          debit: "Debitkarte",
+          banking: "Telefon-Banking",
+          safe: "Tresor & Zugang",
+          other: "Sonstige PIN"
+        },
+        btnRevealConcealed: "Antippen für biometrische Aufdeckung",
+        btnRevealConcealedSub: "12s Zeitfenster • Erneut tippen zum Ausblenden",
+        btnRevealPeeking: (sec) => `Muster aufgedeckt (${sec}s) • Antippen zum Ausblenden`,
+        btnRevealPeekingSub: "Irgendwo auf diesen Button tippen, um sofort auszublenden",
+        secretDecryptionRule: "Geheime Entschlüsselungsregel:",
+        discreetHint: "Diskreter Entschlüsselungshinweis:",
+        lowVisibility: "Schulterblick-geschützt",
+        helpTitle: "Hilfe & Anleitung",
+        aboutTitle: "Über PIN-Tresor",
+        hardwareKeystore: "Hardware-Keystore geschützt"
+      }
+    };
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      const btnEn = document.getElementById('toggleLangEn');
+      const btnDe = document.getElementById('toggleLangDe');
+      if (lang === 'de') {
+        btnDe.className = 'px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold transition shadow';
+        btnEn.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white text-xs font-medium transition';
+      } else {
+        btnEn.className = 'px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold transition shadow';
+        btnDe.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white text-xs font-medium transition';
+      }
+
+      // Update category names
+      Object.keys(CATEGORIES).forEach(k => {
+        CATEGORIES[k].name = I18N[currentLang].categories[k];
+      });
+
+      // Update static UI elements
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) searchInput.placeholder = I18N[currentLang].searchPlaceholder;
+
+      const mainAppTitle = document.getElementById('mainAppTitle');
+      if (mainAppTitle) mainAppTitle.textContent = I18N[currentLang].appTitle;
+
+      renderCardList();
+      if (currentCardId) {
+        renderCardDetail(currentCardId);
+      }
+    }
+
     // DECOY GENERATION ALGORITHM
     function isAdjacentToPin(r, c, pinTiles, colorId) {
       return pinTiles.some(p => {
@@ -1251,7 +1354,7 @@
         return true;
       });
 
-      countLabel.textContent = `${CARDS.length} ${CARDS.length === 1 ? 'Matrix' : 'Matrices'} Stored`;
+      countLabel.textContent = I18N[currentLang].storedCount(CARDS.length);
 
       renderFilterChips();
 
@@ -1259,8 +1362,8 @@
         container.innerHTML = `
           <div class="py-12 flex flex-col items-center justify-center text-center text-slate-500 space-y-2">
             <i class="fa-solid fa-magnifying-glass text-2xl text-slate-600"></i>
-            <p class="ui-card-title text-slate-400 font-bold">No PIN matrices found</p>
-            <p class="ui-card-desc text-slate-500">Try adjusting your search query or folder filter.</p>
+            <p class="ui-card-title text-slate-400 font-bold">${I18N[currentLang].noCardsFound}</p>
+            <p class="ui-card-desc text-slate-500">${I18N[currentLang].noCardsDesc}</p>
           </div>
         `;
         return;
@@ -1309,7 +1412,7 @@
       const folders = [...new Set(CARDS.map(c => c.folder).filter(Boolean))];
 
       let chips = [
-        { id: 'ALL', label: 'All', icon: 'fa-layer-group' }
+        { id: 'ALL', label: I18N[currentLang].all, icon: 'fa-layer-group' }
       ];
 
       // Folder chips
@@ -1362,7 +1465,7 @@
 
       const cat = CATEGORIES[card.category] || CATEGORIES.other;
       document.getElementById('detailCardName').textContent = card.name;
-      document.getElementById('detailCardSubtitle').textContent = `${card.cols}×${card.rows} Camouflage Grid • ${card.folder || cat.name}`;
+      document.getElementById('detailCardSubtitle').textContent = `${card.cols}×${card.rows} ${I18N[currentLang].camouflageGrid} • ${card.folder || cat.name}`;
       
       const badgeIcon = document.getElementById('detailBadgeIcon');
       badgeIcon.style.backgroundColor = cat.bg;
@@ -1451,13 +1554,13 @@
 
       if (isRevealing) {
         btn.className = 'w-full py-3 px-3 rounded-xl bg-amber-500/20 text-amber-300 border-2 border-amber-400 flex items-center justify-center gap-3 select-none transition cursor-pointer shadow-lg shadow-amber-500/20';
-        text.textContent = `Extinguish Reveal (${revealCountdown}s)`;
-        sub.textContent = 'Tap to immediately hide tokens';
+        text.textContent = I18N[currentLang].btnRevealPeeking(revealCountdown);
+        sub.textContent = I18N[currentLang].btnRevealPeekingSub;
         icon.className = 'fa-solid fa-eye-slash text-amber-400 text-xl';
       } else {
         btn.className = 'w-full py-3 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-indigo-500/40 flex items-center justify-center gap-3 select-none transition cursor-pointer shadow-md';
-        text.textContent = 'Tap for Biometric Reveal';
-        sub.textContent = '12s timed window • Tap again to extinguish';
+        text.textContent = I18N[currentLang].btnRevealConcealed;
+        sub.textContent = I18N[currentLang].btnRevealConcealedSub;
         icon.className = 'fa-solid fa-fingerprint text-indigo-400 text-xl';
       }
     }

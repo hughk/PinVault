@@ -37,11 +37,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import eu.hughkennedy.pinvault.R
 
 @Composable
 fun LockScreen(
@@ -91,7 +92,7 @@ fun LockScreen(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "Hardware Keystore Secured",
+                    text = stringResource(R.string.lock_shield_status),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -119,13 +120,13 @@ fun LockScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Pin Vault",
+                    text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
 
                 Text(
-                    text = if (isError) "Incorrect PIN, try again (Default: 1234)" else "Authenticate with biometric or enter Master PIN",
+                    text = if (isError) stringResource(R.string.lock_subtitle_error) else stringResource(R.string.lock_subtitle_normal),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -232,7 +233,7 @@ private fun KeypadButton(
             "bio" -> {
                 Icon(
                     imageVector = Icons.Default.Fingerprint,
-                    contentDescription = "Biometric Unlock",
+                    contentDescription = stringResource(R.string.lock_action_biometric),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(30.dp)
                 )
@@ -240,7 +241,7 @@ private fun KeypadButton(
             "del" -> {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Backspace,
-                    contentDescription = "Delete",
+                    contentDescription = stringResource(R.string.lock_action_delete),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )

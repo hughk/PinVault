@@ -46,8 +46,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import eu.hughkennedy.pinvault.R
 
 @Composable
 fun AboutDialog(
@@ -84,7 +86,7 @@ fun AboutDialog(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Pin Vault",
+                        text = stringResource(R.string.app_name),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -104,7 +106,7 @@ fun AboutDialog(
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = "Visual steganography PIN & credential vault for Android. Shields sensitive access codes from physical shoulder-surfers and surveillance cameras.",
+                    text = stringResource(R.string.about_app_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 20.sp
@@ -122,7 +124,7 @@ fun AboutDialog(
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Text(
-                            text = "Author & Project Lead",
+                            text = stringResource(R.string.about_author_label),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -143,6 +145,9 @@ fun AboutDialog(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
+                        val noEmailToast = stringResource(R.string.about_toast_no_email)
+                        val emailCopiedToast = stringResource(R.string.about_toast_email_copied)
+
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxWidth()
@@ -155,26 +160,26 @@ fun AboutDialog(
                                     try {
                                         context.startActivity(emailIntent)
                                     } catch (e: Exception) {
-                                        Toast.makeText(context, "No email client found", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, noEmailToast, Toast.LENGTH_SHORT).show()
                                     }
                                 },
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Email", fontSize = 13.sp)
+                                Text(stringResource(R.string.about_action_email), fontSize = 13.sp)
                             }
 
                             OutlinedButton(
                                 onClick = {
                                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                     clipboard.setPrimaryClip(ClipData.newPlainText("Author Email", authorEmail))
-                                    Toast.makeText(context, "Email copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, emailCopiedToast, Toast.LENGTH_SHORT).show()
                                 }
                             ) {
                                 Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Copy", fontSize = 13.sp)
+                                Text(stringResource(R.string.about_action_copy), fontSize = 13.sp)
                             }
                         }
                     }
@@ -200,14 +205,14 @@ fun AboutDialog(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Heritage & Inspiration",
+                                text = stringResource(R.string.about_heritage_title),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Inspired by an earlier orphaned application \"Pin Keeper\", which stopped working under newer versions of Android. Re-architected from the ground up for modern Android devices.",
+                            text = stringResource(R.string.about_heritage_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             lineHeight = 18.sp
@@ -235,17 +240,14 @@ fun AboutDialog(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Security & Architecture",
+                                text = stringResource(R.string.about_security_title),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "• 100% Offline: Zero internet permission requested.\n" +
-                                    "• Anti-Snoop: Android FLAG_SECURE prevents screenshots & screen recordings.\n" +
-                                    "• Strong Cryptography: AES-256-GCM + PBKDF2 (100k rounds) for portable backups.\n" +
-                                    "• Biometric Peeker: Android BiometricPrompt hardware integration.",
+                            text = stringResource(R.string.about_security_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             lineHeight = 18.sp
@@ -273,14 +275,14 @@ fun AboutDialog(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Open Source (GPL-3.0)",
+                                text = stringResource(R.string.about_opensource_title),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Source code is available under the GNU General Public License v3.0 (GPL-3.0) at:",
+                            text = stringResource(R.string.about_opensource_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -293,6 +295,10 @@ fun AboutDialog(
                             color = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.height(10.dp))
+
+                        val noBrowserToast = stringResource(R.string.about_toast_no_browser)
+                        val urlCopiedToast = stringResource(R.string.about_toast_url_copied)
+
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxWidth()
@@ -303,25 +309,25 @@ fun AboutDialog(
                                     try {
                                         context.startActivity(intent)
                                     } catch (e: Exception) {
-                                        Toast.makeText(context, "Cannot open browser", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, noBrowserToast, Toast.LENGTH_SHORT).show()
                                     }
                                 },
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Icon(Icons.Default.Public, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("GitHub", fontSize = 13.sp)
+                                Text(stringResource(R.string.about_action_github), fontSize = 13.sp)
                             }
                             OutlinedButton(
                                 onClick = {
                                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                     clipboard.setPrimaryClip(ClipData.newPlainText("GitHub Repository", githubUrl))
-                                    Toast.makeText(context, "URL copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, urlCopiedToast, Toast.LENGTH_SHORT).show()
                                 }
                             ) {
                                 Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Copy", fontSize = 13.sp)
+                                Text(stringResource(R.string.about_action_copy), fontSize = 13.sp)
                             }
                         }
                     }
@@ -330,7 +336,7 @@ fun AboutDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "Free and open source software released under the GNU General Public License v3.0 (GPL-3.0). Source code available at $githubUrl",
+                    text = stringResource(R.string.about_license_footer, githubUrl),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -340,12 +346,12 @@ fun AboutDialog(
             OutlinedButton(onClick = onOpenHelp) {
                 Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Help Guide")
+                Text(stringResource(R.string.action_help_guide_tooltip))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(stringResource(R.string.action_close))
             }
         }
     )

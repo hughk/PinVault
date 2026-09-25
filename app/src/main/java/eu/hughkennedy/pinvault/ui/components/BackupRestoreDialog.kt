@@ -48,11 +48,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import eu.hughkennedy.pinvault.R
 import eu.hughkennedy.pinvault.core.backup.BackupMigrationManager
 import eu.hughkennedy.pinvault.core.model.CardEntity
 
@@ -82,7 +84,7 @@ fun BackupRestoreDialog(
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Encrypted Backup & Transfer", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(text = stringResource(R.string.backup_dialog_title), fontWeight = FontWeight.Bold, fontSize = 18.sp)
             }
         },
         text = {
@@ -98,12 +100,12 @@ fun BackupRestoreDialog(
                     Tab(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0; errorMessage = null },
-                        text = { Text("Export Vault", fontWeight = FontWeight.SemiBold) }
+                        text = { Text(stringResource(R.string.backup_tab_export), fontWeight = FontWeight.SemiBold) }
                     )
                     Tab(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1; errorMessage = null },
-                        text = { Text("Import Vault", fontWeight = FontWeight.SemiBold) }
+                        text = { Text(stringResource(R.string.backup_tab_import), fontWeight = FontWeight.SemiBold) }
                     )
                 }
 
@@ -112,7 +114,7 @@ fun BackupRestoreDialog(
                 if (selectedTab == 0) {
                     // EXPORT TAB
                     Text(
-                        text = "Export an AES-256-GCM encrypted backup containing all ${cards.size} stored matrices. Transfer it to your new phone without cloud risk.",
+                        text = stringResource(R.string.backup_export_desc, cards.size),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -122,8 +124,8 @@ fun BackupRestoreDialog(
                     OutlinedTextField(
                         value = exportPassphrase,
                         onValueChange = { exportPassphrase = it; errorMessage = null },
-                        label = { Text("Backup Passphrase") },
-                        placeholder = { Text("Enter a password to encrypt this file") },
+                        label = { Text(stringResource(R.string.backup_field_passphrase)) },
+                        placeholder = { Text(stringResource(R.string.backup_field_passphrase_placeholder)) },
                         visualTransformation = PasswordVisualTransformation(),
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
@@ -138,7 +140,7 @@ fun BackupRestoreDialog(
                         Button(
                             onClick = {
                                 if (exportPassphrase.isBlank()) {
-                                    errorMessage = "Please enter a passphrase to encrypt your cards."
+                                    errorMessage = context.getString(R.string.backup_error_empty_passphrase)
                                     return@Button
                                 }
                                 try {
@@ -148,34 +150,34 @@ fun BackupRestoreDialog(
                                         putExtra(Intent.EXTRA_TEXT, backupJson)
                                         type = "text/plain"
                                     }
-                                    val shareIntent = Intent.createChooser(sendIntent, "Save or Transfer Pin Vault Backup")
+                                    val shareIntent = Intent.createChooser(sendIntent, context.getString(R.string.backup_share_chooser_title))
                                     context.startActivity(shareIntent)
                                     onDismiss()
                                 } catch (e: Exception) {
-                                    errorMessage = "Export failed: ${e.localizedMessage}"
+                                    errorMessage = context.getString(R.string.backup_error_export_failed, e.localizedMessage ?: "")
                                 }
                             },
                             modifier = Modifier.weight(1f)
                         ) {
                             Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Share / Save")
+                            Text(stringResource(R.string.backup_action_share))
                         }
 
                         OutlinedButton(
                             onClick = {
                                 if (exportPassphrase.isBlank()) {
-                                    errorMessage = "Please enter a passphrase."
+                                    errorMessage = context.getString(R.string.backup_error_empty_passphrase_short)
                                     return@OutlinedButton
                                 }
                                 try {
                                     val backupJson = BackupMigrationManager.exportVault(cards, exportPassphrase)
                                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                     clipboard.setPrimaryClip(ClipData.newPlainText("Pin Vault Backup", backupJson))
-                                    Toast.makeText(context, "Encrypted backup copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.backup_copied_toast), Toast.LENGTH_SHORT).show()
                                     onDismiss()
                                 } catch (e: Exception) {
-                                    errorMessage = "Copy failed: ${e.localizedMessage}"
+                                    errorMessage = context.getString(R.string.backup_error_copy_failed, e.localizedMessage ?: "")
                                 }
                             }
                         ) {
@@ -185,7 +187,7 @@ fun BackupRestoreDialog(
                 } else {
                     // IMPORT TAB
                     Text(
-                        text = "Paste the encrypted .pinvault (or .pinkeeper) payload below, enter the passphrase, and choose merge or replace.",
+                        text = stringResource(R.string.backup_import_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -195,8 +197,8 @@ fun BackupRestoreDialog(
                     OutlinedTextField(
                         value = importPayloadText,
                         onValueChange = { importPayloadText = it; errorMessage = null },
-                        label = { Text("Encrypted Backup Payload") },
-                        placeholder = { Text("Paste .pinvault or .pinkeeper JSON content here...") },
+                        label = { Text(stringResource(R.string.backup_field_payload)) },
+                        placeholder = { Text(stringResource(R.string.backup_field_payload_placeholder)) },
                         maxLines = 4,
                         textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                         modifier = Modifier.fillMaxWidth()
@@ -207,7 +209,7 @@ fun BackupRestoreDialog(
                     OutlinedTextField(
                         value = importPassphrase,
                         onValueChange = { importPassphrase = it; errorMessage = null },
-                        label = { Text("Backup Passphrase") },
+                        label = { Text(stringResource(R.string.backup_field_passphrase)) },
                         visualTransformation = PasswordVisualTransformation(),
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
@@ -215,7 +217,7 @@ fun BackupRestoreDialog(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("Restoration Mode:", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
+                    Text(stringResource(R.string.backup_mode_title), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
@@ -224,7 +226,7 @@ fun BackupRestoreDialog(
                             selected = !isReplaceMode,
                             onClick = { isReplaceMode = false }
                         )
-                        Text("Merge into existing cards", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.backup_mode_merge), style = MaterialTheme.typography.bodyMedium)
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -234,7 +236,7 @@ fun BackupRestoreDialog(
                             selected = isReplaceMode,
                             onClick = { isReplaceMode = true }
                         )
-                        Text("Replace entire vault", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.backup_mode_replace), style = MaterialTheme.typography.bodyMedium)
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -242,20 +244,20 @@ fun BackupRestoreDialog(
                     Button(
                         onClick = {
                             if (importPayloadText.isBlank()) {
-                                errorMessage = "Please paste the backup content."
+                                errorMessage = context.getString(R.string.backup_error_empty_payload)
                                 return@Button
                             }
                             if (importPassphrase.isBlank()) {
-                                errorMessage = "Please enter the passphrase used during export."
+                                errorMessage = context.getString(R.string.backup_error_empty_import_passphrase)
                                 return@Button
                             }
                             try {
                                 val importedCards = BackupMigrationManager.importVault(importPayloadText, importPassphrase)
                                 onImportSuccess(importedCards, isReplaceMode)
-                                Toast.makeText(context, "Successfully restored ${importedCards.size} cards!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.backup_restore_success_toast, importedCards.size), Toast.LENGTH_SHORT).show()
                                 onDismiss()
                             } catch (e: Exception) {
-                                errorMessage = "Decryption failed. Check passphrase or file integrity."
+                                errorMessage = context.getString(R.string.backup_error_decrypt_failed)
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
@@ -263,7 +265,7 @@ fun BackupRestoreDialog(
                     ) {
                         Icon(Icons.Default.FileDownload, contentDescription = null)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Decrypt & Restore Cards")
+                        Text(stringResource(R.string.backup_action_restore))
                     }
                 }
 
@@ -281,7 +283,7 @@ fun BackupRestoreDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )

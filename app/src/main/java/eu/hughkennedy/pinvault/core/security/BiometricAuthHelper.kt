@@ -18,13 +18,17 @@ object BiometricAuthHelper {
 
     fun promptBiometric(
         activity: FragmentActivity,
-        title: String = "Verify Identity",
-        subtitle: String = "Biometric authentication required to reveal pattern",
-        negativeButtonText: String = "Cancel",
+        title: String? = null,
+        subtitle: String? = null,
+        negativeButtonText: String? = null,
         onSuccess: () -> Unit,
         onError: (String) -> Unit = {}
     ) {
         val executor = ContextCompat.getMainExecutor(activity)
+        val promptTitle = title ?: activity.getString(eu.hughkennedy.pinvault.R.string.biometric_prompt_verify_title)
+        val promptSubtitle = subtitle ?: activity.getString(eu.hughkennedy.pinvault.R.string.biometric_prompt_verify_subtitle)
+        val promptNegative = negativeButtonText ?: activity.getString(eu.hughkennedy.pinvault.R.string.action_cancel)
+
         val callback = object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 super.onAuthenticationSucceeded(result)
@@ -38,15 +42,15 @@ object BiometricAuthHelper {
 
             override fun onAuthenticationFailed() {
                 super.onAuthenticationFailed()
-                onError("Biometric authentication failed")
+                onError(activity.getString(eu.hughkennedy.pinvault.R.string.biometric_failed))
             }
         }
 
         val prompt = BiometricPrompt(activity, executor, callback)
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(title)
-            .setSubtitle(subtitle)
-            .setNegativeButtonText(negativeButtonText)
+            .setTitle(promptTitle)
+            .setSubtitle(promptSubtitle)
+            .setNegativeButtonText(promptNegative)
             .build()
 
         prompt.authenticate(promptInfo)

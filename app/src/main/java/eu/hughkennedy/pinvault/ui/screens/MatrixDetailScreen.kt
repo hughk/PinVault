@@ -55,9 +55,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import eu.hughkennedy.pinvault.R
 import eu.hughkennedy.pinvault.core.engine.DecoyRandomizer
 import eu.hughkennedy.pinvault.core.model.CardEntity
 import eu.hughkennedy.pinvault.core.model.PaletteColor
@@ -108,10 +110,10 @@ fun MatrixDetailScreen(
                 )
             },
             title = {
-                Text(text = "Delete PIN Matrix?", fontWeight = FontWeight.Bold)
+                Text(text = stringResource(R.string.delete_card_title), fontWeight = FontWeight.Bold)
             },
             text = {
-                Text("Are you sure you want to permanently delete \"${card.name}\"? This action cannot be undone.")
+                Text(stringResource(R.string.delete_card_message, card.name))
             },
             confirmButton = {
                 Button(
@@ -121,12 +123,12 @@ fun MatrixDetailScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.action_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -156,9 +158,9 @@ fun MatrixDetailScreen(
                             ) {
                                 Text(
                                     text = if (isPeeking) {
-                                        "${card.cols}×${card.rows} • ${palette.displayName}"
+                                        "${card.cols}×${card.rows} • ${stringResource(palette.nameRes)}"
                                     } else {
-                                        "${card.cols}×${card.rows} Camouflage"
+                                        stringResource(R.string.detail_camouflage_suffix, card.cols, card.rows)
                                     },
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -177,17 +179,17 @@ fun MatrixDetailScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = onEditCard) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit Matrix")
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.action_edit_matrix))
                     }
                     IconButton(onClick = { showDeleteConfirmDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.DeleteOutline,
-                            contentDescription = "Delete Matrix",
+                            contentDescription = stringResource(R.string.action_delete_matrix),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
@@ -350,12 +352,12 @@ private fun TopSecurityBar(
             Spacer(modifier = Modifier.width(8.dp))
             Column {
                 Text(
-                    text = "Steganographic Camouflage",
+                    text = stringResource(R.string.detail_steganographic_camouflage),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = if (isPeeking) "Pattern Revealed" else "Shoulder-surf protected",
+                    text = if (isPeeking) stringResource(R.string.detail_pattern_revealed) else stringResource(R.string.detail_shoulder_surf_protected),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -370,7 +372,7 @@ private fun TopSecurityBar(
         ) {
             Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(14.dp))
             Spacer(modifier = Modifier.width(4.dp))
-            Text("Refresh Decoys", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.action_refresh_decoys), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -411,7 +413,7 @@ private fun RuleAndRevealCard(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Secret Decryption Rule:",
+                        text = stringResource(R.string.detail_secret_rule_title),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -426,7 +428,7 @@ private fun RuleAndRevealCard(
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Text(
-                            text = "${palette.displayName} Tokens",
+                            text = stringResource(R.string.detail_tokens_badge, stringResource(palette.nameRes)),
                             color = palette.textColor,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold
@@ -440,7 +442,7 @@ private fun RuleAndRevealCard(
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Text(
-                            text = "🔒 Encrypted Pattern",
+                            text = stringResource(R.string.detail_encrypted_badge),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold
@@ -452,9 +454,9 @@ private fun RuleAndRevealCard(
             // Description: Does NOT interpolate the color name unless isPeeking is true
             Text(
                 text = if (isPeeking) {
-                    if (card.ruleHint.isNotBlank()) card.ruleHint else "Read the ${palette.displayName} tokens according to your mental pattern."
+                    if (card.ruleHint.isNotBlank()) card.ruleHint else stringResource(R.string.detail_rule_default_peeking, stringResource(palette.nameRes))
                 } else {
-                    if (card.ruleHint.isNotBlank()) card.ruleHint else "Tokens are camouflaged. Tap below to verify biometric and reveal sequence."
+                    if (card.ruleHint.isNotBlank()) card.ruleHint else stringResource(R.string.detail_rule_default_concealed)
                 },
                 fontSize = 11.5.sp,
                 lineHeight = 16.sp,
@@ -500,9 +502,9 @@ private fun RuleAndRevealCard(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = if (isPeeking) {
-                                "Pattern Revealed (${countdownSeconds}s) • Tap to Conceal"
+                                stringResource(R.string.reveal_btn_peeking_title, countdownSeconds)
                             } else {
-                                "Tap for Biometric Reveal"
+                                stringResource(R.string.reveal_btn_concealed_title)
                             },
                             color = peekerContentColor,
                             fontWeight = FontWeight.Bold,
@@ -510,9 +512,9 @@ private fun RuleAndRevealCard(
                         )
                         Text(
                             text = if (isPeeking) {
-                                "Tap anywhere on this button to extinguish immediately"
+                                stringResource(R.string.reveal_btn_peeking_subtitle)
                             } else {
-                                "12s timed window • Tap again to extinguish"
+                                stringResource(R.string.reveal_btn_concealed_subtitle)
                             },
                             color = if (isPeeking) peekerContentColor.copy(alpha = 0.85f) else MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 10.sp

@@ -1,0 +1,178 @@
+<resources>
+    <string name="app_name">Pin Vault</string>
+
+    <!-- Categories -->
+    <string name="category_all">Alle</string>
+    <string name="category_credit">Kreditkarte</string>
+    <string name="category_debit">Debitkarte</string>
+    <string name="category_banking">Telefon-Banking</string>
+    <string name="category_safe">Tresor- &amp; Türcodes</string>
+    <string name="category_other">Sonstiger PIN</string>
+
+    <!-- Palette Colors -->
+    <string name="color_blue">Königsblau</string>
+    <string name="color_emerald">Smaragdgrün</string>
+    <string name="color_amber">Bernsteingold</string>
+    <string name="color_rose">Karmesinrot</string>
+    <string name="color_purple">Dunkelviolett</string>
+    <string name="color_cyan">Leuchtendes Cyan</string>
+
+    <!-- Vault Main Screen -->
+    <string name="vault_title">Pin Vault</string>
+    <string name="vault_matrices_stored">%1$d Matrizen gespeichert</string>
+    <string name="action_help_guide_tooltip">Hilfe &amp; Anleitung</string>
+    <string name="action_backup_tooltip">Sicherung &amp; Übertragung</string>
+    <string name="action_more_options">Weitere Optionen</string>
+    <string name="action_about_menu">Über Pin Vault</string>
+    <string name="action_lock_menu">Tresor sperren</string>
+    <string name="action_add_card">Karte hinzufügen</string>
+    <string name="search_placeholder">Karte, Ordner, Konto oder Regel suchen...</string>
+    <string name="search_clear">Suche löschen</string>
+    <string name="vault_empty_no_cards">Noch keine Karten im Tresor</string>
+    <string name="vault_empty_no_search">Keine Karten stimmen mit „%1$s“ überein</string>
+    <string name="vault_empty_no_filter">Keine PIN-Matrizen in dieser Kategorie bzw. diesem Ordner</string>
+    <string name="action_clear_filter_search">Filter &amp; Suche zurücksetzen</string>
+    <string name="card_options">Karten-Optionen</string>
+    <string name="action_view_matrix">Matrix anzeigen</string>
+    <string name="action_edit_matrix">Matrix bearbeiten</string>
+    <string name="action_delete_matrix">Matrix löschen</string>
+    <string name="delete_card_title">PIN-Matrix löschen?</string>
+    <string name="delete_card_message">Sind Sie sicher, dass Sie „%1$s“ dauerhaft löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="action_delete">Löschen</string>
+    <string name="action_cancel">Abbrechen</string>
+    <string name="this_matrix_fallback">diese Matrix</string>
+    <string name="selected_desc">Ausgewählt</string>
+
+    <!-- Matrix Detail Screen -->
+    <string name="detail_camouflage_suffix">%1$d×%2$d Tarnung</string>
+    <string name="detail_steganographic_camouflage">Steganographische Tarnung</string>
+    <string name="detail_pattern_revealed">Muster aufgedeckt</string>
+    <string name="detail_shoulder_surf_protected">Vor Blicken Dritter geschützt</string>
+    <string name="action_refresh_decoys">Tarnmuster erneuern</string>
+    <string name="detail_secret_rule_title">Geheime Entschlüsselungsregel:</string>
+    <string name="detail_tokens_badge">%1$s-Token</string>
+    <string name="detail_encrypted_badge">🔒 Verschlüsseltes Muster</string>
+    <string name="detail_rule_default_peeking">Lesen Sie die %1$s-Token gemäß Ihrem mentalen Muster ab.</string>
+    <string name="detail_rule_default_concealed">Token sind getarnt. Tippen Sie unten zur biometrischen Bestätigung und Anzeige.</string>
+    <string name="reveal_btn_peeking_title">Muster aufgedeckt (%1$ds) • Tippen zum Verbergen</string>
+    <string name="reveal_btn_concealed_title">Tippen zur biometrischen Anzeige</string>
+    <string name="reveal_btn_peeking_subtitle">Tippen Sie auf diesen Button, um die Anzeige sofort zu beenden</string>
+    <string name="reveal_btn_concealed_subtitle">12s-Zeitfenster • Erneutes Tippen beendet sofort</string>
+    <string name="action_back">Zurück</string>
+
+    <!-- Matrix Editor Screen -->
+    <string name="editor_title_create">PIN-Matrix erstellen</string>
+    <string name="editor_title_edit">PIN-Matrix bearbeiten</string>
+    <string name="action_save">Speichern</string>
+    <string name="editor_field_name_label">Karten- / Kontobezeichnung</string>
+    <string name="editor_field_name_placeholder">z. B. DKB Visa Debitkarte</string>
+    <string name="editor_field_category_label">Kategorie</string>
+    <string name="editor_field_grid_size_label">Rastergröße</string>
+    <string name="editor_grid_tiles_count">%1$d×%2$d (%3$d Felder)</string>
+    <string name="editor_field_folder_label">Ordner / Gruppe (Optional)</string>
+    <string name="editor_field_folder_placeholder">z. B. Privat, Beruf, Finanzen, Reisen</string>
+    <string name="editor_suggestions_label">Vorschläge:</string>
+    <string name="editor_secret_color_title">Farbe der geheimen Token</string>
+    <string name="editor_secret_color_subtitle">Ihre tatsächlichen PIN-Ziffern werden mit dieser Geheimfarbe getarnt.</string>
+    <string name="editor_grid_title">PIN-Platzierungsraster</string>
+    <string name="editor_grid_subtitle">Tippen Sie auf Felder, um echte PIN-Ziffern zu platzieren</string>
+    <string name="action_randomize_decoys">Tarn-Ziffern \'?\' würfeln</string>
+    <string name="editor_unassigned_tiles_note">Nicht zugewiesene \'?\' Felder werden beim Speichern automatisch mit Täuschungszahlen und nicht-angrenzenden Farben gefüllt.</string>
+    <string name="editor_field_rule_label">Hinweis zur geheimen Regel (verschlüsselt gespeichert)</string>
+    <string name="editor_field_rule_placeholder">z. B. Blaue Felder diagonal von oben links lesen</string>
+    <string name="action_delete_card_matrix">Karten-Matrix löschen</string>
+    <string name="editor_tile_dialog_title">Feld festlegen (Zeile %1$d, Spalte %2$d)</string>
+    <string name="editor_tile_dialog_assign">PIN-Ziffer in %1$s zuweisen:</string>
+    <string name="editor_tile_dialog_reset">Auf \'?\' Platzhalter zurücksetzen</string>
+
+    <!-- Lock Screen -->
+    <string name="lock_shield_status">Durch Hardware-Keystore geschützt</string>
+    <string name="lock_subtitle_normal">Mit Biometrie bestätigen oder Master-PIN eingeben</string>
+    <string name="lock_subtitle_error">Falsche PIN, bitte erneut versuchen (Standard: 1234)</string>
+    <string name="lock_action_biometric">Biometrisch entsperren</string>
+    <string name="lock_action_delete">Löschen</string>
+    <string name="biometric_prompt_unlock">Pin Vault entsperren</string>
+    <string name="biometric_prompt_reveal">Geheimes Muster aufdecken</string>
+    <string name="biometric_prompt_verify_title">Identität bestätigen</string>
+    <string name="biometric_prompt_verify_subtitle">Biometrische Bestätigung erforderlich, um das Muster aufzudecken</string>
+    <string name="biometric_failed">Biometrische Authentifizierung fehlgeschlagen</string>
+
+    <!-- Backup & Restore Dialog -->
+    <string name="backup_dialog_title">Verschlüsselte Sicherung &amp; Übertragung</string>
+    <string name="backup_tab_export">Tresor exportieren</string>
+    <string name="backup_tab_import">Tresor importieren</string>
+    <string name="backup_export_desc">Erstellen Sie ein mit AES-256-GCM verschlüsseltes Backup aller %1$d gespeicherten Matrizen zur sicheren Übertragung ohne Cloud-Risiko.</string>
+    <string name="backup_field_passphrase">Passwort für das Backup</string>
+    <string name="backup_field_passphrase_placeholder">Passwort zum Verschlüsseln eingeben</string>
+    <string name="backup_action_share">Teilen / Speichern</string>
+    <string name="backup_share_chooser_title">Pin Vault-Backup speichern oder senden</string>
+    <string name="backup_copied_toast">Verschlüsseltes Backup in die Zwischenablage kopiert!</string>
+    <string name="backup_import_desc">Fügen Sie die verschlüsselten .pinvault- (oder .pinkeeper-) Daten unten ein, geben Sie das Passwort ein und wählen Sie Zusammenführen oder Ersetzen.</string>
+    <string name="backup_field_payload">Verschlüsselte Backup-Daten</string>
+    <string name="backup_field_payload_placeholder">Hier .pinvault- oder .pinkeeper-JSON-Inhalt einfügen...</string>
+    <string name="backup_mode_title">Wiederherstellungsmodus:</string>
+    <string name="backup_mode_merge">Mit vorhandenen Karten zusammenführen</string>
+    <string name="backup_mode_replace">Gesamten Tresor ersetzen</string>
+    <string name="backup_action_restore">Karten entschlüsseln &amp; wiederherstellen</string>
+    <string name="backup_restore_success_toast">%1$d Karten erfolgreich wiederhergestellt!</string>
+    <string name="backup_error_empty_passphrase">Bitte geben Sie ein Passwort zum Verschlüsseln Ihrer Karten ein.</string>
+    <string name="backup_error_empty_passphrase_short">Bitte geben Sie ein Passwort ein.</string>
+    <string name="backup_error_empty_payload">Bitte fügen Sie den Backup-Inhalt ein.</string>
+    <string name="backup_error_empty_import_passphrase">Bitte geben Sie das beim Export verwendete Passwort ein.</string>
+    <string name="backup_error_decrypt_failed">Entschlüsselung fehlgeschlagen. Bitte Passwort oder Dateiintegrität prüfen.</string>
+    <string name="backup_error_export_failed">Export fehlgeschlagen: %1$s</string>
+    <string name="backup_error_copy_failed">Kopieren fehlgeschlagen: %1$s</string>
+
+    <!-- Help & Guide Screen -->
+    <string name="help_title">Hilfe &amp; Anleitung</string>
+    <string name="help_hero_title">Visuelle Steganographie</string>
+    <string name="help_hero_desc">Versteckt geheime PINs unauffällig in einem Zufallsraster farbiger Zahlen. Neugierige Blicke und Überwachungskameras sehen nur wirres Rauschen.</string>
+    <string name="help_section1_title">Die 3 Schlüssel zu Ihrer PIN</string>
+    <string name="help_section1_subtitle">Um Ihre PIN abzulesen, kombinieren Sie drei nur Ihnen bekannte Elemente:</string>
+    <string name="help_key1_title">Geheime Farbe</string>
+    <string name="help_key1_desc">Wählen Sie beim Erstellen einer Karte eine Geheimfarbe. Die App verbirgt diese Farbe in der Normalansicht, sodass Beobachter nicht wissen, welche Farbe die echte ist.</string>
+    <string name="help_key2_title">Startfeld</string>
+    <string name="help_key2_desc">Wählen Sie, wo Ihre Zahlenfolge auf der Matrix beginnt (z. B. obere linke Ecke, Mittelfeld oder Zeile 2 Spalte 3).</string>
+    <string name="help_key3_title">Lesepfad</string>
+    <string name="help_key3_desc">Folgen Sie Ihrem geometrischen Pfad über die Matrix (z. B. diagonal nach rechts unten, Rösselsprung wie beim Schach oder L-Form).</string>
+    <string name="help_tip_rule_hint">Tipp: Verfassen Sie einen subtilen Regelhinweis, der nur für Sie Sinn ergibt (z. B. „Springerzug von rechts unten“).</string>
+    <string name="help_section2_title">Tarnmuster gegen Beobachtung</string>
+    <string name="help_section2_subtitle">Wie der Algorithmus Blicke und Kamera-Analysen in die Irre führt</string>
+    <string name="help_decoy_p1">• Lineare Täuschungs-PINs: Die App platziert automatisch Täuschungslinien (horizontal, vertikal oder diagonal) einheitlicher Farben im Raster. Wer auf das Display schaut, sieht mehrere falsche Muster.</string>
+    <string name="help_decoy_p2">• Strikte Nicht-Nachbarschaft: Täuschungsfelder in Ihrer Geheimfarbe werden strategisch so verteilt, dass sie Ihre echten PIN-Felder niemals berühren – das schließt Verdacht durch Häufung aus.</string>
+    <string name="help_decoy_p3">• Farbverbergung: Die echte PIN-Farbe wird bei normaler Nutzung weder im Kartentitel noch auf der Matrix angezeigt.</string>
+    <string name="help_section3_title">Notfall-Musteranzeige</string>
+    <string name="help_section3_subtitle">Zeitgesteuertes biometrisches Aufdecken mit Sofort-Abschaltung</string>
+    <string name="help_peeker_steps">Falls Sie Ihren Pfad vergessen haben oder die PIN schnell verifizieren müssen:\n\n1. Tippen Sie auf den Button „Tippen zur biometrischen Anzeige“.\n2. Authentifizieren Sie sich per Fingerabdruck, Gesichtserkennung oder Geräte-PIN.\n3. Die geheimen Felder leuchten für 12 Sekunden in ihrer echten Farbe auf (mit Live-Countdown).\n4. Tippen Sie jederzeit erneut auf den Button, um die Anzeige sofort zu löschen und zur Tarnung zurückzukehren.</string>
+    <string name="help_section4_title">Ordner, Filter &amp; Löschen</string>
+    <string name="help_section4_subtitle">Matrizen nach Typ oder eigenen Gruppen strukturieren</string>
+    <string name="help_folders_content">• Kategorie- &amp; Ordner-Filter: Nutzen Sie die horizontale Filterleiste auf dem Hauptbildschirm, um nach Kreditkarten, Debitkarten, Banking, Tresoren oder eigenen Ordnern zu filtern.\n\n• Eigene Ordner: Weisen Sie Karten im Editor eigenen Ordnern zu (z. B. „Privat“, „Arbeit“, „Reisen“).\n\n• Karten löschen: Tippen Sie in der Detailansicht auf das Mülleimer-Symbol oder wählen Sie „Matrix löschen“ im Drei-Punkte-Menü. Das Löschen erfordert immer eine Bestätigung.</string>
+    <string name="help_section5_title">Verschlüsseltes Backup &amp; Migration</string>
+    <string name="help_section5_subtitle">Sicherer Gerätewechsel ohne Cloud-Abhängigkeit</string>
+    <string name="help_backup_content">Pin Vault arbeitet 100 % offline. So übertragen Sie Ihre Karten auf ein neues Smartphone:\n\n1. Tippen Sie auf dem Hauptbildschirm auf das Sicherungssymbol (Sync).\n2. Vergeben Sie ein starkes Passwort, um einen mit AES-256-GCM verschlüsselten Datensatz zu erstellen.\n3. Übertragen oder kopieren Sie die .pinvault-Daten auf Ihr neues Gerät.\n4. Öffnen Sie auf dem neuen Smartphone Pin Vault -&gt; Tresor importieren, fügen Sie die Daten ein und geben Sie das Passwort ein.</string>
+    <string name="help_section6_title">Gerätesicherheits-Architektur</string>
+    <string name="help_section6_subtitle">Integrierte Schutzmaßnahmen des Betriebssystems</string>
+    <string name="help_security_content">• Screenshots &amp; Videoaufnahmen blockiert: Android FLAG_SECURE verhindert, dass andere Apps Screenshots oder Bildschirmaufnahmen Ihres Tresors erstellen.\n\n• App-Umschalter-Schutz: Tresorinhalte werden in den zuletzt geöffneten Apps ausgeblendet.\n\n• Keinerlei Netzwerkzugriff: Die App fordert keine Internetberechtigung an und sendet keinerlei Telemetriedaten.</string>
+    <string name="help_about_card_version">Pin Vault v%1$s</string>
+    <string name="help_about_card_author">Entwickelt von Hugh Kennedy (hughk.projects@gmail.com)</string>
+    <string name="action_about_app">Über die App</string>
+
+    <!-- About Dialog -->
+    <string name="about_app_desc">Visueller Steganographie-Tresor für PINs und Zugangsdaten unter Android. Schützt sensible Zugangscodes vor neugierigen Blicken und Überwachungskameras.</string>
+    <string name="about_author_label">Entwickler &amp; Projektleitung</string>
+    <string name="about_action_email">E-Mail</string>
+    <string name="about_action_copy">Kopieren</string>
+    <string name="about_toast_no_email">Keine E-Mail-App gefunden</string>
+    <string name="about_toast_email_copied">E-Mail-Adresse in die Zwischenablage kopiert!</string>
+    <string name="about_heritage_title">Herkunft &amp; Inspiration</string>
+    <string name="about_heritage_desc">Inspiriert von der früheren Anwendung „Pin Keeper“, die unter neueren Android-Versionen nicht mehr funktionierte. Für moderne Android-Geräte von Grund auf neu entwickelt.</string>
+    <string name="about_security_title">Sicherheit &amp; Architektur</string>
+    <string name="about_security_desc">• 100 % Offline: Keinerlei Internetberechtigung angefordert.\n• Blickschutz: Android FLAG_SECURE verhindert Screenshots &amp; Videoaufnahmen.\n• Starke Kryptographie: AES-256-GCM + PBKDF2 (100.000 Runden) für portable Backups.\n• Biometrische Anzeige: Direkte Integration von Android BiometricPrompt.</string>
+    <string name="about_opensource_title">Open Source (GPL-3.0)</string>
+    <string name="about_opensource_desc">Der Quellcode ist unter der GNU General Public License v3.0 (GPL-3.0) verfügbar unter:</string>
+    <string name="about_action_github">GitHub</string>
+    <string name="about_toast_no_browser">Browser konnte nicht geöffnet werden</string>
+    <string name="about_toast_url_copied">URL in die Zwischenablage kopiert!</string>
+    <string name="about_license_footer">Freie und quelloffene Software unter der GNU General Public License v3.0 (GPL-3.0). Quellcode verfügbar unter %1$s</string>
+    <string name="action_close">Schließen</string>
+</resources>

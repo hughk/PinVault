@@ -53,9 +53,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import eu.hughkennedy.pinvault.R
 import eu.hughkennedy.pinvault.core.engine.DecoyRandomizer
 import eu.hughkennedy.pinvault.core.model.CardCategory
 import eu.hughkennedy.pinvault.core.model.CardEntity
@@ -96,6 +98,7 @@ fun MatrixEditorScreen(
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
     if (showDeleteConfirmDialog && initialCard != null && onDeleteCard != null) {
+        val fallbackName = stringResource(R.string.this_matrix_fallback)
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
             icon = {
@@ -106,8 +109,8 @@ fun MatrixEditorScreen(
                     modifier = Modifier.size(32.dp)
                 )
             },
-            title = { Text("Delete PIN Matrix?", fontWeight = FontWeight.Bold) },
-            text = { Text("Are you sure you want to permanently delete \"${name.ifBlank { "this matrix" }}\"? This action cannot be undone.") },
+            title = { Text(stringResource(R.string.delete_card_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.delete_card_message, name.ifBlank { fallbackName })) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -116,12 +119,12 @@ fun MatrixEditorScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.action_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -132,14 +135,14 @@ fun MatrixEditorScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = if (isNew) "Create PIN Matrix" else "Edit PIN Matrix",
+                        text = if (isNew) stringResource(R.string.editor_title_create) else stringResource(R.string.editor_title_edit),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onCancel) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Cancel")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_cancel))
                     }
                 },
                 actions = {
@@ -162,7 +165,7 @@ fun MatrixEditorScreen(
                             onSaveCard(updatedCard)
                         }
                     ) {
-                        Icon(Icons.Default.Save, contentDescription = "Save", tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Default.Save, contentDescription = stringResource(R.string.action_save), tint = MaterialTheme.colorScheme.primary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -193,8 +196,8 @@ fun MatrixEditorScreen(
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
-                        label = { Text("Card / Account Name") },
-                        placeholder = { Text("e.g. Barclays Visa Debit") },
+                        label = { Text(stringResource(R.string.editor_field_name_label)) },
+                        placeholder = { Text(stringResource(R.string.editor_field_name_placeholder)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -210,10 +213,10 @@ fun MatrixEditorScreen(
                             modifier = Modifier.weight(1f)
                         ) {
                             OutlinedTextField(
-                                value = category.displayName,
+                                value = stringResource(category.titleRes),
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Category") },
+                                label = { Text(stringResource(R.string.editor_field_category_label)) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded) },
                                 modifier = Modifier.menuAnchor()
                             )
@@ -223,7 +226,7 @@ fun MatrixEditorScreen(
                             ) {
                                 CardCategory.values().forEach { cat ->
                                     DropdownMenuItem(
-                                        text = { Text(cat.displayName) },
+                                        text = { Text(stringResource(cat.titleRes)) },
                                         onClick = {
                                             category = cat
                                             categoryDropdownExpanded = false
@@ -243,7 +246,7 @@ fun MatrixEditorScreen(
                                 value = "${cols}×${rows}",
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Grid Size") },
+                                label = { Text(stringResource(R.string.editor_field_grid_size_label)) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = gridSizeDropdownExpanded) },
                                 modifier = Modifier.menuAnchor()
                             )
@@ -253,7 +256,7 @@ fun MatrixEditorScreen(
                             ) {
                                 listOf(Pair(5, 6), Pair(6, 7), Pair(7, 8)).forEach { (c, r) ->
                                     DropdownMenuItem(
-                                        text = { Text("${c}×${r} (${c * r} tiles)") },
+                                        text = { Text(stringResource(R.string.editor_grid_tiles_count, c, r, c * r)) },
                                         onClick = {
                                             cols = c
                                             rows = r
@@ -271,8 +274,8 @@ fun MatrixEditorScreen(
                         OutlinedTextField(
                             value = folder,
                             onValueChange = { folder = it },
-                            label = { Text("Folder / Group (Optional)") },
-                            placeholder = { Text("e.g. Personal, Work, Banking, Travel") },
+                            label = { Text(stringResource(R.string.editor_field_folder_label)) },
+                            placeholder = { Text(stringResource(R.string.editor_field_folder_placeholder)) },
                             leadingIcon = {
                                 Icon(Icons.Default.Folder, contentDescription = null, modifier = Modifier.size(18.dp))
                             },
@@ -291,7 +294,7 @@ fun MatrixEditorScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Suggestions:",
+                                    text = stringResource(R.string.editor_suggestions_label),
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -319,12 +322,12 @@ fun MatrixEditorScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
-                        text = "Secret Token Color",
+                        text = stringResource(R.string.editor_secret_color_title),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Your actual PIN digits will be camouflaged using this secret color.",
+                        text = stringResource(R.string.editor_secret_color_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -358,12 +361,12 @@ fun MatrixEditorScreen(
                     ) {
                         Column {
                             Text(
-                                text = "PIN Placement Grid",
+                                text = stringResource(R.string.editor_grid_title),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Tap tiles to place your real PIN digits",
+                                text = stringResource(R.string.editor_grid_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -378,7 +381,7 @@ fun MatrixEditorScreen(
                         ) {
                             Icon(Icons.Default.Casino, contentDescription = null, modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Randomize '?' Decoys", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.action_randomize_decoys), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -400,7 +403,7 @@ fun MatrixEditorScreen(
                     }
 
                     Text(
-                        text = "Unassigned '?' tiles will be filled with decoy numbers and non-adjacent colors automatically upon save.",
+                        text = stringResource(R.string.editor_unassigned_tiles_note),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -411,8 +414,8 @@ fun MatrixEditorScreen(
             OutlinedTextField(
                 value = ruleHint,
                 onValueChange = { ruleHint = it },
-                label = { Text("Secret Rule Hint (Stored Encrypted)") },
-                placeholder = { Text("e.g. Read blue tiles diagonally starting from top-left") },
+                label = { Text(stringResource(R.string.editor_field_rule_label)) },
+                placeholder = { Text(stringResource(R.string.editor_field_rule_placeholder)) },
                 maxLines = 2,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -426,7 +429,7 @@ fun MatrixEditorScreen(
                 ) {
                     Icon(Icons.Default.Delete, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Delete Card Matrix")
+                    Text(stringResource(R.string.action_delete_card_matrix))
                 }
             }
 
@@ -441,7 +444,7 @@ fun MatrixEditorScreen(
             onDismissRequest = { selectedTileForEdit = null },
             title = {
                 Text(
-                    text = "Set Tile (Row ${targetTile.row + 1}, Col ${targetTile.col + 1})",
+                    text = stringResource(R.string.editor_tile_dialog_title, targetTile.row + 1, targetTile.col + 1),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
@@ -449,7 +452,7 @@ fun MatrixEditorScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        text = "Assign a PIN digit in ${PaletteColor.find(secretColor).displayName}:",
+                        text = stringResource(R.string.editor_tile_dialog_assign, stringResource(PaletteColor.find(secretColor).nameRes)),
                         style = MaterialTheme.typography.bodySmall
                     )
 
@@ -510,14 +513,14 @@ fun MatrixEditorScreen(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Reset to '?' Placeholder", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.editor_tile_dialog_reset), color = MaterialTheme.colorScheme.error)
                     }
                 }
             },
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { selectedTileForEdit = null }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )

@@ -1,3 +1,178 @@
 <resources>
     <string name="app_name">Pin Vault</string>
+
+    <!-- Categories -->
+    <string name="category_all">All</string>
+    <string name="category_credit">Credit Card</string>
+    <string name="category_debit">Debit Card</string>
+    <string name="category_banking">Telephone Banking</string>
+    <string name="category_safe">Safe &amp; Door Access</string>
+    <string name="category_other">Other PIN</string>
+
+    <!-- Palette Colors -->
+    <string name="color_blue">Royal Blue</string>
+    <string name="color_emerald">Emerald Green</string>
+    <string name="color_amber">Amber Gold</string>
+    <string name="color_rose">Rose Crimson</string>
+    <string name="color_purple">Deep Purple</string>
+    <string name="color_cyan">Vivid Cyan</string>
+
+    <!-- Vault Main Screen -->
+    <string name="vault_title">Pin Vault</string>
+    <string name="vault_matrices_stored">%1$d Matrices Stored</string>
+    <string name="action_help_guide_tooltip">Help &amp; Guide</string>
+    <string name="action_backup_tooltip">Backup &amp; Transfer</string>
+    <string name="action_more_options">More Options</string>
+    <string name="action_about_menu">About Pin Vault</string>
+    <string name="action_lock_menu">Lock Vault</string>
+    <string name="action_add_card">Add Card</string>
+    <string name="search_placeholder">Search card, folder, account, or rule...</string>
+    <string name="search_clear">Clear search</string>
+    <string name="vault_empty_no_cards">No cards in vault yet</string>
+    <string name="vault_empty_no_search">No cards match \"%1$s\"</string>
+    <string name="vault_empty_no_filter">No PIN matrices in this category/folder</string>
+    <string name="action_clear_filter_search">Clear Filter &amp; Search</string>
+    <string name="card_options">Card options</string>
+    <string name="action_view_matrix">View Matrix</string>
+    <string name="action_edit_matrix">Edit Matrix</string>
+    <string name="action_delete_matrix">Delete Matrix</string>
+    <string name="delete_card_title">Delete PIN Matrix?</string>
+    <string name="delete_card_message">Are you sure you want to permanently delete \"%1$s\"? This action cannot be undone.</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="this_matrix_fallback">this matrix</string>
+    <string name="selected_desc">Selected</string>
+
+    <!-- Matrix Detail Screen -->
+    <string name="detail_camouflage_suffix">%1$d×%2$d Camouflage</string>
+    <string name="detail_steganographic_camouflage">Steganographic Camouflage</string>
+    <string name="detail_pattern_revealed">Pattern Revealed</string>
+    <string name="detail_shoulder_surf_protected">Shoulder-surf protected</string>
+    <string name="action_refresh_decoys">Refresh Decoys</string>
+    <string name="detail_secret_rule_title">Secret Decryption Rule:</string>
+    <string name="detail_tokens_badge">%1$s Tokens</string>
+    <string name="detail_encrypted_badge">🔒 Encrypted Pattern</string>
+    <string name="detail_rule_default_peeking">Read the %1$s tokens according to your mental pattern.</string>
+    <string name="detail_rule_default_concealed">Tokens are camouflaged. Tap below to verify biometric and reveal sequence.</string>
+    <string name="reveal_btn_peeking_title">Pattern Revealed (%1$ds) • Tap to Conceal</string>
+    <string name="reveal_btn_concealed_title">Tap for Biometric Reveal</string>
+    <string name="reveal_btn_peeking_subtitle">Tap anywhere on this button to extinguish immediately</string>
+    <string name="reveal_btn_concealed_subtitle">12s timed window • Tap again to extinguish</string>
+    <string name="action_back">Back</string>
+
+    <!-- Matrix Editor Screen -->
+    <string name="editor_title_create">Create PIN Matrix</string>
+    <string name="editor_title_edit">Edit PIN Matrix</string>
+    <string name="action_save">Save</string>
+    <string name="editor_field_name_label">Card / Account Name</string>
+    <string name="editor_field_name_placeholder">e.g. Barclays Visa Debit</string>
+    <string name="editor_field_category_label">Category</string>
+    <string name="editor_field_grid_size_label">Grid Size</string>
+    <string name="editor_grid_tiles_count">%1$d×%2$d (%3$d tiles)</string>
+    <string name="editor_field_folder_label">Folder / Group (Optional)</string>
+    <string name="editor_field_folder_placeholder">e.g. Personal, Work, Banking, Travel</string>
+    <string name="editor_suggestions_label">Suggestions:</string>
+    <string name="editor_secret_color_title">Secret Token Color</string>
+    <string name="editor_secret_color_subtitle">Your actual PIN digits will be camouflaged using this secret color.</string>
+    <string name="editor_grid_title">PIN Placement Grid</string>
+    <string name="editor_grid_subtitle">Tap tiles to place your real PIN digits</string>
+    <string name="action_randomize_decoys">Randomize \'?\' Decoys</string>
+    <string name="editor_unassigned_tiles_note">Unassigned \'?\' tiles will be filled with decoy numbers and non-adjacent colors automatically upon save.</string>
+    <string name="editor_field_rule_label">Secret Rule Hint (Stored Encrypted)</string>
+    <string name="editor_field_rule_placeholder">e.g. Read blue tiles diagonally starting from top-left</string>
+    <string name="action_delete_card_matrix">Delete Card Matrix</string>
+    <string name="editor_tile_dialog_title">Set Tile (Row %1$d, Col %2$d)</string>
+    <string name="editor_tile_dialog_assign">Assign a PIN digit in %1$s:</string>
+    <string name="editor_tile_dialog_reset">Reset to \'?\' Placeholder</string>
+
+    <!-- Lock Screen -->
+    <string name="lock_shield_status">Hardware Keystore Secured</string>
+    <string name="lock_subtitle_normal">Authenticate with biometric or enter Master PIN</string>
+    <string name="lock_subtitle_error">Incorrect PIN, try again (Default: 1234)</string>
+    <string name="lock_action_biometric">Biometric Unlock</string>
+    <string name="lock_action_delete">Delete</string>
+    <string name="biometric_prompt_unlock">Unlock Pin Vault</string>
+    <string name="biometric_prompt_reveal">Reveal Secret Pattern</string>
+    <string name="biometric_prompt_verify_title">Verify Identity</string>
+    <string name="biometric_prompt_verify_subtitle">Biometric authentication required to reveal pattern</string>
+    <string name="biometric_failed">Biometric authentication failed</string>
+
+    <!-- Backup & Restore Dialog -->
+    <string name="backup_dialog_title">Encrypted Backup &amp; Transfer</string>
+    <string name="backup_tab_export">Export Vault</string>
+    <string name="backup_tab_import">Import Vault</string>
+    <string name="backup_export_desc">Export an AES-256-GCM encrypted backup containing all %1$d stored matrices. Transfer it to your new phone without cloud risk.</string>
+    <string name="backup_field_passphrase">Backup Passphrase</string>
+    <string name="backup_field_passphrase_placeholder">Enter a password to encrypt this file</string>
+    <string name="backup_action_share">Share / Save</string>
+    <string name="backup_share_chooser_title">Save or Transfer Pin Vault Backup</string>
+    <string name="backup_copied_toast">Encrypted backup copied to clipboard!</string>
+    <string name="backup_import_desc">Paste the encrypted .pinvault (or .pinkeeper) payload below, enter the passphrase, and choose merge or replace.</string>
+    <string name="backup_field_payload">Encrypted Backup Payload</string>
+    <string name="backup_field_payload_placeholder">Paste .pinvault or .pinkeeper JSON content here...</string>
+    <string name="backup_mode_title">Restoration Mode:</string>
+    <string name="backup_mode_merge">Merge into existing cards</string>
+    <string name="backup_mode_replace">Replace entire vault</string>
+    <string name="backup_action_restore">Decrypt &amp; Restore Cards</string>
+    <string name="backup_restore_success_toast">Successfully restored %1$d cards!</string>
+    <string name="backup_error_empty_passphrase">Please enter a passphrase to encrypt your cards.</string>
+    <string name="backup_error_empty_passphrase_short">Please enter a passphrase.</string>
+    <string name="backup_error_empty_payload">Please paste the backup content.</string>
+    <string name="backup_error_empty_import_passphrase">Please enter the passphrase used during export.</string>
+    <string name="backup_error_decrypt_failed">Decryption failed. Check passphrase or file integrity.</string>
+    <string name="backup_error_export_failed">Export failed: %1$s</string>
+    <string name="backup_error_copy_failed">Copy failed: %1$s</string>
+
+    <!-- Help & Guide Screen -->
+    <string name="help_title">Help &amp; Guide</string>
+    <string name="help_hero_title">Visual Steganography</string>
+    <string name="help_hero_desc">Hiding secret PINs in plain sight on a randomized grid of colored numbers. Shoulder-surfers and security cameras see only noise.</string>
+    <string name="help_section1_title">The 3 Keys to Your PIN</string>
+    <string name="help_section1_subtitle">To read your PIN, combine three elements known only to you:</string>
+    <string name="help_key1_title">Secret Color</string>
+    <string name="help_key1_desc">When creating a card, choose a secret color. The app conceals this color in normal view, so an observer cannot tell which color is the real one.</string>
+    <string name="help_key2_title">Starting Tile</string>
+    <string name="help_key2_desc">Choose where your sequence begins on the matrix (e.g. top-left corner, center tile, or row 2 column 3).</string>
+    <string name="help_key3_title">Traversal Path</string>
+    <string name="help_key3_desc">Follow your geometric path across the matrix (e.g. diagonal down-right, chess knight\'s move, or reverse L-shape).</string>
+    <string name="help_tip_rule_hint">Tip: Write a clever, subtle Rule Hint that makes sense only to you (e.g., \"Knight from bottom-right\").</string>
+    <string name="help_section2_title">Anti-Observation Decoys</string>
+    <string name="help_section2_subtitle">How the algorithm baffles onlookers and camera analysis</string>
+    <string name="help_decoy_p1">• Linear Decoy PINs: The app automatically places decoy lines (horizontal, vertical, or diagonal) of uniform colors across the matrix. Anyone scanning the screen sees multiple false patterns.</string>
+    <string name="help_decoy_p2">• Strict Non-Adjacency: Decoy tiles matching your secret color are strategically scattered so they never touch your real PIN tiles, eliminating clustering suspicion.</string>
+    <string name="help_decoy_p3">• Color Concealment: The true PIN color is never shown on the card title or matrix view during normal usage.</string>
+    <string name="help_section3_title">Emergency Pattern Peeker</string>
+    <string name="help_section3_subtitle">Biometric timed reveal with instant extinguish</string>
+    <string name="help_peeker_steps">If you ever forget your path or need immediate verification:\n\n1. Tap the \"Tap for Biometric Reveal\" button.\n2. Authenticate with your fingerprint, face, or device PIN.\n3. The secret tiles illuminate in their genuine color for a 12-second window with a live countdown timer.\n4. Tap the button again at any time to immediately extinguish the reveal and return to decoy camouflage mode.</string>
+    <string name="help_section4_title">Folders, Filtering &amp; Deletion</string>
+    <string name="help_section4_subtitle">Organize matrices by type or custom group</string>
+    <string name="help_folders_content">• Category &amp; Folder Chips: Use the horizontal filter bar on the main screen to filter by Credit Cards, Debit Cards, Banking, Access Safes, or custom folders.\n\n• Custom Folders: Assign cards to custom folders (e.g. \"Personal\", \"Work\", \"Travel\") in the card editor.\n\n• Deleting Cards: Tap the trash icon in the matrix detail screen or select \"Delete Matrix\" from the card\'s 3-dot menu. Deletions always require explicit confirmation.</string>
+    <string name="help_section5_title">Encrypted Backup &amp; Migration</string>
+    <string name="help_section5_subtitle">Switch phones safely with zero cloud dependency</string>
+    <string name="help_backup_content">Pin Vault is 100% offline. To transfer your cards to a new phone:\n\n1. Tap the Backup icon (Sync) on the main vault screen.\n2. Enter a strong backup passphrase to generate an AES-256-GCM encrypted payload.\n3. Share or copy the .pinvault data to your new device.\n4. On the new phone, open Pin Vault -&gt; Import Vault, paste the data, and enter your passphrase.</string>
+    <string name="help_section6_title">Device Security Architecture</string>
+    <string name="help_section6_subtitle">Built-in operating system protections</string>
+    <string name="help_security_content">• Screenshot &amp; Recording Blocked: Android FLAG_SECURE prevents rogue apps from taking screenshots or capturing video of your vault.\n\n• App Switcher Shield: Vault contents are hidden in Android Recents (task switcher).\n\n• Zero Network Access: The application requests no internet permission and transmits no telemetry.</string>
+    <string name="help_about_card_version">Pin Vault v%1$s</string>
+    <string name="help_about_card_author">Created by Hugh Kennedy (hughk.projects@gmail.com)</string>
+    <string name="action_about_app">About App</string>
+
+    <!-- About Dialog -->
+    <string name="about_app_desc">Visual steganography PIN &amp; credential vault for Android. Shields sensitive access codes from physical shoulder-surfers and surveillance cameras.</string>
+    <string name="about_author_label">Author &amp; Project Lead</string>
+    <string name="about_action_email">Email</string>
+    <string name="about_action_copy">Copy</string>
+    <string name="about_toast_no_email">No email client found</string>
+    <string name="about_toast_email_copied">Email copied to clipboard!</string>
+    <string name="about_heritage_title">Heritage &amp; Inspiration</string>
+    <string name="about_heritage_desc">Inspired by an earlier orphaned application \"Pin Keeper\", which stopped working under newer versions of Android. Re-architected from the ground up for modern Android devices.</string>
+    <string name="about_security_title">Security &amp; Architecture</string>
+    <string name="about_security_desc">• 100% Offline: Zero internet permission requested.\n• Anti-Snoop: Android FLAG_SECURE prevents screenshots &amp; screen recordings.\n• Strong Cryptography: AES-256-GCM + PBKDF2 (100k rounds) for portable backups.\n• Biometric Peeker: Android BiometricPrompt hardware integration.</string>
+    <string name="about_opensource_title">Open Source (GPL-3.0)</string>
+    <string name="about_opensource_desc">Source code is available under the GNU General Public License v3.0 (GPL-3.0) at:</string>
+    <string name="about_action_github">GitHub</string>
+    <string name="about_toast_no_browser">Cannot open browser</string>
+    <string name="about_toast_url_copied">URL copied to clipboard!</string>
+    <string name="about_license_footer">Free and open source software released under the GNU General Public License v3.0 (GPL-3.0). Source code available at %1$s</string>
+    <string name="action_close">Close</string>
 </resources>

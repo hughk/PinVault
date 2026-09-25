@@ -47,10 +47,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import eu.hughkennedy.pinvault.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +66,7 @@ fun HelpScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Help & Guide",
+                        text = stringResource(R.string.help_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -73,7 +75,7 @@ fun HelpScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.action_back)
                         )
                     }
                 },
@@ -81,7 +83,7 @@ fun HelpScreen(
                     IconButton(onClick = onOpenAbout) {
                         Icon(
                             imageVector = Icons.Default.Info,
-                            contentDescription = "About Pin Vault",
+                            contentDescription = stringResource(R.string.action_about_menu),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -132,14 +134,14 @@ fun HelpScreen(
 
                     Column {
                         Text(
-                            text = "Visual Steganography",
+                            text = stringResource(R.string.help_hero_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Hiding secret PINs in plain sight on a randomized grid of colored numbers. Shoulder-surfers and security cameras see only noise.",
+                            text = stringResource(R.string.help_hero_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
                             lineHeight = 18.sp
@@ -151,27 +153,27 @@ fun HelpScreen(
             // Section 1: The 3 Keys
             HelpSectionCard(
                 icon = Icons.Default.Route,
-                title = "The 3 Keys to Your PIN",
-                subtitle = "To read your PIN, combine three elements known only to you:"
+                title = stringResource(R.string.help_section1_title),
+                subtitle = stringResource(R.string.help_section1_subtitle)
             ) {
                 KeyElementItem(
                     number = "1",
-                    title = "Secret Color",
-                    description = "When creating a card, choose a secret color. The app conceals this color in normal view, so an observer cannot tell which color is the real one.",
+                    title = stringResource(R.string.help_key1_title),
+                    description = stringResource(R.string.help_key1_desc),
                     accentColor = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 KeyElementItem(
                     number = "2",
-                    title = "Starting Tile",
-                    description = "Choose where your sequence begins on the matrix (e.g. top-left corner, center tile, or row 2 column 3).",
+                    title = stringResource(R.string.help_key2_title),
+                    description = stringResource(R.string.help_key2_desc),
                     accentColor = MaterialTheme.colorScheme.secondary
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 KeyElementItem(
                     number = "3",
-                    title = "Traversal Path",
-                    description = "Follow your geometric path across the matrix (e.g. diagonal down-right, chess knight's move, or reverse L-shape).",
+                    title = stringResource(R.string.help_key3_title),
+                    description = stringResource(R.string.help_key3_desc),
                     accentColor = MaterialTheme.colorScheme.tertiary
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -191,7 +193,7 @@ fun HelpScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Tip: Write a clever, subtle Rule Hint that makes sense only to you (e.g., \"Knight from bottom-right\").",
+                        text = stringResource(R.string.help_tip_rule_hint),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -201,25 +203,25 @@ fun HelpScreen(
             // Section 2: Decoy Engineering
             HelpSectionCard(
                 icon = Icons.Default.VisibilityOff,
-                title = "Anti-Observation Decoys",
-                subtitle = "How the algorithm baffles onlookers and camera analysis"
+                title = stringResource(R.string.help_section2_title),
+                subtitle = stringResource(R.string.help_section2_subtitle)
             ) {
                 Text(
-                    text = "• Linear Decoy PINs: The app automatically places decoy lines (horizontal, vertical, or diagonal) of uniform colors across the matrix. Anyone scanning the screen sees multiple false patterns.",
+                    text = stringResource(R.string.help_decoy_p1),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 18.sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "• Strict Non-Adjacency: Decoy tiles matching your secret color are strategically scattered so they never touch your real PIN tiles, eliminating clustering suspicion.",
+                    text = stringResource(R.string.help_decoy_p2),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 18.sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "• Color Concealment: The true PIN color is never shown on the card title or matrix view during normal usage.",
+                    text = stringResource(R.string.help_decoy_p3),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 18.sp
@@ -229,15 +231,11 @@ fun HelpScreen(
             // Section 3: Emergency Peeker
             HelpSectionCard(
                 icon = Icons.Default.Fingerprint,
-                title = "Emergency Pattern Peeker",
-                subtitle = "Biometric timed reveal with instant extinguish"
+                title = stringResource(R.string.help_section3_title),
+                subtitle = stringResource(R.string.help_section3_subtitle)
             ) {
                 Text(
-                    text = "If you ever forget your path or need immediate verification:\n\n" +
-                            "1. Tap the \"Tap for Biometric Reveal\" button.\n" +
-                            "2. Authenticate with your fingerprint, face, or device PIN.\n" +
-                            "3. The secret tiles illuminate in their genuine color for a 12-second window with a live countdown timer.\n" +
-                            "4. Tap the button again at any time to immediately extinguish the reveal and return to decoy camouflage mode.",
+                    text = stringResource(R.string.help_peeker_steps),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 19.sp
@@ -247,13 +245,11 @@ fun HelpScreen(
             // Section 4: Folders, Filtering & Management
             HelpSectionCard(
                 icon = Icons.Default.Folder,
-                title = "Folders, Filtering & Deletion",
-                subtitle = "Organize matrices by type or custom group"
+                title = stringResource(R.string.help_section4_title),
+                subtitle = stringResource(R.string.help_section4_subtitle)
             ) {
                 Text(
-                    text = "• Category & Folder Chips: Use the horizontal filter bar on the main screen to filter by Credit Cards, Debit Cards, Banking, Access Safes, or custom folders.\n\n" +
-                            "• Custom Folders: Assign cards to custom folders (e.g. \"Personal\", \"Work\", \"Travel\") in the card editor.\n\n" +
-                            "• Deleting Cards: Tap the trash icon in the matrix detail screen or select \"Delete Matrix\" from the card's 3-dot menu. Deletions always require explicit confirmation.",
+                    text = stringResource(R.string.help_folders_content),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 19.sp
@@ -263,15 +259,11 @@ fun HelpScreen(
             // Section 5: Encrypted Offline Backup
             HelpSectionCard(
                 icon = Icons.Default.Sync,
-                title = "Encrypted Backup & Migration",
-                subtitle = "Switch phones safely with zero cloud dependency"
+                title = stringResource(R.string.help_section5_title),
+                subtitle = stringResource(R.string.help_section5_subtitle)
             ) {
                 Text(
-                    text = "Pin Vault is 100% offline. To transfer your cards to a new phone:\n\n" +
-                            "1. Tap the Backup icon (Sync) on the main vault screen.\n" +
-                            "2. Enter a strong backup passphrase to generate an AES-256-GCM encrypted payload.\n" +
-                            "3. Share or copy the .pinvault data to your new device.\n" +
-                            "4. On the new phone, open Pin Vault -> Import Vault, paste the data, and enter your passphrase.",
+                    text = stringResource(R.string.help_backup_content),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 19.sp
@@ -281,13 +273,11 @@ fun HelpScreen(
             // Section 6: Device Hardening
             HelpSectionCard(
                 icon = Icons.Default.Lock,
-                title = "Device Security Architecture",
-                subtitle = "Built-in operating system protections"
+                title = stringResource(R.string.help_section6_title),
+                subtitle = stringResource(R.string.help_section6_subtitle)
             ) {
                 Text(
-                    text = "• Screenshot & Recording Blocked: Android FLAG_SECURE prevents rogue apps from taking screenshots or capturing video of your vault.\n\n" +
-                            "• App Switcher Shield: Vault contents are hidden in Android Recents (task switcher).\n\n" +
-                            "• Zero Network Access: The application requests no internet permission and transmits no telemetry.",
+                    text = stringResource(R.string.help_security_content),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 19.sp
@@ -309,18 +299,18 @@ fun HelpScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Pin Vault v0.993",
+                            text = stringResource(R.string.help_about_card_version, "0.993"),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Created by Hugh Kennedy (hughk.projects@gmail.com)",
+                            text = stringResource(R.string.help_about_card_author),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     OutlinedButton(onClick = onOpenAbout) {
-                        Text("About App")
+                        Text(stringResource(R.string.action_about_app))
                     }
                 }
             }

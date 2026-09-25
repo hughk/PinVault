@@ -78,6 +78,7 @@ fun PinVaultAppRoot(
     repository: VaultRepository,
     onBiometricAuth: (String, () -> Unit) -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val cards by repository.cards.collectAsState()
     var isLocked by remember { mutableStateOf(false) } // starts unlocked for instant convenience or can lock
     var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.Vault) }
@@ -88,7 +89,7 @@ fun PinVaultAppRoot(
         LockScreen(
             onUnlockSuccess = { isLocked = false },
             onBiometricRequested = {
-                onBiometricAuth("Unlock Pin Vault") {
+                onBiometricAuth(context.getString(R.string.biometric_prompt_unlock)) {
                     isLocked = false
                 }
             },
@@ -123,7 +124,7 @@ fun PinVaultAppRoot(
                             currentScreen = AppScreen.Vault
                         },
                         onBiometricAuthRequested = { revealCallback ->
-                            onBiometricAuth("Reveal Secret Pattern") {
+                            onBiometricAuth(context.getString(R.string.biometric_prompt_reveal)) {
                                 revealCallback()
                             }
                         }

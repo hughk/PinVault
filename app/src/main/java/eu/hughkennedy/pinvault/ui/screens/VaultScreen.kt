@@ -67,8 +67,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import eu.hughkennedy.pinvault.R
 import eu.hughkennedy.pinvault.core.model.CardCategory
 import eu.hughkennedy.pinvault.core.model.CardEntity
 import eu.hughkennedy.pinvault.ui.components.CategoryIconBadge
@@ -150,10 +152,10 @@ fun VaultScreen(
                 )
             },
             title = {
-                Text(text = "Delete PIN Matrix?", fontWeight = FontWeight.Bold)
+                Text(text = stringResource(R.string.delete_card_title), fontWeight = FontWeight.Bold)
             },
             text = {
-                Text("Are you sure you want to permanently delete \"${target.name}\"? This action cannot be undone.")
+                Text(stringResource(R.string.delete_card_message, target.name))
             },
             confirmButton = {
                 Button(
@@ -164,12 +166,12 @@ fun VaultScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.action_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { cardToDelete = null }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -197,12 +199,12 @@ fun VaultScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "Pin Vault",
+                                text = stringResource(R.string.vault_title),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "${cards.size} Matrices Stored",
+                                text = stringResource(R.string.vault_matrices_stored, cards.size),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -213,14 +215,14 @@ fun VaultScreen(
                     IconButton(onClick = onOpenHelp) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.HelpOutline,
-                            contentDescription = "Help & Guide",
+                            contentDescription = stringResource(R.string.action_help_guide_tooltip),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     IconButton(onClick = onOpenBackup) {
                         Icon(
                             imageVector = Icons.Default.Sync,
-                            contentDescription = "Backup & Transfer",
+                            contentDescription = stringResource(R.string.action_backup_tooltip),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -228,7 +230,7 @@ fun VaultScreen(
                         IconButton(onClick = { showTopMenu = true }) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
-                                contentDescription = "More Options",
+                                contentDescription = stringResource(R.string.action_more_options),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -237,7 +239,7 @@ fun VaultScreen(
                             onDismissRequest = { showTopMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("About Pin Vault") },
+                                text = { Text(stringResource(R.string.action_about_menu)) },
                                 leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) },
                                 onClick = {
                                     showTopMenu = false
@@ -245,7 +247,7 @@ fun VaultScreen(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Help & Guide") },
+                                text = { Text(stringResource(R.string.action_help_guide_tooltip)) },
                                 leadingIcon = { Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = null) },
                                 onClick = {
                                     showTopMenu = false
@@ -253,7 +255,7 @@ fun VaultScreen(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Backup & Transfer") },
+                                text = { Text(stringResource(R.string.action_backup_tooltip)) },
                                 leadingIcon = { Icon(Icons.Default.Sync, contentDescription = null) },
                                 onClick = {
                                     showTopMenu = false
@@ -261,7 +263,7 @@ fun VaultScreen(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Lock Vault") },
+                                text = { Text(stringResource(R.string.action_lock_menu)) },
                                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                                 onClick = {
                                     showTopMenu = false
@@ -282,7 +284,7 @@ fun VaultScreen(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Card")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.action_add_card))
             }
         },
         modifier = modifier.fillMaxSize()
@@ -297,14 +299,14 @@ fun VaultScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Search card, folder, account, or rule...", fontSize = 13.sp) },
+                placeholder = { Text(stringResource(R.string.search_placeholder), fontSize = 13.sp) },
                 leadingIcon = {
                     Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp))
                 },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear search", modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.search_clear), modifier = Modifier.size(16.dp))
                         }
                     }
                 },
@@ -328,7 +330,7 @@ fun VaultScreen(
                 FilterChip(
                     selected = selectedFilter == VaultFilter.All,
                     onClick = { selectedFilter = VaultFilter.All },
-                    label = { Text("All (${cards.size})") },
+                    label = { Text("${stringResource(R.string.category_all)} (${cards.size})") },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                         selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -355,7 +357,7 @@ fun VaultScreen(
                                     modifier = Modifier.size(14.dp)
                                 )
                             },
-                            label = { Text("${cat.displayName} ($count)") }
+                            label = { Text("${stringResource(cat.titleRes)} ($count)") }
                         )
                     }
                 }
@@ -402,11 +404,11 @@ fun VaultScreen(
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = if (searchQuery.isNotBlank()) {
-                                "No cards match \"$searchQuery\""
+                                stringResource(R.string.vault_empty_no_search, searchQuery)
                             } else if (selectedFilter != VaultFilter.All) {
-                                "No PIN matrices in this category/folder"
+                                stringResource(R.string.vault_empty_no_filter)
                             } else {
-                                "No cards in vault yet"
+                                stringResource(R.string.vault_empty_no_cards)
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -419,7 +421,7 @@ fun VaultScreen(
                                     searchQuery = ""
                                 }
                             ) {
-                                Text("Clear Filter & Search")
+                                Text(stringResource(R.string.action_clear_filter_search))
                             }
                         }
                     }
@@ -516,7 +518,7 @@ private fun CardItemRow(
 
                         // Category text
                         Text(
-                            text = card.category.displayName,
+                            text = stringResource(card.category.titleRes),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -546,7 +548,7 @@ private fun CardItemRow(
                 IconButton(onClick = { menuExpanded = true }) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = "Card options",
+                        contentDescription = stringResource(R.string.card_options),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -555,7 +557,7 @@ private fun CardItemRow(
                     onDismissRequest = { menuExpanded = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("View Matrix") },
+                        text = { Text(stringResource(R.string.action_view_matrix)) },
                         leadingIcon = { Icon(Icons.Default.Visibility, contentDescription = null) },
                         onClick = {
                             menuExpanded = false
@@ -563,7 +565,7 @@ private fun CardItemRow(
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Edit Matrix") },
+                        text = { Text(stringResource(R.string.action_edit_matrix)) },
                         leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                         onClick = {
                             menuExpanded = false
@@ -571,7 +573,7 @@ private fun CardItemRow(
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Delete Matrix", color = MaterialTheme.colorScheme.error) },
+                        text = { Text(stringResource(R.string.action_delete_matrix), color = MaterialTheme.colorScheme.error) },
                         leadingIcon = {
                             Icon(
                                 Icons.Default.Delete,

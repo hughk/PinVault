@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import eu.hughkennedy.pinvault.core.model.CardCategory
 
 object CategoryVisuals {
@@ -73,7 +74,7 @@ fun CategoryIconBadge(
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = category.displayName,
+            contentDescription = stringResource(category.titleRes),
             tint = color,
             modifier = Modifier.size(iconSize)
         )
