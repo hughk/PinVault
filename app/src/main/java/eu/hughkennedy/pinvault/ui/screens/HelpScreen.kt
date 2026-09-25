@@ -309,7 +309,7 @@ fun HelpScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Pin Vault v0.992",
+                            text = "Pin Vault v0.993",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )

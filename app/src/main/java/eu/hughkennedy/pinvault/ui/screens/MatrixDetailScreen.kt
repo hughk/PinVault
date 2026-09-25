@@ -456,8 +456,9 @@ private fun RuleAndRevealCard(
                 } else {
                     if (card.ruleHint.isNotBlank()) card.ruleHint else "Tokens are camouflaged. Tap below to verify biometric and reveal sequence."
                 },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                fontSize = 11.5.sp,
+                lineHeight = 16.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
             )
 
             // TIMED BIOMETRIC REVEAL BUTTON (Tap to Reveal + Tap to Extinguish)

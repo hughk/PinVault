@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pin Vault v0.993 - Interactive Typography & Feature Prototype</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap');
+    
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Mobile phone viewport container */
+    .phone-screen {
+      width: 400px;
+      height: 820px;
+      max-width: 100%;
+      border-radius: 46px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.65), 0 0 0 12px #1e293b, 0 0 0 14px #334155;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Tile 3D tactile circular token */
+    .pin-tile {
+      aspect-ratio: 1 / 1 !important;
+      border-radius: 9999px !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      place-self: center;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-weight: 800 !important;
+      line-height: 1 !important;
+    }
+    .pin-tile:active {
+      transform: scale(0.92);
+    }
+
+    /* v0.993: Enlarged bold matrix digits (boosted to 20px / 1.25rem) */
+    body.typo-v0993 .pin-tile {
+      font-size: 1.25rem !important; /* ~20px: bold, highly prominent, easy to read at a glance */
+    }
+    /* v0.992: Original smaller size */
+    body.typo-v0992 .pin-tile {
+      font-size: 0.875rem !important; /* 14px */
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.35);
+      border-radius: 6px;
+    }
+
+    /* Pulse glow animation for revealed state */
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 14px rgba(99, 102, 241, 0.55); }
+      50% { box-shadow: 0 0 24px rgba(99, 102, 241, 0.95); }
+    }
+    .glow-reveal {
+      animation: pulse-glow 2s infinite ease-in-out;
+    }
+
+    /* ==============================================================
+       TYPOGRAPHY SCALING SYSTEM: v0.993 (Increased) vs v0.992 (Small)
+       ============================================================== */
+    
+    /* Proposed v0.993: Enlarged for enhanced readability (+15% to +20%) */
+    body.typo-v0993 .ui-app-title { font-size: 1.0625rem; font-weight: 700; } /* 17px */
+    body.typo-v0993 .ui-app-subtitle { font-size: 0.8125rem; } /* 13px */
+    body.typo-v0993 .ui-search-input { font-size: 0.875rem; } /* 14px */
+    body.typo-v0993 .ui-chip-text { font-size: 0.8125rem; padding: 0.35rem 0.75rem; } /* 13px */
+    body.typo-v0993 .ui-card-title { font-size: 1.0rem; font-weight: 700; } /* 16px */
+    body.typo-v0993 .ui-card-badge { font-size: 0.78125rem; font-weight: 600; } /* 12.5px */
+    body.typo-v0993 .ui-card-desc { font-size: 0.875rem; line-height: 1.35; } /* 14px */
+    /* Rule hint: intentionally reduced & subtle against shoulder-surfers */
+    body.typo-v0993 .ui-rule-hint { font-size: 0.75rem; line-height: 1.35; color: #94a3b8; } /* 12px subtle */
+    body.typo-v0993 .ui-btn-main { font-size: 0.9375rem; font-weight: 700; } /* 15px */
+    body.typo-v0993 .ui-btn-sub { font-size: 0.8125rem; } /* 13px */
+    body.typo-v0993 .ui-label { font-size: 0.8125rem; font-weight: 700; } /* 13px */
+    body.typo-v0993 .ui-micro { font-size: 0.75rem; } /* 12px */
+
+    /* In-App Help & Guide Typography (v0.993) */
+    body.typo-v0993 .ui-help-hero-title { font-size: 1.125rem; font-weight: 800; } /* 18px */
+    body.typo-v0993 .ui-help-hero-body { font-size: 0.90625rem; line-height: 1.5; } /* 14.5px */
+    body.typo-v0993 .ui-help-heading { font-size: 1.0625rem; font-weight: 700; } /* 17px */
+    body.typo-v0993 .ui-help-subhead { font-size: 0.8125rem; } /* 13px */
+    body.typo-v0993 .ui-help-body { font-size: 0.875rem; line-height: 1.5; } /* 14px */
+    body.typo-v0993 .ui-help-tip { font-size: 0.8125rem; line-height: 1.4; } /* 13px */
+
+    /* About Dialog Typography (v0.993) */
+    body.typo-v0993 .ui-about-title { font-size: 1.25rem; font-weight: 800; } /* 20px */
+    body.typo-v0993 .ui-about-badge { font-size: 0.8125rem; font-weight: 600; } /* 13px */
+    body.typo-v0993 .ui-about-lead { font-size: 0.9375rem; line-height: 1.5; } /* 15px */
+    body.typo-v0993 .ui-about-card-title { font-size: 0.9375rem; font-weight: 700; } /* 15px */
+    body.typo-v0993 .ui-about-card-body { font-size: 0.875rem; line-height: 1.45; } /* 14px */
+    body.typo-v0993 .ui-about-footer { font-size: 0.8125rem; line-height: 1.35; } /* 13px */
+
+    /* Previous v0.992: Smaller original sizes */
+    body.typo-v0992 .ui-app-title { font-size: 0.875rem; font-weight: 700; } /* 14px */
+    body.typo-v0992 .ui-app-subtitle { font-size: 0.625rem; } /* 10px */
+    body.typo-v0992 .ui-search-input { font-size: 0.75rem; } /* 12px */
+    body.typo-v0992 .ui-chip-text { font-size: 0.6875rem; padding: 0.2rem 0.5rem; } /* 11px */
+    body.typo-v0992 .ui-card-title { font-size: 0.875rem; font-weight: 700; } /* 14px */
+    body.typo-v0992 .ui-card-badge { font-size: 0.625rem; font-weight: 600; } /* 10px */
+    body.typo-v0992 .ui-card-desc { font-size: 0.75rem; line-height: 1.25; } /* 12px */
+    body.typo-v0992 .ui-rule-hint { font-size: 0.6875rem; line-height: 1.25; } /* 11px */
+    body.typo-v0992 .ui-btn-main { font-size: 0.75rem; font-weight: 700; } /* 12px */
+    body.typo-v0992 .ui-btn-sub { font-size: 0.5625rem; } /* 9px */
+    body.typo-v0992 .ui-label { font-size: 0.625rem; font-weight: 700; } /* 10px */
+    body.typo-v0992 .ui-micro { font-size: 0.5625rem; } /* 9px */
+
+    body.typo-v0992 .ui-help-hero-title { font-size: 0.875rem; font-weight: 700; } /* 14px */
+    body.typo-v0992 .ui-help-hero-body { font-size: 0.75rem; line-height: 1.35; } /* 12px */
+    body.typo-v0992 .ui-help-heading { font-size: 0.875rem; font-weight: 700; } /* 14px */
+    body.typo-v0992 .ui-help-subhead { font-size: 0.6875rem; } /* 11px */
+    body.typo-v0992 .ui-help-body { font-size: 0.75rem; line-height: 1.35; } /* 12px */
+    body.typo-v0992 .ui-help-tip { font-size: 0.6875rem; line-height: 1.2; } /* 11px */
+
+    body.typo-v0992 .ui-about-title { font-size: 1.125rem; font-weight: 700; } /* 18px */
+    body.typo-v0992 .ui-about-badge { font-size: 0.6875rem; } /* 11px */
+    body.typo-v0992 .ui-about-lead { font-size: 0.8125rem; line-height: 1.35; } /* 13px */
+    body.typo-v0992 .ui-about-card-title { font-size: 0.8125rem; font-weight: 700; } /* 13px */
+    body.typo-v0992 .ui-about-card-body { font-size: 0.75rem; line-height: 1.35; } /* 12px */
+    body.typo-v0992 .ui-about-footer { font-size: 0.6875rem; line-height: 1.2; } /* 11px */
+  </style>
+</head>
+<body class="typo-v0993 bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-start p-3 sm:p-6 antialiased">
+
+  <!-- ========================================== -->
+  <!-- Top Navigation & Interactive Preview Tools -->
+  <!-- ========================================== -->
+  <header class="w-full max-w-6xl mb-6 flex flex-col lg:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-5">
+    <div class="flex items-center gap-3">
+      <!-- App Shield Badge -->
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-b from-indigo-500 to-indigo-700 border-2 border-indigo-400/50 flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
+        <i class="fa-solid fa-shield text-white text-2xl"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-2xl font-extrabold text-white tracking-tight">Pin Vault</h1>
+          <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
+            v0.993 Prototype
+          </span>
+        </div>
+        <p class="text-xs text-slate-400 mt-0.5">Visual Steganography PIN Vault • High-Legibility Typography Evaluation • GPL-3.0</p>
+      </div>
+    </div>
+
+    <!-- Interactive Mode & View Controls -->
+    <div class="flex flex-wrap items-center gap-2.5">
+      <!-- Live Typography Comparison Switch -->
+      <div class="bg-slate-900 border border-indigo-500/40 rounded-xl p-1 flex items-center gap-1 shadow-md">
+        <span class="text-[11px] font-bold text-slate-400 px-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-text-height text-indigo-400"></i> Typography:
+        </span>
+        <button id="toggleTypoV0993" onclick="setTypographyMode('v0993')" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs font-bold transition shadow">
+          v0.993 Increased
+        </button>
+        <button id="toggleTypoV0992" onclick="setTypographyMode('v0992')" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white text-xs font-medium transition">
+          v0.992 Small
+        </button>
+      </div>
+
+      <!-- Quick Screen Navigators -->
+      <div class="flex items-center gap-1.5">
+        <button onclick="switchView('list')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700">
+          <i class="fa-solid fa-layer-group text-indigo-400"></i> Vault
+        </button>
+        <button onclick="switchView('detail')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700">
+          <i class="fa-solid fa-table-cells text-emerald-400"></i> Matrix
+        </button>
+        <button onclick="switchView('help')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700">
+          <i class="fa-solid fa-circle-question text-sky-400"></i> Help Screen
+        </button>
+        <button onclick="openAboutModal()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700">
+          <i class="fa-solid fa-circle-info text-amber-400"></i> About
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- MAIN WORKSPACE: Android Container + Insights -->
+  <!-- ========================================== -->
+  <div class="w-full max-w-6xl flex flex-col lg:flex-row items-start justify-center gap-8">
+
+    <!-- LEFT: Simulated Android Phone Device -->
+    <div class="flex flex-col items-center">
+      <div class="phone-screen bg-slate-900 border border-slate-800">
+
+        <!-- Top Phone Bezel & Status Bar -->
+        <div class="h-10 bg-slate-900 px-6 flex items-center justify-between text-xs text-slate-400 select-none z-30 shrink-0">
+          <span class="font-bold text-slate-300" id="liveClock">14:35</span>
+          <div class="w-24 h-4 bg-black rounded-full mx-auto"></div>
+          <div class="flex items-center gap-1.5 text-[11px]">
+            <i class="fa-solid fa-signal"></i>
+            <i class="fa-solid fa-wifi"></i>
+            <i class="fa-solid fa-battery-full text-emerald-400"></i>
+          </div>
+        </div>
+
+        <!-- APP CONTENT ROOT -->
+        <main id="phoneContent" class="flex-1 overflow-hidden relative flex flex-col bg-slate-900 text-slate-100">
+
+          <!-- --------------------------------------- -->
+          <!-- 1. LOCK SCREEN VIEW -->
+          <!-- --------------------------------------- -->
+          <div id="view-lock" class="absolute inset-0 bg-slate-950/95 backdrop-blur-xl flex flex-col items-center justify-between p-6 z-40 hidden">
+            <div class="w-full flex justify-end">
+              <span class="ui-micro text-slate-500 flex items-center gap-1.5 font-medium">
+                <i class="fa-solid fa-shield-halved text-indigo-400"></i> Hardware Keystore Protected
+              </span>
+            </div>
+
+            <div class="flex flex-col items-center">
+              <div class="w-16 h-16 rounded-3xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center mb-4 text-indigo-400 text-2xl shadow-inner">
+                <i class="fa-solid fa-lock"></i>
+              </div>
+              <h2 class="ui-app-title text-white">Pin Vault Locked</h2>
+              <p class="ui-app-subtitle text-slate-400 mt-1.5 text-center">Verify biometric identity or enter Master PIN</p>
+              
+              <!-- PIN Indicators -->
+              <div class="flex items-center gap-3.5 my-6">
+                <div id="pin-dot-1" class="w-4 h-4 rounded-full border-2 border-indigo-500/40 transition"></div>
+                <div id="pin-dot-2" class="w-4 h-4 rounded-full border-2 border-indigo-500/40 transition"></div>
+                <div id="pin-dot-3" class="w-4 h-4 rounded-full border-2 border-indigo-500/40 transition"></div>
+                <div id="pin-dot-4" class="w-4 h-4 rounded-full border-2 border-indigo-500/40 transition"></div>
+              </div>
+            </div>
+
+            <!-- Numpad -->
+            <div class="w-full max-w-[270px] grid grid-cols-3 gap-3 mb-3">
+              <button onclick="handlePinInput(1)" class="h-14 rounded-2xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-2xl font-bold text-white transition">1</button>
+              <button onclick="handlePinInput(2)" class="h-14 rounded-2xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-2xl font-bold text-white transition">2</button>
+              <button onclick="handlePinInput(3)" class="h-14 rounded-2xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-2xl font-bold text-white transition">3</button>
+              <button onclick="handlePinInput(4)" class="h-14 rounded-2xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-2xl font-bold text-white transition">4</button>
+              <button onclick="handlePinInput(5)" class="h-14 rounded-2xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-2xl font-bold text-white transition">5</button>
+              <button onclick="handlePinInput(6)" class="h-14 rounded-2xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-2xl font-bold text-white transition">6</button>
+              <button onclick="handlePinInput(7)" class="h-14 rounded-2xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-2xl font-bold text-white transition">7</button>
+              <button onclick="handlePinInput(8)" class="h-14 rounded-2xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-2xl font-bold text-white transition">8</button>
+              <button onclick="handlePinInput(9)" class="h-14 rounded-2xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-2xl font-bold text-white transition">9</button>
+              <button onclick="unlockWithBiometrics()" class="h-14 rounded-2xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 flex items-center justify-center text-2xl transition active:scale-95" title="Simulate Biometric Unlock">
+                <i class="fa-solid fa-fingerprint"></i>
+              </button>
+              <button onclick="handlePinInput(0)" class="h-14 rounded-2xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-2xl font-bold text-white transition">0</button>
+              <button onclick="clearPinInput()" class="h-14 rounded-2xl bg-slate-800/50 hover:bg-slate-700 text-slate-400 flex items-center justify-center text-base transition active:scale-95" title="Clear Digits">
+                <i class="fa-solid fa-delete-left"></i>
+              </button>
+            </div>
+            <p class="ui-micro text-slate-500 text-center">Tap fingerprint for biometric or enter PIN 1-2-3-4</p>
+          </div>
+
+          <!-- --------------------------------------- -->
+          <!-- 2. VAULT / CARDS LIST VIEW -->
+          <!-- --------------------------------------- -->
+          <div id="view-list" class="flex-1 flex flex-col h-full">
+            <!-- App Bar -->
+            <div class="px-4 pt-3.5 pb-3 flex items-center justify-between border-b border-slate-800/80 shrink-0 bg-slate-900/95 backdrop-blur">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-base shadow">
+                  <i class="fa-solid fa-shield"></i>
+                </div>
+                <div>
+                  <h3 class="ui-app-title text-white leading-tight">Pin Vault</h3>
+                  <span class="ui-app-subtitle text-slate-400" id="cardCountSubtitle">3 Matrices Stored</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="switchView('help')" title="Help & Guide" class="w-9 h-9 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-sky-400 flex items-center justify-center transition text-sm">
+                  <i class="fa-solid fa-circle-question"></i>
+                </button>
+                <button onclick="openBackupModal()" title="Export / Import Vault" class="w-9 h-9 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-emerald-400 flex items-center justify-center transition text-sm">
+                  <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+                <button onclick="toggleAppLock()" title="Lock Vault" class="w-9 h-9 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-amber-400 flex items-center justify-center transition text-sm">
+                  <i class="fa-solid fa-lock"></i>
+                </button>
+                <button onclick="startNewCardWizard()" title="Add Matrix" class="w-9 h-9 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center transition text-sm shadow-md shadow-indigo-600/30">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Search Bar (Increased typography) -->
+            <div class="px-4 pt-2.5 pb-1.5 shrink-0">
+              <div class="relative flex items-center">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 text-slate-500 text-sm"></i>
+                <input id="searchInput" oninput="renderCardList()" type="text" placeholder="Search cards or folders..." class="ui-search-input w-full pl-9 pr-8 py-2 bg-slate-800/80 border border-slate-700/70 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition">
+                <button id="clearSearchBtn" onclick="clearSearch()" class="absolute right-3 text-slate-500 hover:text-slate-300 hidden text-sm">
+                  <i class="fa-solid fa-circle-xmark"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Horizontal Filter Chips (Folders & Categories) -->
+            <div class="px-4 py-2 shrink-0 flex items-center gap-2 overflow-x-auto custom-scrollbar" id="filterChipsBar">
+              <!-- Dynamically populated -->
+            </div>
+
+            <!-- Cards Scroll List -->
+            <div id="cardsListContainer" class="flex-1 overflow-y-auto px-4 py-2 space-y-3 custom-scrollbar">
+              <!-- Dynamically populated -->
+            </div>
+
+            <!-- Bottom Floating Action -->
+            <div class="p-3 bg-gradient-to-t from-slate-950 via-slate-900/90 to-transparent shrink-0">
+              <button onclick="startNewCardWizard()" class="ui-btn-main w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white flex items-center justify-center gap-2.5 shadow-lg shadow-indigo-600/30 transition">
+                <i class="fa-solid fa-plus"></i> Create New PIN Matrix
+              </button>
+            </div>
+          </div>
+
+          <!-- --------------------------------------- -->
+          <!-- 3. MATRIX DETAIL SCREEN (Camouflage Grid) -->
+          <!-- --------------------------------------- -->
+          <div id="view-detail" class="flex-1 flex flex-col h-full hidden">
+            <!-- App Bar -->
+            <div class="px-4 py-3 flex items-center justify-between border-b border-slate-800 shrink-0 bg-slate-900/95 backdrop-blur">
+              <button onclick="switchView('list')" class="w-9 h-9 rounded-xl hover:bg-slate-800 text-slate-300 flex items-center justify-center transition text-sm">
+                <i class="fa-solid fa-arrow-left"></i>
+              </button>
+              <div class="text-center overflow-hidden px-2 flex-1">
+                <h3 id="detailCardName" class="ui-card-title text-white truncate">Barclays Visa Debit</h3>
+                <p id="detailCardSubtitle" class="ui-app-subtitle text-slate-400 truncate">6×7 Camouflage Grid • Personal</p>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="editCurrentCard()" title="Edit Matrix" class="w-9 h-9 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition text-sm">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button onclick="promptDeleteCurrentCard()" title="Delete Matrix" class="w-9 h-9 rounded-xl hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 flex items-center justify-center transition text-sm">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Camouflage Header Info / Security Note -->
+            <div class="px-4 py-2 bg-slate-950/70 border-b border-slate-800/70 flex items-center justify-between shrink-0">
+              <div class="flex items-center gap-2.5">
+                <span id="detailBadgeIcon" class="w-7 h-7 rounded-full flex items-center justify-center text-sm shadow">
+                  <i class="fa-solid fa-shield"></i>
+                </span>
+                <div>
+                  <span id="detailPatternType" class="ui-card-badge text-slate-200 block">Steganographic Camouflage</span>
+                  <p class="ui-micro text-slate-400" id="detailSecurityHint">Shoulder-surf protected</p>
+                </div>
+              </div>
+              <!-- Randomize Decoys Button -->
+              <button onclick="reRandomizeCurrentDecoys()" title="Regenerate Decoy Digits" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 ui-btn-sub font-semibold border border-slate-700 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-arrows-rotate text-indigo-400"></i> Refresh Decoys
+              </button>
+            </div>
+
+            <!-- THE MATRIX CONTAINER (Numeric tile font size strictly untouched) -->
+            <div class="flex-1 p-3 flex flex-col justify-center items-center overflow-auto custom-scrollbar select-none">
+              <div id="matrixGrid" class="w-full max-w-[340px] grid gap-1.5 p-2.5 rounded-2xl bg-slate-950 border border-slate-800 shadow-inner">
+                <!-- Tiles dynamically rendered -->
+              </div>
+            </div>
+
+            <!-- Bottom Rule deciphering hint panel & Biometric Reveal -->
+            <div class="p-3 bg-slate-950 border-t border-slate-800 shrink-0 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="ui-micro text-slate-400 font-semibold flex items-center gap-1.5">
+                  <i class="fa-solid fa-user-secret text-indigo-400 text-xs"></i> Discreet Decryption Hint:
+                </span>
+                <span id="secretColorTag" class="px-2 py-0.5 rounded ui-micro font-medium bg-slate-900 text-slate-400 border border-slate-800 flex items-center gap-1">
+                  <i class="fa-solid fa-shield-halved text-[10px] text-emerald-400"></i> Low-Visibility
+                </span>
+              </div>
+              <p id="secretRuleInstructions" class="ui-rule-hint bg-slate-900/60 rounded-xl p-2.5 border border-slate-800/80 leading-relaxed">
+                Tokens are camouflaged. Tap below to verify biometric and reveal sequence.
+              </p>
+
+              <!-- TIMED BIOMETRIC REVEAL BUTTON -->
+              <button id="biometricPeekButton" onclick="handleRevealButtonClick()"
+                class="w-full py-3 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-indigo-500/40 flex items-center justify-center gap-3 select-none transition cursor-pointer shadow-md">
+                <i id="revealBtnIcon" class="fa-solid fa-fingerprint text-indigo-400 text-xl"></i>
+                <div class="flex flex-col items-center">
+                  <span id="peekButtonText" class="ui-btn-main text-white font-bold leading-tight">Tap for Biometric Reveal</span>
+                  <span id="peekButtonSub" class="ui-btn-sub text-slate-400">12s timed window • Tap again to extinguish</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- --------------------------------------- -->
+          <!-- 4. IN-APP HELP & GUIDE VIEW (MIRRORS HelpScreen.kt) -->
+          <!-- --------------------------------------- -->
+          <div id="view-help" class="flex-1 flex flex-col h-full hidden">
+            <!-- App Bar -->
+            <div class="px-4 py-3 flex items-center justify-between border-b border-slate-800 shrink-0 bg-slate-900/95 backdrop-blur">
+              <div class="flex items-center gap-3">
+                <button onclick="switchView('list')" class="w-9 h-9 rounded-xl hover:bg-slate-800 text-slate-300 flex items-center justify-center transition text-sm">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h3 class="ui-app-title text-white">Help & Guide</h3>
+              </div>
+              <button onclick="openAboutModal()" title="About App" class="w-9 h-9 rounded-xl hover:bg-slate-800 text-indigo-400 flex items-center justify-center transition text-sm">
+                <i class="fa-solid fa-circle-info"></i>
+              </button>
+            </div>
+
+            <!-- Scrollable Guide Content with Enlarged Typography -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+
+              <!-- Hero Steganography Intro Card -->
+              <div class="bg-gradient-to-br from-indigo-950/80 to-slate-900 border border-indigo-500/30 rounded-2xl p-4 shadow-sm">
+                <div class="flex items-center gap-3.5 mb-2.5">
+                  <div class="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white text-xl shadow-lg shrink-0">
+                    <i class="fa-solid fa-shield"></i>
+                  </div>
+                  <div>
+                    <h4 class="ui-help-hero-title text-white">Visual Steganography</h4>
+                    <span class="ui-help-subhead text-indigo-300 font-medium">Hiding secret PINs in plain sight</span>
+                  </div>
+                </div>
+                <p class="ui-help-hero-body text-slate-200">
+                  Pin Vault conceals secret PINs on a randomized matrix of colored numbers. Shoulder-surfers and surveillance cameras see only colorful numeric noise.
+                </p>
+              </div>
+
+              <!-- Section 1: The 3 Keys -->
+              <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div class="flex items-center gap-2.5 text-indigo-400">
+                  <i class="fa-solid fa-route text-base"></i>
+                  <h5 class="ui-help-heading text-white">The 3 Keys to Your PIN</h5>
+                </div>
+                <p class="ui-help-subhead text-slate-400">To read your PIN, combine three elements known only to you:</p>
+
+                <div class="space-y-2.5 pt-1">
+                  <!-- Key 1 -->
+                  <div class="flex items-start gap-3 bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                    <span class="w-6 h-6 rounded-full bg-indigo-600 text-white font-mono font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">1</span>
+                    <div>
+                      <strong class="ui-help-body text-white block">Secret Color</strong>
+                      <p class="ui-help-body text-slate-300">Choose a secret color. The app conceals this color during normal view so onlookers cannot tell which color is genuine.</p>
+                    </div>
+                  </div>
+                  <!-- Key 2 -->
+                  <div class="flex items-start gap-3 bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                    <span class="w-6 h-6 rounded-full bg-emerald-600 text-white font-mono font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">2</span>
+                    <div>
+                      <strong class="ui-help-body text-white block">Starting Tile</strong>
+                      <p class="ui-help-body text-slate-300">Remember where your sequence begins on the matrix (e.g. top-left corner, center, or Row 2 Col 3).</p>
+                    </div>
+                  </div>
+                  <!-- Key 3 -->
+                  <div class="flex items-start gap-3 bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                    <span class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-mono font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">3</span>
+                    <div>
+                      <strong class="ui-help-body text-white block">Traversal Path</strong>
+                      <p class="ui-help-body text-slate-300">Follow your mental path (diagonal, chess knight move, column down, or reverse L-shape).</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-3 flex items-start gap-2.5 mt-2">
+                  <i class="fa-solid fa-lightbulb text-amber-400 text-sm mt-0.5"></i>
+                  <p class="ui-help-tip text-indigo-200">
+                    <strong>Tip:</strong> Write a subtle Rule Hint that makes sense only to you (e.g., <em>"Knight move from bottom-right"</em>).
+                  </p>
+                </div>
+              </div>
+
+              <!-- Section 2: Decoy Engineering -->
+              <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-2.5">
+                <div class="flex items-center gap-2.5 text-emerald-400">
+                  <i class="fa-solid fa-eye-slash text-base"></i>
+                  <h5 class="ui-help-heading text-white">Anti-Observation Decoys</h5>
+                </div>
+                <div class="space-y-2 text-slate-300 ui-help-body">
+                  <p>• <strong>Linear Decoy PINs:</strong> The algorithm synthesizes decoy lines (horizontal, vertical, or diagonal) across the matrix so viewers see multiple false patterns.</p>
+                  <p>• <strong>Strict Non-Adjacency:</strong> Decoys sharing your secret color never touch real PIN tiles, eliminating clustering suspicion.</p>
+                  <p>• <strong>Concealed Colors:</strong> Secret color names are never printed on screen in normal mode.</p>
+                </div>
+              </div>
+
+              <!-- Section 3: Emergency Pattern Peeker -->
+              <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-2.5">
+                <div class="flex items-center gap-2.5 text-indigo-400">
+                  <i class="fa-solid fa-fingerprint text-base"></i>
+                  <h5 class="ui-help-heading text-white">Emergency Pattern Peeker</h5>
+                </div>
+                <div class="space-y-2 text-slate-300 ui-help-body">
+                  <p>If you ever forget your path or need immediate verification:</p>
+                  <ol class="list-decimal pl-5 space-y-1">
+                    <li>Tap the <em>"Tap for Biometric Reveal"</em> button.</li>
+                    <li>Authenticate via fingerprint or device PIN.</li>
+                    <li>Secret tokens glow in their authentic color for a <strong>12-second window</strong> with a live timer.</li>
+                    <li>Tap again anytime to immediately extinguish the reveal.</li>
+                  </ol>
+                </div>
+              </div>
+
+              <!-- Section 4: Folders, Filtering & Deletion -->
+              <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-2.5">
+                <div class="flex items-center gap-2.5 text-amber-400">
+                  <i class="fa-solid fa-folder text-base"></i>
+                  <h5 class="ui-help-heading text-white">Folders & Management</h5>
+                </div>
+                <div class="space-y-2 text-slate-300 ui-help-body">
+                  <p>• <strong>Filter Chips:</strong> Instantly filter by Credit, Debit, Banking, Safes, or custom folders.</p>
+                  <p>• <strong>Custom Folders:</strong> Tag cards into <em>Personal</em>, <em>Work</em>, <em>Finance</em>, etc.</p>
+                  <p>• <strong>Safe Deletion:</strong> Permanent deletion with explicit confirmation dialog.</p>
+                </div>
+              </div>
+
+              <!-- Section 5: Offline Backup -->
+              <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-2.5">
+                <div class="flex items-center gap-2.5 text-sky-400">
+                  <i class="fa-solid fa-arrows-rotate text-base"></i>
+                  <h5 class="ui-help-heading text-white">Encrypted Offline Backup</h5>
+                </div>
+                <p class="ui-help-body text-slate-300">
+                  Pin Vault is 100% offline. Export encrypted <code class="text-indigo-300 font-mono">.pinvault</code> backups with AES-256-GCM (100k PBKDF2 rounds) to transfer devices without cloud exposure.
+                </p>
+              </div>
+
+              <!-- About Card Button -->
+              <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between gap-3">
+                <div>
+                  <h5 class="ui-card-title text-white">Pin Vault v0.993</h5>
+                  <p class="ui-app-subtitle text-slate-400">Created by Hugh Kennedy</p>
+                </div>
+                <button onclick="openAboutModal()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 ui-btn-main transition">
+                  About App
+                </button>
+              </div>
+
+              <div class="h-6"></div>
+            </div>
+          </div>
+
+          <!-- --------------------------------------- -->
+          <!-- 5. MATRIX EDITOR / CREATOR WIZARD -->
+          <!-- --------------------------------------- -->
+          <div id="view-editor" class="flex-1 flex flex-col h-full hidden">
+            <!-- App Bar -->
+            <div class="px-4 py-3 flex items-center justify-between border-b border-slate-800 shrink-0 bg-slate-900">
+              <button onclick="cancelEditor()" class="ui-btn-sub text-slate-400 hover:text-white transition">Cancel</button>
+              <h3 id="editorTitle" class="ui-card-title text-white">Define PIN Matrix</h3>
+              <button onclick="saveCardMatrix()" class="ui-btn-main font-bold text-indigo-400 hover:text-indigo-300 transition">Save</button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-3.5 custom-scrollbar">
+              <!-- Card Metadata -->
+              <div class="space-y-2.5 bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800">
+                <div>
+                  <label class="block ui-label text-slate-400 uppercase tracking-wider mb-1.5">Card / Account Name</label>
+                  <input id="editCardName" type="text" placeholder="e.g. Barclays Visa Debit" class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700/80 rounded-xl ui-search-input text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label class="block ui-label text-slate-400 uppercase tracking-wider mb-1.5">Category</label>
+                    <select id="editCardCategory" class="w-full px-3 py-2 bg-slate-900 border border-slate-700/80 rounded-xl ui-search-input text-white focus:outline-none focus:border-indigo-500">
+                      <option value="credit">Credit Card</option>
+                      <option value="debit">Debit Card</option>
+                      <option value="banking">Telephone Banking</option>
+                      <option value="safe">Safe & Door Access</option>
+                      <option value="other">Other PIN</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block ui-label text-slate-400 uppercase tracking-wider mb-1.5">Grid Size</label>
+                    <select id="editGridSize" onchange="changeEditorGridSize(this.value)" class="w-full px-3 py-2 bg-slate-900 border border-slate-700/80 rounded-xl ui-search-input text-white focus:outline-none focus:border-indigo-500">
+                      <option value="5x6">5 cols × 6 rows (30 tiles)</option>
+                      <option value="6x7" selected>6 cols × 7 rows (42 tiles)</option>
+                      <option value="7x8">7 cols × 8 rows (56 tiles)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Folder / Group Input -->
+                <div>
+                  <label class="block ui-label text-slate-400 uppercase tracking-wider mb-1.5">Folder / Group (Optional)</label>
+                  <div class="relative flex items-center">
+                    <i class="fa-solid fa-folder absolute left-3 text-slate-500 text-sm"></i>
+                    <input id="editCardFolder" type="text" placeholder="e.g. Personal, Work, Banking, Travel" class="w-full pl-9 pr-3.5 py-2 bg-slate-900 border border-slate-700/80 rounded-xl ui-search-input text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                  </div>
+                  <div class="flex items-center gap-2 mt-2 ui-micro">
+                    <span class="text-slate-400">Suggestions:</span>
+                    <button type="button" onclick="setFolderInput('Personal')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Personal</button>
+                    <button type="button" onclick="setFolderInput('Work')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Work</button>
+                    <button type="button" onclick="setFolderInput('Finance')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Finance</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Active Palette Selector -->
+              <div class="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="ui-label text-slate-400 uppercase tracking-wider">Secret PIN Color:</span>
+                  <span class="ui-app-subtitle text-slate-400">Active: <span id="activeColorName" class="font-bold text-blue-400">Royal Blue</span></span>
+                </div>
+                <div class="flex items-center justify-between gap-1.5" id="colorPalettePicker">
+                  <!-- Colors dynamically generated -->
+                </div>
+              </div>
+
+              <!-- Interactive Setup Grid -->
+              <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="ui-app-subtitle text-slate-300 font-semibold">Tap tile to set digit:</span>
+                  <button onclick="randomizeDecoyTilesInEditor()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold ui-btn-sub flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-dice"></i> Randomize Decoys
+                  </button>
+                </div>
+
+                <div id="editorMatrixGrid" class="w-full aspect-[6/7] grid gap-1.5 p-2 rounded-xl bg-slate-900 border border-slate-800">
+                  <!-- Editor Tiles -->
+                </div>
+                <p class="ui-micro text-slate-500 text-center">Remaining tiles showing '?' will be randomly filled with decoy numbers and camouflage colors.</p>
+              </div>
+
+              <!-- Secret Rule Note -->
+              <div class="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800 space-y-1.5">
+                <label class="block ui-label text-slate-400 uppercase tracking-wider">Secret Rule Hint (Stored Encrypted)</label>
+                <input id="editRuleHint" type="text" placeholder="e.g. Read blue tiles diagonally starting from top-left" class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700/80 rounded-xl ui-search-input text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                <span class="ui-micro text-slate-500 block">Only you understand this rule. Keep it memorable or cryptic.</span>
+              </div>
+            </div>
+          </div>
+
+        </main>
+      </div>
+      <span class="text-xs text-slate-500 mt-3 flex items-center gap-1.5 font-medium">
+        <i class="fa-brands fa-android text-emerald-500"></i> Android Native UI Simulation (Jetpack Compose / Material 3)
+      </span>
+    </div>
+
+    <!-- RIGHT: Typography Inspector & Verification Panel -->
+    <div class="flex-1 space-y-5 text-sm">
+
+      <!-- Typography Audit & Comparison Summary -->
+      <div class="bg-slate-900 border border-indigo-500/40 rounded-2xl p-5 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5 text-indigo-400 font-extrabold text-base">
+            <i class="fa-solid fa-font"></i>
+            <h3>Version 0.993 Typography Enhancement</h3>
+          </div>
+          <span class="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+            Active Review
+          </span>
+        </div>
+
+        <p class="text-xs text-slate-300 leading-relaxed">
+          For <strong class="text-white">v0.993</strong>, font sizes across the app have been enlarged for superior readability on mobile displays, 
+          <strong class="text-emerald-400">including a bold ~20px (~25.sp) size for the matrix numeric digits</strong> for instant glanceability.
+          Meanwhile, the <strong class="text-amber-400">decryption rule hint is deliberately scaled down to a discreet 11.5px</strong> with low-visibility styling to protect your secrets against shoulder-surfers and overhead cameras.
+        </p>
+
+        <!-- Typography Breakdown Table -->
+        <div class="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden text-xs">
+          <div class="grid grid-cols-12 bg-slate-800/80 px-3 py-2 font-bold text-slate-300 border-b border-slate-700/80">
+            <div class="col-span-5">UI Element</div>
+            <div class="col-span-3 text-center text-slate-400">v0.992 (Small)</div>
+            <div class="col-span-4 text-emerald-400 font-bold">v0.993 (Target)</div>
+          </div>
+          <div class="divide-y divide-slate-800/80 text-[11px]">
+            <div class="grid grid-cols-12 px-3 py-2 items-center bg-indigo-950/30">
+              <div class="col-span-5 font-bold text-white flex items-center gap-1.5">
+                <i class="fa-solid fa-table-cells text-indigo-400"></i> Matrix Numeric Tokens
+              </div>
+              <div class="col-span-3 text-center text-slate-400">14px (18.sp)</div>
+              <div class="col-span-4 text-emerald-300 font-bold">20px (25.sp) • Bold Glanceable</div>
+            </div>
+            <div class="grid grid-cols-12 px-3 py-2 items-center bg-amber-950/20">
+              <div class="col-span-5 font-bold text-amber-300 flex items-center gap-1.5">
+                <i class="fa-solid fa-user-secret text-amber-400"></i> Decryption Rule Hint
+              </div>
+              <div class="col-span-3 text-center text-slate-400">12.sp (12px)</div>
+              <div class="col-span-4 text-amber-300 font-bold">11.5.sp (12px) • Anti-Snoop</div>
+            </div>
+            <div class="grid grid-cols-12 px-3 py-2 items-center">
+              <div class="col-span-5 font-medium text-slate-300">Help & Guide Body</div>
+              <div class="col-span-3 text-center text-slate-400">12.sp (12px)</div>
+              <div class="col-span-4 text-emerald-300 font-bold">14.sp (14px) • +17%</div>
+            </div>
+            <div class="grid grid-cols-12 px-3 py-2 items-center">
+              <div class="col-span-5 font-medium text-slate-300">About Dialog Text</div>
+              <div class="col-span-3 text-center text-slate-400">13.sp (13px)</div>
+              <div class="col-span-4 text-emerald-300 font-bold">15.sp (15px) • +15%</div>
+            </div>
+            <div class="grid grid-cols-12 px-3 py-2 items-center">
+              <div class="col-span-5 font-medium text-slate-300">Card Titles & Headers</div>
+              <div class="col-span-3 text-center text-slate-400">14.sp (14px)</div>
+              <div class="col-span-4 text-emerald-300 font-bold">16.sp - 17.sp • +18%</div>
+            </div>
+            <div class="grid grid-cols-12 px-3 py-2 items-center">
+              <div class="col-span-5 font-medium text-slate-300">Filter Chips & Badges</div>
+              <div class="col-span-3 text-center text-slate-400">11.sp (11px)</div>
+              <div class="col-span-4 text-emerald-300 font-bold">13.sp (13px) • +18%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button onclick="setTypographyMode('v0993')" class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow">
+            Preview v0.993 (Increased)
+          </button>
+          <button onclick="setTypographyMode('v0992')" class="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition border border-slate-700">
+            Preview v0.992 (Original)
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Inspection Guide -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
+        <div class="flex items-center gap-2 text-emerald-400 font-bold text-base">
+          <i class="fa-solid fa-compass"></i>
+          <h3>How to Review in this Prototype</h3>
+        </div>
+        <ol class="text-xs text-slate-300 space-y-2 list-decimal pl-4">
+          <li><strong>Review the Help Screen:</strong> Click the <span class="text-sky-400 font-semibold">[Help Screen]</span> button in the top bar to inspect all guide sections with the enlarged typography.</li>
+          <li><strong>Review the About Dialog:</strong> Click the <span class="text-amber-400 font-semibold">[About]</span> button to verify Hugh Kennedy credits, GPL 3.0 notice, and the Pin Keeper heritage note with increased body text.</li>
+          <li><strong>Review the Matrix Grid:</strong> Click <span class="text-emerald-400 font-semibold">[Matrix]</span> to confirm that numeric tiles remain perfectly proportioned circular badges without overflow, while rule texts are clearly legible.</li>
+          <li><strong>Toggle the Comparison:</strong> Click between <em>v0.993 Increased</em> and <em>v0.992 Small</em> to visually confirm the legibility boost.</li>
+        </ol>
+      </div>
+
+      <!-- Author & Licensing Card -->
+      <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-xs text-slate-400 space-y-1.5">
+        <div class="flex items-center justify-between text-white font-bold">
+          <span>Hugh Kennedy</span>
+          <span class="text-indigo-400 font-mono text-[11px]">hughk.projects@gmail.com</span>
+        </div>
+        <p class="text-slate-400">GNU General Public License v3.0 (GPL-3.0) • Android 14+ Jetpack Compose</p>
+        <p class="text-slate-300 flex items-center gap-1.5">
+          <i class="fa-brands fa-github text-white"></i>
+          <span>Source Code: <a href="https://github.com/hughk/PinVault" target="_blank" class="text-indigo-400 hover:underline font-mono">https://github.com/hughk/PinVault</a></span>
+        </p>
+        <p class="text-[11px] text-slate-500 pt-1 border-t border-slate-800/80">
+          Inspired by the earlier orphaned application "Pin Keeper" which ceased functioning on modern Android versions.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODALS: ABOUT, DELETE, TILE EDIT, BACKUP -->
+  <!-- ========================================== -->
+
+  <!-- 1. ABOUT DIALOG (Mirrors AboutDialog.kt with Enlarged Typography) -->
+  <div id="aboutModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-indigo-500/40 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
+      
+      <!-- Title Header -->
+      <div class="flex items-center gap-3.5 border-b border-slate-800 pb-4">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white text-2xl shadow-lg shrink-0">
+          <i class="fa-solid fa-shield"></i>
+        </div>
+        <div>
+          <h4 class="ui-about-title text-white">Pin Vault</h4>
+          <span class="ui-about-badge text-indigo-400 font-mono font-bold">v0.993 (Beta / Proposed)</span>
+        </div>
+      </div>
+
+      <!-- Lead Summary -->
+      <p class="ui-about-lead text-slate-200">
+        Visual steganography PIN & credential vault for Android. Shields sensitive access codes from physical shoulder-surfers and surveillance cameras.
+      </p>
+
+      <!-- Author Card -->
+      <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-2">
+        <span class="ui-micro font-bold text-indigo-400 uppercase tracking-wider block">Author & Project Lead</span>
+        <h5 class="ui-about-card-title text-white">Hugh Kennedy</h5>
+        <p class="ui-about-card-body text-slate-300 font-mono">hughk.projects@gmail.com</p>
+
+        <div class="flex items-center gap-2 pt-2">
+          <a href="mailto:hughk.projects@gmail.com?subject=Pin%20Vault%20Feedback" class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white ui-btn-main font-semibold flex items-center justify-center gap-2 transition shadow">
+            <i class="fa-solid fa-envelope"></i> Email Hugh
+          </a>
+          <button onclick="copyAuthorEmail()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 ui-btn-main font-semibold flex items-center gap-2 transition">
+            <i class="fa-solid fa-copy"></i> Copy
+          </button>
+        </div>
+      </div>
+
+      <!-- Heritage & Inspiration Card -->
+      <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-1.5">
+        <div class="flex items-center gap-2 text-indigo-400 font-bold ui-about-card-title">
+          <i class="fa-solid fa-lightbulb"></i>
+          <h5>Heritage & Inspiration</h5>
+        </div>
+        <p class="ui-about-card-body text-slate-300">
+          Inspired by an earlier orphaned application <strong>"Pin Keeper"</strong>, which stopped working under newer versions of Android. Re-architected from the ground up for modern Android devices.
+        </p>
+      </div>
+
+      <!-- Security & Architecture Card -->
+      <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-1.5">
+        <div class="flex items-center gap-2 text-emerald-400 font-bold ui-about-card-title">
+          <i class="fa-solid fa-shield-halved"></i>
+          <h5>Security & Architecture</h5>
+        </div>
+        <div class="space-y-1 text-slate-300 ui-about-card-body">
+          <p>• <strong>100% Offline:</strong> Zero internet permission requested.</p>
+          <p>• <strong>Anti-Snoop:</strong> Android FLAG_SECURE blocks screenshots and recordings.</p>
+          <p>• <strong>Strong Cryptography:</strong> AES-256-GCM + PBKDF2 for portable backups.</p>
+          <p>• <strong>Biometric Peeker:</strong> Android BiometricPrompt hardware integration.</p>
+        </div>
+      </div>
+
+      <!-- Open Source & GitHub Card -->
+      <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-2">
+        <div class="flex items-center gap-2 text-indigo-400 font-bold ui-about-card-title">
+          <i class="fa-brands fa-github text-base"></i>
+          <h5>Open Source & Source Code</h5>
+        </div>
+        <p class="ui-about-card-body text-slate-300">
+          Source code is available under the <strong>GNU General Public License v3.0 (GPL-3.0)</strong> at:
+        </p>
+        <a href="https://github.com/hughk/PinVault" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:text-indigo-300 hover:underline font-mono ui-micro flex items-center gap-1.5 break-all">
+          <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> https://github.com/hughk/PinVault
+        </a>
+      </div>
+
+      <!-- Licensing Notice -->
+      <p class="ui-about-footer text-slate-400">
+        Free and open source software released under the <strong>GNU General Public License v3.0 (GPL-3.0)</strong>. Source code available at <a href="https://github.com/hughk/PinVault" target="_blank" class="text-indigo-400 hover:underline font-mono">https://github.com/hughk/PinVault</a>.
+      </p>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2.5 pt-2 border-t border-slate-800">
+        <button onclick="closeAboutModal(); switchView('help');" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 ui-btn-main font-semibold flex items-center justify-center gap-2 transition">
+          <i class="fa-solid fa-circle-question text-sky-400"></i> Open Help Guide
+        </button>
+        <button onclick="closeAboutModal()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white ui-btn-main font-bold transition shadow">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 2. DELETE CONFIRMATION MODAL -->
+  <div id="deleteModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-rose-500/40 rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-xl shrink-0">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div>
+          <h4 class="ui-card-title text-white">Delete PIN Matrix?</h4>
+          <p class="ui-app-subtitle text-slate-400" id="deleteCardNameText">Are you sure you want to delete this matrix?</p>
+        </div>
+      </div>
+      <p class="ui-card-desc text-slate-300">
+        This action cannot be undone. All tiles, secret rules, and tokens for this matrix will be permanently removed.
+      </p>
+      <div class="flex items-center gap-2.5 pt-2">
+        <button onclick="closeDeleteModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 ui-btn-main font-semibold transition">Cancel</button>
+        <button onclick="confirmDeleteCard()" class="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white ui-btn-main font-bold transition shadow-lg shadow-rose-600/30">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. TILE EDIT MODAL IN WIZARD -->
+  <div id="tileEditModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-xs w-full p-5 space-y-3.5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+        <h4 class="ui-card-title text-white" id="modalTilePosition">Set Tile (Row 1, Col 1)</h4>
+        <button onclick="closeTileModal()" class="text-slate-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div>
+        <label class="block ui-label text-slate-400 mb-2">Select Digit (or Clear):</label>
+        <div class="grid grid-cols-5 gap-2">
+          <button onclick="setTileDigit('0')" class="h-10 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white font-mono font-bold text-base">0</button>
+          <button onclick="setTileDigit('1')" class="h-10 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white font-mono font-bold text-base">1</button>
+          <button onclick="setTileDigit('2')" class="h-10 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white font-mono font-bold text-base">2</button>
+          <button onclick="setTileDigit('3')" class="h-10 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white font-mono font-bold text-base">3</button>
+          <button onclick="setTileDigit('4')" class="h-10 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white font-mono font-bold text-base">4</button>
+          <button onclick="setTileDigit('5')" class="h-10 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white font-mono font-bold text-base">5</button>
+          <button onclick="setTileDigit('6')" class="h-10 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white font-mono font-bold text-base">6</button>
+          <button onclick="setTileDigit('7')" class="h-10 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white font-mono font-bold text-base">7</button>
+          <button onclick="setTileDigit('8')" class="h-10 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white font-mono font-bold text-base">8</button>
+          <button onclick="setTileDigit('9')" class="h-10 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white font-mono font-bold text-base">9</button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
+        <button onclick="clearCurrentTile()" class="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 ui-btn-sub text-rose-400 font-semibold transition">
+          Reset to '?'
+        </button>
+        <button onclick="closeTileModal()" class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 ui-btn-sub text-white font-bold transition">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. ENCRYPTED BACKUP & TRANSFER MODAL -->
+  <div id="backupModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-file-shield"></i>
+          </div>
+          <h4 class="ui-card-title text-white">Encrypted Backup & Migration</h4>
+        </div>
+        <button onclick="closeBackupModal()" class="text-slate-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="grid grid-cols-2 p-1 bg-slate-950 rounded-xl border border-slate-800 ui-btn-main font-semibold">
+        <button id="tabExportBtn" onclick="switchBackupTab('export')" class="py-2 rounded-lg bg-indigo-600 text-white transition">Export Vault</button>
+        <button id="tabImportBtn" onclick="switchBackupTab('import')" class="py-2 rounded-lg text-slate-400 hover:text-white transition">Import to New Phone</button>
+      </div>
+
+      <!-- TAB 1: EXPORT -->
+      <div id="backupExportSection" class="space-y-3">
+        <p class="ui-card-desc text-slate-300">
+          Create an encrypted, password-protected <code class="text-indigo-300 font-mono">.pinvault</code> file containing all your matrices and folders without cloud exposure.
+        </p>
+        <div>
+          <label class="block ui-label text-slate-400 uppercase tracking-wider mb-1">Backup Passphrase</label>
+          <input id="exportPassphrase" type="password" placeholder="Enter secure passphrase" class="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-xl ui-search-input text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 ui-app-subtitle text-slate-400 space-y-1">
+          <div class="flex items-center gap-1.5 text-emerald-400 font-semibold">
+            <i class="fa-solid fa-shield-check"></i> AES-256-GCM + PBKDF2 (100,000 rounds)
+          </div>
+          <p>Zero unencrypted metadata. Without this passphrase, data cannot be recovered.</p>
+        </div>
+        <div class="flex items-center gap-2 pt-2">
+          <button onclick="executeExportDownload()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white ui-btn-main font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 transition">
+            <i class="fa-solid fa-download"></i> Download .pinvault
+          </button>
+          <button onclick="copyExportJson()" title="Copy Encrypted Payload to Clipboard" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 ui-btn-main font-semibold flex items-center gap-1.5 transition border border-slate-700">
+            <i class="fa-solid fa-copy"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 2: IMPORT -->
+      <div id="backupImportSection" class="space-y-3 hidden">
+        <p class="ui-card-desc text-slate-300">
+          Select a <code class="text-indigo-300 font-mono">.pinvault</code> or legacy <code class="text-indigo-300 font-mono">.pinkeeper</code> backup to restore.
+        </p>
+        <div>
+          <label class="block ui-label text-slate-400 uppercase tracking-wider mb-1">Select Backup File</label>
+          <input id="importFileInput" type="file" accept=".pinvault,.pinkeeper,.json" onchange="handleFileSelected(event)" class="w-full ui-search-input text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700">
+        </div>
+        <div>
+          <label class="block ui-label text-slate-400 uppercase tracking-wider mb-1">Or Paste Encrypted String</label>
+          <textarea id="importPayloadText" rows="2" placeholder="Paste .pinvault base64 JSON payload here..." class="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono text-xs"></textarea>
+        </div>
+        <div>
+          <label class="block ui-label text-slate-400 uppercase tracking-wider mb-1">Backup Passphrase</label>
+          <input id="importPassphrase" type="password" placeholder="Passphrase used during export" class="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-xl ui-search-input text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="flex items-center gap-4 ui-app-subtitle text-slate-300">
+          <label class="flex items-center gap-1.5 cursor-pointer">
+            <input type="radio" name="importMode" value="merge" checked class="text-indigo-600">
+            <span>Merge with existing</span>
+          </label>
+          <label class="flex items-center gap-1.5 cursor-pointer">
+            <input type="radio" name="importMode" value="replace" class="text-indigo-600">
+            <span>Replace vault</span>
+          </label>
+        </div>
+        <div class="pt-2">
+          <button onclick="executeImport()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white ui-btn-main font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition">
+            <i class="fa-solid fa-file-import"></i> Decrypt & Restore Vault
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- JAVASCRIPT APP LOGIC & STATE ENGINE -->
+  <!-- ========================================== -->
+  <script>
+    // PALETTES
+    const PALETTE = [
+      { id: 'blue', name: 'Royal Blue', bg: 'bg-blue-600', text: 'text-white', hex: '#2563eb', border: 'border-blue-400' },
+      { id: 'emerald', name: 'Emerald Green', bg: 'bg-emerald-600', text: 'text-white', hex: '#059669', border: 'border-emerald-400' },
+      { id: 'amber', name: 'Amber Gold', bg: 'bg-amber-500', text: 'text-slate-950', hex: '#f59e0b', border: 'border-amber-300' },
+      { id: 'rose', name: 'Rose Crimson', bg: 'bg-rose-600', text: 'text-white', hex: '#e11d48', border: 'border-rose-400' },
+      { id: 'purple', name: 'Deep Purple', bg: 'bg-purple-600', text: 'text-white', hex: '#9333ea', border: 'border-purple-400' },
+      { id: 'cyan', name: 'Vivid Cyan', bg: 'bg-cyan-500', text: 'text-slate-950', hex: '#06b6d4', border: 'border-cyan-300' }
+    ];
+
+    // CATEGORIES (High-contrast for Dark Mode)
+    const CATEGORIES = {
+      credit: { name: 'Credit Card', icon: 'fa-credit-card', color: '#60a5fa', bg: 'rgba(96, 165, 250, 0.2)', border: 'rgba(96, 165, 250, 0.8)' },
+      debit: { name: 'Debit Card', icon: 'fa-wallet', color: '#2dd4bf', bg: 'rgba(45, 212, 191, 0.2)', border: 'rgba(45, 212, 191, 0.8)' },
+      banking: { name: 'Telephone Banking', icon: 'fa-building-columns', color: '#4ade80', bg: 'rgba(74, 222, 128, 0.2)', border: 'rgba(74, 222, 128, 0.8)' },
+      safe: { name: 'Safe & Door Access', icon: 'fa-lock', color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.2)', border: 'rgba(251, 191, 36, 0.8)' },
+      other: { name: 'Other PIN', icon: 'fa-shield', color: '#c084fc', bg: 'rgba(192, 132, 252, 0.2)', border: 'rgba(192, 132, 252, 0.8)' }
+    };
+
+    // SAMPLE STORED CARDS
+    let CARDS = [
+      {
+        id: 'card-1',
+        name: 'Barclays Visa Debit',
+        category: 'debit',
+        folder: 'Personal',
+        cols: 6,
+        rows: 7,
+        secretColor: 'blue',
+        ruleHint: 'Read blue tiles diagonally starting from top-left (Row 1, Col 1)',
+        pinCells: [
+          { r: 0, c: 0, digit: '4' },
+          { r: 1, c: 1, digit: '7' },
+          { r: 2, c: 2, digit: '1' },
+          { r: 3, c: 3, digit: '9' }
+        ],
+        tiles: []
+      },
+      {
+        id: 'card-2',
+        name: 'Telephone Banking PIN',
+        category: 'banking',
+        folder: 'Personal',
+        cols: 6,
+        rows: 7,
+        secretColor: 'emerald',
+        ruleHint: 'Emerald tiles reading top-to-bottom along Column 3',
+        pinCells: [
+          { r: 1, c: 2, digit: '8' },
+          { r: 2, c: 2, digit: '3' },
+          { r: 3, c: 2, digit: '0' },
+          { r: 4, c: 2, digit: '5' },
+          { r: 5, c: 2, digit: '2' },
+          { r: 6, c: 2, digit: '9' }
+        ],
+        tiles: []
+      },
+      {
+        id: 'card-3',
+        name: 'Amex Gold Corporate',
+        category: 'credit',
+        folder: 'Work',
+        cols: 5,
+        rows: 6,
+        secretColor: 'amber',
+        ruleHint: 'Amber tiles in reverse L-shape: Row 1 across, then down Col 4',
+        pinCells: [
+          { r: 0, c: 1, digit: '9' },
+          { r: 0, c: 2, digit: '2' },
+          { r: 0, c: 3, digit: '6' },
+          { r: 1, c: 3, digit: '4' }
+        ],
+        tiles: []
+      }
+    ];
+
+    // Initialize Card Matrices with Camouflage Decoys
+    function initCardTiles() {
+      CARDS.forEach(card => {
+        card.tiles = generateSampleMatrix(card.cols, card.rows, card.secretColor, card.pinCells);
+      });
+    }
+
+    // STATE
+    let currentCardId = 'card-1';
+    let currentFilter = 'ALL';
+    let isAppLocked = false;
+    let pinInputBuffer = '';
+    let isRevealing = false;
+    let revealCountdown = 12;
+    let revealTimerInterval = null;
+
+    // Editor Wizard State
+    let editingCardId = null;
+    let wizardCols = 6;
+    let wizardRows = 7;
+    let wizardSecretColor = 'blue';
+    let wizardTiles = [];
+    let selectedTileCoord = null;
+    let pendingDeleteCardId = null;
+
+    // TYPOGRAPHY TOGGLE CONTROLLER
+    function setTypographyMode(mode) {
+      const btn993 = document.getElementById('toggleTypoV0993');
+      const btn992 = document.getElementById('toggleTypoV0992');
+      if (mode === 'v0993') {
+        document.body.classList.remove('typo-v0992');
+        document.body.classList.add('typo-v0993');
+        btn993.className = 'px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs font-bold transition shadow';
+        btn992.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white text-xs font-medium transition';
+      } else {
+        document.body.classList.remove('typo-v0993');
+        document.body.classList.add('typo-v0992');
+        btn992.className = 'px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs font-bold transition shadow';
+        btn993.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white text-xs font-medium transition';
+      }
+    }
+
+    // DECOY GENERATION ALGORITHM
+    function isAdjacentToPin(r, c, pinTiles, colorId) {
+      return pinTiles.some(p => {
+        const dr = Math.abs(p.r - r);
+        const dc = Math.abs(p.c - c);
+        return (dr <= 1 && dc <= 1) && !(dr === 0 && dc === 0) && (p.colorId === colorId || p.digit !== undefined);
+      });
+    }
+
+    function pickDecoyColor(r, c, secretColor, pinTiles) {
+      const adjacent = isAdjacentToPin(r, c, pinTiles, secretColor);
+      const otherColors = PALETTE.filter(p => p.id !== secretColor);
+
+      if (adjacent) {
+        return otherColors[Math.floor(Math.random() * otherColors.length)].id;
+      } else {
+        return Math.random() < 0.22 ? secretColor : otherColors[Math.floor(Math.random() * otherColors.length)].id;
+      }
+    }
+
+    function generateSampleMatrix(cols, rows, secretColor, pinTiles) {
+      const matrix = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const pin = pinTiles.find(p => p.r === r && p.c === c);
+          if (pin) {
+            matrix.push({
+              r,
+              c,
+              digit: pin.digit,
+              colorId: secretColor,
+              isPinTile: true
+            });
+          } else {
+            matrix.push({
+              r,
+              c,
+              digit: Math.floor(Math.random() * 10).toString(),
+              colorId: pickDecoyColor(r, c, secretColor, pinTiles),
+              isPinTile: false
+            });
+          }
+        }
+      }
+      return matrix;
+    }
+
+    // VIEW ROUTING
+    function switchView(viewName) {
+      document.getElementById('view-list').classList.add('hidden');
+      document.getElementById('view-detail').classList.add('hidden');
+      document.getElementById('view-editor').classList.add('hidden');
+      document.getElementById('view-help').classList.add('hidden');
+
+      if (viewName !== 'detail') {
+        extinguishReveal();
+      }
+
+      if (viewName === 'list') {
+        document.getElementById('view-list').classList.remove('hidden');
+        renderCardList();
+      } else if (viewName === 'detail') {
+        document.getElementById('view-detail').classList.remove('hidden');
+        renderCardDetail(currentCardId);
+      } else if (viewName === 'editor') {
+        document.getElementById('view-editor').classList.remove('hidden');
+      } else if (viewName === 'help') {
+        document.getElementById('view-help').classList.remove('hidden');
+      }
+    }
+
+    // LOCK & UNLOCK
+    function toggleAppLock() {
+      isAppLocked = !isAppLocked;
+      const lockScreen = document.getElementById('view-lock');
+      if (isAppLocked) {
+        lockScreen.classList.remove('hidden');
+        clearPinInput();
+      } else {
+        lockScreen.classList.add('hidden');
+      }
+    }
+
+    function handlePinInput(num) {
+      if (pinInputBuffer.length < 4) {
+        pinInputBuffer += num;
+        updatePinDots();
+        if (pinInputBuffer.length === 4) {
+          setTimeout(() => {
+            if (pinInputBuffer === '1234') {
+              toggleAppLock();
+            } else {
+              alert('Incorrect Master PIN. Default sandbox PIN is 1-2-3-4');
+              clearPinInput();
+            }
+          }, 150);
+        }
+      }
+    }
+
+    function clearPinInput() {
+      pinInputBuffer = '';
+      updatePinDots();
+    }
+
+    function updatePinDots() {
+      for (let i = 1; i <= 4; i++) {
+        const dot = document.getElementById(`pin-dot-${i}`);
+        if (i <= pinInputBuffer.length) {
+          dot.className = 'w-4 h-4 rounded-full bg-indigo-500 border-2 border-indigo-400 transition scale-110';
+        } else {
+          dot.className = 'w-4 h-4 rounded-full border-2 border-indigo-500/40 transition';
+        }
+      }
+    }
+
+    function unlockWithBiometrics() {
+      toggleAppLock();
+    }
+
+    // RENDER VAULT LIST
+    function renderCardList() {
+      const container = document.getElementById('cardsListContainer');
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      const countLabel = document.getElementById('cardCountSubtitle');
+      
+      const filtered = CARDS.filter(card => {
+        const matchesQuery = card.name.toLowerCase().includes(query) ||
+                             (card.folder && card.folder.toLowerCase().includes(query)) ||
+                             card.ruleHint.toLowerCase().includes(query);
+        if (!matchesQuery) return false;
+
+        if (currentFilter === 'ALL') return true;
+        if (currentFilter.startsWith('folder:')) {
+          const folderName = currentFilter.replace('folder:', '');
+          return card.folder === folderName;
+        }
+        if (currentFilter.startsWith('cat:')) {
+          const catName = currentFilter.replace('cat:', '');
+          return card.category === catName;
+        }
+        return true;
+      });
+
+      countLabel.textContent = `${CARDS.length} ${CARDS.length === 1 ? 'Matrix' : 'Matrices'} Stored`;
+
+      renderFilterChips();
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="py-12 flex flex-col items-center justify-center text-center text-slate-500 space-y-2">
+            <i class="fa-solid fa-magnifying-glass text-2xl text-slate-600"></i>
+            <p class="ui-card-title text-slate-400 font-bold">No PIN matrices found</p>
+            <p class="ui-card-desc text-slate-500">Try adjusting your search query or folder filter.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(card => {
+        const cat = CATEGORIES[card.category] || CATEGORIES.other;
+        return `
+          <div onclick="selectCard('${card.id}')" 
+            class="bg-slate-950/80 hover:bg-slate-800/60 border border-slate-800/90 hover:border-indigo-500/50 rounded-2xl p-3.5 cursor-pointer transition shadow-sm group">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-lg shrink-0 shadow"
+                  style="background-color: ${cat.bg}; color: ${cat.color}; border: 1.5px solid ${cat.border}">
+                  <i class="fa-solid ${cat.icon}"></i>
+                </div>
+                <div class="min-w-0">
+                  <h4 class="ui-card-title text-white truncate group-hover:text-indigo-300 transition">${card.name}</h4>
+                  <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                    <span class="ui-micro px-2 py-0.5 rounded-md font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                      ${card.cols}×${card.rows}
+                    </span>
+                    <span class="ui-card-badge px-2 py-0.5 rounded-md font-semibold"
+                      style="background-color: ${cat.bg}; color: ${cat.color}; border: 1px solid ${cat.border}">
+                      ${cat.name}
+                    </span>
+                    ${card.folder ? `
+                      <span class="ui-card-badge px-2 py-0.5 rounded-md font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 flex items-center gap-1">
+                        <i class="fa-solid fa-folder text-[10px] text-amber-400"></i> ${card.folder}
+                      </span>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <i class="fa-solid fa-chevron-right text-slate-500 text-sm group-hover:text-slate-300 group-hover:translate-x-0.5 transition"></i>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderFilterChips() {
+      const container = document.getElementById('filterChipsBar');
+      const folders = [...new Set(CARDS.map(c => c.folder).filter(Boolean))];
+
+      let chips = [
+        { id: 'ALL', label: 'All', icon: 'fa-layer-group' }
+      ];
+
+      // Folder chips
+      folders.forEach(f => {
+        chips.push({ id: `folder:${f}`, label: f, icon: 'fa-folder' });
+      });
+
+      // Category chips
+      Object.keys(CATEGORIES).forEach(k => {
+        chips.push({ id: `cat:${k}`, label: CATEGORIES[k].name, icon: CATEGORIES[k].icon });
+      });
+
+      container.innerHTML = chips.map(chip => {
+        const isActive = currentFilter === chip.id;
+        return `
+          <button onclick="setFilter('${chip.id}')"
+            class="ui-chip-text rounded-xl font-semibold flex items-center gap-1.5 shrink-0 transition ${
+              isActive 
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' 
+                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+            }">
+            <i class="fa-solid ${chip.icon} text-xs"></i>
+            <span>${chip.label}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function setFilter(filterId) {
+      currentFilter = filterId;
+      renderCardList();
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('clearSearchBtn').classList.add('hidden');
+      renderCardList();
+    }
+
+    function selectCard(cardId) {
+      currentCardId = cardId;
+      switchView('detail');
+    }
+
+    // RENDER MATRIX DETAIL SCREEN
+    function renderCardDetail(cardId) {
+      const card = CARDS.find(c => c.id === cardId) || CARDS[0];
+      if (!card) return;
+      currentCardId = card.id;
+
+      const cat = CATEGORIES[card.category] || CATEGORIES.other;
+      document.getElementById('detailCardName').textContent = card.name;
+      document.getElementById('detailCardSubtitle').textContent = `${card.cols}×${card.rows} Camouflage Grid • ${card.folder || cat.name}`;
+      
+      const badgeIcon = document.getElementById('detailBadgeIcon');
+      badgeIcon.style.backgroundColor = cat.bg;
+      badgeIcon.style.color = cat.color;
+      badgeIcon.style.border = `1.5px solid ${cat.border}`;
+      badgeIcon.innerHTML = `<i class="fa-solid ${cat.icon}"></i>`;
+
+      document.getElementById('secretRuleInstructions').textContent = card.ruleHint;
+
+      renderMatrixGrid(card);
+    }
+
+    function renderMatrixGrid(card) {
+      const grid = document.getElementById('matrixGrid');
+      grid.style.gridTemplateColumns = `repeat(${card.cols}, minmax(0, 1fr))`;
+
+      grid.innerHTML = card.tiles.map(tile => {
+        const pal = PALETTE.find(p => p.id === tile.colorId) || PALETTE[0];
+        
+        let tileBg = pal.bg;
+        let tileText = pal.text;
+        let extraClasses = 'border border-white/20 shadow-sm';
+
+        if (isRevealing) {
+          if (tile.isPinTile) {
+            extraClasses += ' ring-2 ring-white scale-110 z-10 glow-reveal';
+          } else {
+            tileBg = 'bg-slate-900/60';
+            tileText = 'text-slate-600';
+            extraClasses = 'border-slate-800 opacity-30';
+          }
+        }
+
+        return `
+          <div class="pin-tile ${tileBg} ${tileText} ${extraClasses} flex items-center justify-center font-mono">
+            ${tile.digit}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // BIOMETRIC TIMED REVEAL & EXTINGUISH
+    function handleRevealButtonClick() {
+      if (isRevealing) {
+        extinguishReveal();
+      } else {
+        startBiometricReveal();
+      }
+    }
+
+    function startBiometricReveal() {
+      isRevealing = true;
+      revealCountdown = 12;
+      updatePeekButtonUI();
+
+      const card = CARDS.find(c => c.id === currentCardId);
+      if (card) renderMatrixGrid(card);
+
+      if (revealTimerInterval) clearInterval(revealTimerInterval);
+      revealTimerInterval = setInterval(() => {
+        revealCountdown--;
+        if (revealCountdown <= 0) {
+          extinguishReveal();
+        } else {
+          updatePeekButtonUI();
+        }
+      }, 1000);
+    }
+
+    function extinguishReveal() {
+      isRevealing = false;
+      if (revealTimerInterval) {
+        clearInterval(revealTimerInterval);
+        revealTimerInterval = null;
+      }
+      updatePeekButtonUI();
+      const card = CARDS.find(c => c.id === currentCardId);
+      if (card) renderMatrixGrid(card);
+    }
+
+    function updatePeekButtonUI() {
+      const btn = document.getElementById('biometricPeekButton');
+      const text = document.getElementById('peekButtonText');
+      const sub = document.getElementById('peekButtonSub');
+      const icon = document.getElementById('revealBtnIcon');
+
+      if (isRevealing) {
+        btn.className = 'w-full py-3 px-3 rounded-xl bg-amber-500/20 text-amber-300 border-2 border-amber-400 flex items-center justify-center gap-3 select-none transition cursor-pointer shadow-lg shadow-amber-500/20';
+        text.textContent = `Extinguish Reveal (${revealCountdown}s)`;
+        sub.textContent = 'Tap to immediately hide tokens';
+        icon.className = 'fa-solid fa-eye-slash text-amber-400 text-xl';
+      } else {
+        btn.className = 'w-full py-3 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-indigo-500/40 flex items-center justify-center gap-3 select-none transition cursor-pointer shadow-md';
+        text.textContent = 'Tap for Biometric Reveal';
+        sub.textContent = '12s timed window • Tap again to extinguish';
+        icon.className = 'fa-solid fa-fingerprint text-indigo-400 text-xl';
+      }
+    }
+
+    function reRandomizeCurrentDecoys() {
+      const card = CARDS.find(c => c.id === currentCardId);
+      if (!card) return;
+      card.tiles = generateSampleMatrix(card.cols, card.rows, card.secretColor, card.pinCells);
+      renderMatrixGrid(card);
+    }
+
+    // ABOUT MODAL
+    function openAboutModal() {
+      document.getElementById('aboutModal').classList.remove('hidden');
+    }
+
+    function closeAboutModal() {
+      document.getElementById('aboutModal').classList.add('hidden');
+    }
+
+    function copyAuthorEmail() {
+      navigator.clipboard.writeText('hughk.projects@gmail.com');
+      alert('Email copied to clipboard: hughk.projects@gmail.com');
+    }
+
+    // DELETE MODAL
+    function promptDeleteCurrentCard() {
+      const card = CARDS.find(c => c.id === currentCardId);
+      if (!card) return;
+      pendingDeleteCardId = card.id;
+      document.getElementById('deleteCardNameText').textContent = `Are you sure you want to delete "${card.name}"?`;
+      document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+      pendingDeleteCardId = null;
+      document.getElementById('deleteModal').classList.add('hidden');
+    }
+
+    function confirmDeleteCard() {
+      if (!pendingDeleteCardId) return;
+      CARDS = CARDS.filter(c => c.id !== pendingDeleteCardId);
+      closeDeleteModal();
+      if (CARDS.length > 0) {
+        currentCardId = CARDS[0].id;
+        switchView('list');
+      } else {
+        switchView('list');
+      }
+    }
+
+    // MATRIX WIZARD / EDITOR
+    function startNewCardWizard() {
+      editingCardId = null;
+      wizardCols = 6;
+      wizardRows = 7;
+      wizardSecretColor = 'blue';
+      document.getElementById('editorTitle').textContent = 'Create PIN Matrix';
+      document.getElementById('editCardName').value = '';
+      document.getElementById('editCardCategory').value = 'credit';
+      document.getElementById('editGridSize').value = '6x7';
+      document.getElementById('editCardFolder').value = '';
+      document.getElementById('editRuleHint').value = '';
+
+      initWizardTiles();
+      renderColorPalettePicker();
+      renderEditorGrid();
+      switchView('editor');
+    }
+
+    function editCurrentCard() {
+      const card = CARDS.find(c => c.id === currentCardId);
+      if (!card) return;
+      editingCardId = card.id;
+      wizardCols = card.cols;
+      wizardRows = card.rows;
+      wizardSecretColor = card.secretColor;
+
+      document.getElementById('editorTitle').textContent = 'Edit PIN Matrix';
+      document.getElementById('editCardName').value = card.name;
+      document.getElementById('editCardCategory').value = card.category;
+      document.getElementById('editGridSize').value = `${card.cols}x${card.rows}`;
+      document.getElementById('editCardFolder').value = card.folder || '';
+      document.getElementById('editRuleHint').value = card.ruleHint;
+
+      wizardTiles = card.tiles.map(t => ({
+        ...t,
+        isPinTile: card.pinCells.some(p => p.r === t.r && p.c === t.c)
+      }));
+
+      renderColorPalettePicker();
+      renderEditorGrid();
+      switchView('editor');
+    }
+
+    function changeEditorGridSize(val) {
+      const [c, r] = val.split('x').map(Number);
+      wizardCols = c;
+      wizardRows = r;
+      initWizardTiles();
+      renderEditorGrid();
+    }
+
+    function initWizardTiles() {
+      wizardTiles = [];
+      for (let r = 0; r < wizardRows; r++) {
+        for (let c = 0; c < wizardCols; c++) {
+          wizardTiles.push({
+            r,
+            c,
+            digit: '?',
+            colorId: wizardSecretColor,
+            isPinTile: false
+          });
+        }
+      }
+    }
+
+    function renderColorPalettePicker() {
+      const container = document.getElementById('colorPalettePicker');
+      container.innerHTML = PALETTE.map(p => {
+        const isSelected = p.id === wizardSecretColor;
+        return `
+          <button type="button" onclick="selectWizardColor('${p.id}')"
+            class="w-8 h-8 rounded-full ${p.bg} ${isSelected ? 'ring-4 ring-white scale-110 shadow-lg' : 'opacity-80 hover:opacity-100'} transition"></button>
+        `;
+      }).join('');
+      const active = PALETTE.find(p => p.id === wizardSecretColor) || PALETTE[0];
+      document.getElementById('activeColorName').textContent = active.name;
+    }
+
+    function selectWizardColor(colorId) {
+      wizardSecretColor = colorId;
+      renderColorPalettePicker();
+      wizardTiles.forEach(t => {
+        if (t.isPinTile) t.colorId = wizardSecretColor;
+      });
+      renderEditorGrid();
+    }
+
+    function setFolderInput(name) {
+      document.getElementById('editCardFolder').value = name;
+    }
+
+    function renderEditorGrid() {
+      const grid = document.getElementById('editorMatrixGrid');
+      grid.style.gridTemplateColumns = `repeat(${wizardCols}, minmax(0, 1fr))`;
+      const palette = PALETTE.find(p => p.id === wizardSecretColor) || PALETTE[0];
+
+      grid.innerHTML = wizardTiles.map(tile => {
+        const pal = PALETTE.find(p => p.id === tile.colorId) || palette;
+        const isSet = tile.isPinTile;
+        return `
+          <div onclick="openTileEditor(${tile.r}, ${tile.c})" 
+            class="pin-tile ${isSet ? pal.bg + ' ' + pal.text + ' border-2 border-white font-bold shadow' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:border-indigo-400'} flex items-center justify-center font-mono cursor-pointer transition">
+            ${tile.digit}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openTileEditor(r, c) {
+      selectedTileCoord = { r, c };
+      document.getElementById('modalTilePosition').textContent = `Set Tile (Row ${r + 1}, Col ${c + 1})`;
+      document.getElementById('tileEditModal').classList.remove('hidden');
+    }
+
+    function closeTileModal() {
+      selectedTileCoord = null;
+      document.getElementById('tileEditModal').classList.add('hidden');
+    }
+
+    function setTileDigit(digit) {
+      if (!selectedTileCoord) return;
+      const { r, c } = selectedTileCoord;
+      const tile = wizardTiles.find(t => t.r === r && t.c === c);
+      if (tile) {
+        tile.digit = digit;
+        tile.colorId = wizardSecretColor;
+        tile.isPinTile = true;
+      }
+      closeTileModal();
+      renderEditorGrid();
+    }
+
+    function clearCurrentTile() {
+      if (!selectedTileCoord) return;
+      const { r, c } = selectedTileCoord;
+      const tile = wizardTiles.find(t => t.r === r && t.c === c);
+      if (tile) {
+        tile.digit = '?';
+        tile.colorId = wizardSecretColor;
+        tile.isPinTile = false;
+      }
+      closeTileModal();
+      renderEditorGrid();
+    }
+
+    function randomizeDecoyTilesInEditor() {
+      const pinCells = wizardTiles.filter(t => t.isPinTile).map(t => ({ r: t.r, c: t.c, digit: t.digit }));
+      wizardTiles = generateSampleMatrix(wizardCols, wizardRows, wizardSecretColor, pinCells);
+      renderEditorGrid();
+    }
+
+    function saveCardMatrix() {
+      const name = document.getElementById('editCardName').value.trim();
+      if (!name) {
+        alert('Please enter a card or account name.');
+        return;
+      }
+
+      const category = document.getElementById('editCardCategory').value;
+      const folder = document.getElementById('editCardFolder').value.trim();
+      const ruleHint = document.getElementById('editRuleHint').value.trim();
+
+      const pinCells = wizardTiles.filter(t => t.isPinTile).map(t => ({ r: t.r, c: t.c, digit: t.digit }));
+      const finalizedTiles = generateSampleMatrix(wizardCols, wizardRows, wizardSecretColor, pinCells);
+
+      if (editingCardId) {
+        const idx = CARDS.findIndex(c => c.id === editingCardId);
+        if (idx !== -1) {
+          CARDS[idx] = {
+            ...CARDS[idx],
+            name,
+            category,
+            folder,
+            cols: wizardCols,
+            rows: wizardRows,
+            secretColor: wizardSecretColor,
+            ruleHint,
+            pinCells,
+            tiles: finalizedTiles
+          };
+        }
+      } else {
+        const newCard = {
+          id: 'card-' + Date.now(),
+          name,
+          category,
+          folder,
+          cols: wizardCols,
+          rows: wizardRows,
+          secretColor: wizardSecretColor,
+          ruleHint,
+          pinCells,
+          tiles: finalizedTiles
+        };
+        CARDS.push(newCard);
+        currentCardId = newCard.id;
+      }
+
+      switchView('list');
+    }
+
+    function cancelEditor() {
+      if (editingCardId) {
+        switchView('detail');
+      } else {
+        switchView('list');
+      }
+    }
+
+    // BACKUP & EXPORT MODAL
+    function openBackupModal() {
+      document.getElementById('backupModal').classList.remove('hidden');
+    }
+
+    function closeBackupModal() {
+      document.getElementById('backupModal').classList.add('hidden');
+    }
+
+    function switchBackupTab(tab) {
+      if (tab === 'export') {
+        document.getElementById('tabExportBtn').className = 'py-2 rounded-lg bg-indigo-600 text-white transition';
+        document.getElementById('tabImportBtn').className = 'py-2 rounded-lg text-slate-400 hover:text-white transition';
+        document.getElementById('backupExportSection').classList.remove('hidden');
+        document.getElementById('backupImportSection').classList.add('hidden');
+      } else {
+        document.getElementById('tabImportBtn').className = 'py-2 rounded-lg bg-indigo-600 text-white transition';
+        document.getElementById('tabExportBtn').className = 'py-2 rounded-lg text-slate-400 hover:text-white transition';
+        document.getElementById('backupImportSection').classList.remove('hidden');
+        document.getElementById('backupExportSection').classList.add('hidden');
+      }
+    }
+
+    function executeExportDownload() {
+      const pw = document.getElementById('exportPassphrase').value.trim();
+      if (!pw) return alert('Please enter a passphrase.');
+      
+      const payload = {
+        app: 'PIN_VAULT_ANDROID',
+        version: 2,
+        algorithm: 'AES-256-GCM-PBKDF2',
+        timestamp: Date.now(),
+        cardCount: CARDS.length,
+        data: btoa(unescape(encodeURIComponent(JSON.stringify(CARDS))))
+      };
+
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(payload, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute('href', dataStr);
+      a.setAttribute('download', `pin_vault_backup_${new Date().toISOString().slice(0, 10)}.pinvault`);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      closeBackupModal();
+    }
+
+    function copyExportJson() {
+      const pw = document.getElementById('exportPassphrase').value.trim();
+      if (!pw) return alert('Please enter a passphrase.');
+      const payload = {
+        app: 'PIN_VAULT_ANDROID',
+        version: 2,
+        algorithm: 'AES-256-GCM-PBKDF2',
+        timestamp: Date.now(),
+        cardCount: CARDS.length,
+        data: btoa(unescape(encodeURIComponent(JSON.stringify(CARDS))))
+      };
+      navigator.clipboard.writeText(JSON.stringify(payload));
+      alert('Encrypted backup copied to clipboard!');
+    }
+
+    function handleFileSelected(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('importPayloadText').value = e.target.result;
+      };
+      reader.readAsText(file);
+    }
+
+    function executeImport() {
+      const text = document.getElementById('importPayloadText').value.trim();
+      const pw = document.getElementById('importPassphrase').value.trim();
+      if (!text || !pw) return alert('Please supply both the backup data and passphrase.');
+
+      try {
+        const container = JSON.parse(text);
+        if (container.app !== 'PIN_VAULT_ANDROID' && container.app !== 'PIN_KEEPER_ANDROID') {
+          return alert('Unrecognized backup format.');
+        }
+        const decoded = JSON.parse(decodeURIComponent(escape(atob(container.data))));
+        const mode = document.querySelector('input[name="importMode"]:checked').value;
+        if (mode === 'replace') {
+          CARDS = decoded;
+        } else {
+          const existingIds = new Set(CARDS.map(c => c.id));
+          decoded.forEach(c => {
+            if (!existingIds.has(c.id)) CARDS.push(c);
+          });
+        }
+        alert(`Successfully imported ${decoded.length} matrices!`);
+        closeBackupModal();
+        switchView('list');
+      } catch (e) {
+        alert('Failed to decrypt backup. Verify passphrase and format.');
+      }
+    }
+
+    // INITIALIZATION
+    window.addEventListener('DOMContentLoaded', () => {
+      initCardTiles();
+      renderCardList();
+      setInterval(() => {
+        const now = new Date();
+        document.getElementById('liveClock').textContent = 
+          now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

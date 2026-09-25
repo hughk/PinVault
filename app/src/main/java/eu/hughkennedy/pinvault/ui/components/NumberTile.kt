@@ -61,7 +61,7 @@ fun NumberTile(
         palette.textColor.copy(alpha = alpha)
     }
 
-    val fontSize = (size.value * 0.48f).sp
+    val fontSize = (size.value * 0.60f).sp
 
     Box(
         contentAlignment = Alignment.Center,

@@ -22,10 +22,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.AlertDialog
@@ -55,7 +57,8 @@ fun AboutDialog(
     val context = LocalContext.current
     val authorName = "Hugh Kennedy"
     val authorEmail = "hughk.projects@gmail.com"
-    val appVersion = "0.992 (Pre-release)"
+    val appVersion = "0.993"
+    val githubUrl = "https://github.com/hughk/PinVault"
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -250,10 +253,84 @@ fun AboutDialog(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Open Source & GitHub Repository Card
+                Card(
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Code,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Open Source (GPL-3.0)",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Source code is available under the GNU General Public License v3.0 (GPL-3.0) at:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = githubUrl,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Button(
+                                onClick = {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(githubUrl))
+                                    try {
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Cannot open browser", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Public, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("GitHub", fontSize = 13.sp)
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    clipboard.setPrimaryClip(ClipData.newPlainText("GitHub Repository", githubUrl))
+                                    Toast.makeText(context, "URL copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                }
+                            ) {
+                                Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Copy", fontSize = 13.sp)
+                            }
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "Open source software released under the GNU General Public License v3.0 (GPL-3.0).",
+                    text = "Free and open source software released under the GNU General Public License v3.0 (GPL-3.0). Source code available at $githubUrl",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline
                 )
