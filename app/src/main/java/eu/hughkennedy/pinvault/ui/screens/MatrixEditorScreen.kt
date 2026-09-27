@@ -577,24 +577,6 @@ fun MatrixEditorScreen(
                                 Text(stringResource(R.string.editor_artist_clear_path), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
 
-                            // Suggest Rule Hint
-                            if (paintedPath.size >= 2) {
-                                OutlinedButton(
-                                    onClick = {
-                                        val colorName = context.getString(PaletteColor.find(secretColor).nameRes)
-                                        val isGerman = java.util.Locale.getDefault().language.startsWith("de")
-                                        ruleHint = ArtistPathManager.generateRuleHint(paintedPath, colorName, isGerman)
-                                        Toast.makeText(context, context.getString(R.string.editor_artist_hint_copied_toast), Toast.LENGTH_SHORT).show()
-                                    },
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.height(34.dp)
-                                ) {
-                                    Icon(Icons.Default.AutoFixHigh, contentDescription = null, modifier = Modifier.size(14.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(stringResource(R.string.editor_artist_suggest_hint), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                }
-                            }
-
                             // Randomize Decoys
                             OutlinedButton(
                                 onClick = {
