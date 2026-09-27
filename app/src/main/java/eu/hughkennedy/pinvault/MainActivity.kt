@@ -41,11 +41,15 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Privacy Protection: Prevent screenshots and conceal preview in Android Recents
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_SECURE,
-            WindowManager.LayoutParams.FLAG_SECURE
-        )
+        // Privacy Protection: Prevent screenshots and conceal preview in Android Recents.
+        // In debug builds, FLAG_SECURE is omitted so developers and testers can capture screenshots.
+        val isDebuggable = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        if (!isDebuggable) {
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE
+            )
+        }
 
         repository = VaultRepository(applicationContext)
 
