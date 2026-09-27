@@ -138,7 +138,8 @@ fun MatrixGridView(
                                         change.consume()
                                         ArtistPathManager.findCellAtOffset(
                                             change.position.x, change.position.y,
-                                            cols, rows, tileSizePx, spacingPx, paddingPx
+                                            cols, rows, tileSizePx, spacingPx, paddingPx,
+                                            maxRadiusPx = tileSizePx * 0.52f
                                         )?.let { cell ->
                                             onCellTraversed(cell)
                                         }
@@ -206,58 +207,69 @@ fun MatrixGridView(
                 }
 
                 // Overlay Canvas: draws directional strokes and arrows connecting painted cells in Artist Mode
-                if (isArtistMode && (strokes.isNotEmpty() || activeStroke.isNotEmpty())) {
+                if (isArtistMode && (strokes.isNotEmpty() || activeStroke.isNotEmpty() || paintedPath.size >= 2)) {
                     val lineColor = PaletteColor.find(secretColorId).color.copy(alpha = 0.85f)
                     val allStrokes = strokes + if (activeStroke.isNotEmpty()) listOf(activeStroke) else emptyList()
 
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        for (stroke in allStrokes) {
-                            if (stroke.size >= 2) {
-                                for (i in 0 until stroke.size - 1) {
-                                    val c1 = stroke[i]
-                                    val c2 = stroke[i + 1]
+                    val segments = mutableListOf<Pair<PaintedCell, PaintedCell>>()
+                    for (stroke in allStrokes) {
+                        if (stroke.size >= 2) {
+                            for (i in 0 until stroke.size - 1) {
+                                segments.add(stroke[i] to stroke[i + 1])
+                            }
+                        }
+                    }
 
-                                    val p1X = c1.col * slotSizePx + tileSizePx / 2f
-                                    val p1Y = c1.row * slotSizePx + tileSizePx / 2f
-                                    val p2X = c2.col * slotSizePx + tileSizePx / 2f
-                                    val p2Y = c2.row * slotSizePx + tileSizePx / 2f
+                    // If user defined the path via individual tile taps (strokes of size 1):
+                    if (segments.isEmpty() && paintedPath.size >= 2) {
+                        for (i in 0 until paintedPath.size - 1) {
+                            segments.add(paintedPath[i] to paintedPath[i + 1])
+                        }
+                    }
 
-                                    // Draw stroke line connecting consecutive cells
-                                    drawLine(
-                                        color = lineColor,
-                                        start = Offset(p1X, p1Y),
-                                        end = Offset(p2X, p2Y),
-                                        strokeWidth = 4.dp.toPx(),
-                                        cap = StrokeCap.Round
-                                    )
+                    if (segments.isNotEmpty()) {
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            for ((c1, c2) in segments) {
+                                val p1X = c1.col * slotSizePx + tileSizePx / 2f
+                                val p1Y = c1.row * slotSizePx + tileSizePx / 2f
+                                val p2X = c2.col * slotSizePx + tileSizePx / 2f
+                                val p2Y = c2.row * slotSizePx + tileSizePx / 2f
 
-                                    // Draw directional chevron along the stroke
-                                    val angle = atan2(p2Y - p1Y, p2X - p1X)
-                                    val midX = (p1X + p2X) / 2f
-                                    val midY = (p1Y + p2Y) / 2f
-                                    val chevronLen = 10.dp.toPx()
-                                    val wingAngle = PI.toFloat() / 4f
+                                // Draw stroke line connecting consecutive cells
+                                drawLine(
+                                    color = lineColor,
+                                    start = Offset(p1X, p1Y),
+                                    end = Offset(p2X, p2Y),
+                                    strokeWidth = 4.dp.toPx(),
+                                    cap = StrokeCap.Round
+                                )
 
-                                    val w1X = midX - chevronLen * cos(angle - wingAngle)
-                                    val w1Y = midY - chevronLen * sin(angle - wingAngle)
-                                    val w2X = midX - chevronLen * cos(angle + wingAngle)
-                                    val w2Y = midY - chevronLen * sin(angle + wingAngle)
+                                // Draw directional chevron along the stroke
+                                val angle = atan2(p2Y - p1Y, p2X - p1X)
+                                val midX = (p1X + p2X) / 2f
+                                val midY = (p1Y + p2Y) / 2f
+                                val chevronLen = 10.dp.toPx()
+                                val wingAngle = PI.toFloat() / 4f
 
-                                    drawLine(
-                                        color = Color.White,
-                                        start = Offset(midX, midY),
-                                        end = Offset(w1X, w1Y),
-                                        strokeWidth = 2.5.dp.toPx(),
-                                        cap = StrokeCap.Round
-                                    )
-                                    drawLine(
-                                        color = Color.White,
-                                        start = Offset(midX, midY),
-                                        end = Offset(w2X, w2Y),
-                                        strokeWidth = 2.5.dp.toPx(),
-                                        cap = StrokeCap.Round
-                                    )
-                                }
+                                val w1X = midX - chevronLen * cos(angle - wingAngle)
+                                val w1Y = midY - chevronLen * sin(angle - wingAngle)
+                                val w2X = midX - chevronLen * cos(angle + wingAngle)
+                                val w2Y = midY - chevronLen * sin(angle + wingAngle)
+
+                                drawLine(
+                                    color = Color.White,
+                                    start = Offset(midX, midY),
+                                    end = Offset(w1X, w1Y),
+                                    strokeWidth = 2.5.dp.toPx(),
+                                    cap = StrokeCap.Round
+                                )
+                                drawLine(
+                                    color = Color.White,
+                                    start = Offset(midX, midY),
+                                    end = Offset(w2X, w2Y),
+                                    strokeWidth = 2.5.dp.toPx(),
+                                    cap = StrokeCap.Round
+                                )
                             }
                         }
                     }

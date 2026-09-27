@@ -1953,7 +1953,22 @@
           ? `Read ${pal.name} tiles top-to-bottom along Column ${first.c + 1}`
           : `Read ${pal.name} tiles bottom-to-top along Column ${first.c + 1}`;
       } else {
-        hint = `Read ${pal.name} tiles in painted stroke order (${path.length} tiles)`;
+        // Diagonal checks
+        const dr = second.r - first.r;
+        const dc = second.c - first.c;
+        const isStrictDiag = Math.abs(dr) === 1 && Math.abs(dc) === 1 &&
+          path.every((p, i) => i === 0 || (p.r - path[i-1].r === dr && p.c - path[i-1].c === dc));
+
+        if (isStrictDiag) {
+          let dir = '';
+          if (dr > 0 && dc > 0) dir = 'diagonally down-right';
+          else if (dr > 0 && dc < 0) dir = 'diagonally down-left';
+          else if (dr < 0 && dc > 0) dir = 'diagonally up-right';
+          else dir = 'diagonally up-left';
+          hint = `Read ${pal.name} tiles ${dir} starting at Row ${first.r + 1}, Col ${first.c + 1}`;
+        } else {
+          hint = `Read ${pal.name} tiles in painted stroke order (${path.length} tiles)`;
+        }
       }
 
       document.getElementById('editRuleHint').value = hint;

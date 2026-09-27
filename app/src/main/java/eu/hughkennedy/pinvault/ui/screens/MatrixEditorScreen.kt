@@ -655,8 +655,18 @@ fun MatrixEditorScreen(
                                 selectedTileForEdit = clickedTile
                             },
                             onCellTraversed = { cell ->
-                                if (!strokes.flatten().contains(cell) && !activeStroke.contains(cell)) {
-                                    val updatedActive = activeStroke + cell
+                                val lastCell = activeStroke.lastOrNull()
+                                val cellsToAdd = if (lastCell != null && lastCell != cell) {
+                                    ArtistPathManager.interpolateBetween(lastCell, cell)
+                                } else {
+                                    listOf(cell)
+                                }
+
+                                val alreadyPresent = (strokes.flatten() + activeStroke).toSet()
+                                val newCells = cellsToAdd.filter { !alreadyPresent.contains(it) }
+
+                                if (newCells.isNotEmpty()) {
+                                    val updatedActive = activeStroke + newCells
                                     activeStroke = updatedActive
                                     val currentFull = strokes.flatten() + updatedActive
                                     tiles = ArtistPathManager.mapDigitsToPath(

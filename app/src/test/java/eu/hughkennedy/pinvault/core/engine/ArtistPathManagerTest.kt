@@ -253,4 +253,204 @@ class ArtistPathManagerTest {
         val hintEn = ArtistPathManager.generateRuleHint(paintedPath, "Emerald", isGerman = false)
         assertEquals("Read Emerald tiles left-to-right along Row 4", hintEn)
     }
+
+    @Test
+    fun `paint diagonal down-right places digits and generates down-right hint`() {
+        val paintedPath = listOf(
+            PaintedCell(0, 0),
+            PaintedCell(1, 1),
+            PaintedCell(2, 2),
+            PaintedCell(3, 3)
+        )
+        val digitString = "1234"
+        val emptyTiles = createEmpty6x7Matrix()
+
+        val updatedTiles = ArtistPathManager.mapDigitsToPath(
+            paintedPath = paintedPath,
+            digitString = digitString,
+            secretColor = "emerald",
+            existingTiles = emptyTiles
+        )
+
+        val cell00 = updatedTiles.find { it.row == 0 && it.col == 0 }!!
+        val cell11 = updatedTiles.find { it.row == 1 && it.col == 1 }!!
+        val cell22 = updatedTiles.find { it.row == 2 && it.col == 2 }!!
+        val cell33 = updatedTiles.find { it.row == 3 && it.col == 3 }!!
+
+        assertEquals("1", cell00.digit)
+        assertEquals("2", cell11.digit)
+        assertEquals("3", cell22.digit)
+        assertEquals("4", cell33.digit)
+        assertTrue(cell00.isPinTile)
+        assertTrue(cell33.isPinTile)
+
+        val hintEn = ArtistPathManager.generateRuleHint(paintedPath, "Emerald", isGerman = false)
+        val hintDe = ArtistPathManager.generateRuleHint(paintedPath, "Smaragd", isGerman = true)
+        assertEquals("Read Emerald tiles diagonally down-right starting at Row 1, Col 1", hintEn)
+        assertEquals("Smaragd-Kacheln diagonal nach rechts-unten ab Zeile 1, Spalte 1 lesen", hintDe)
+    }
+
+    @Test
+    fun `paint diagonal up-left places digits in reverse order and generates up-left hint`() {
+        val paintedPath = listOf(
+            PaintedCell(3, 3),
+            PaintedCell(2, 2),
+            PaintedCell(1, 1),
+            PaintedCell(0, 0)
+        )
+        val digitString = "1234"
+        val emptyTiles = createEmpty6x7Matrix()
+
+        val updatedTiles = ArtistPathManager.mapDigitsToPath(
+            paintedPath = paintedPath,
+            digitString = digitString,
+            secretColor = "blue",
+            existingTiles = emptyTiles
+        )
+
+        val cell33 = updatedTiles.find { it.row == 3 && it.col == 3 }!!
+        val cell22 = updatedTiles.find { it.row == 2 && it.col == 2 }!!
+        val cell11 = updatedTiles.find { it.row == 1 && it.col == 1 }!!
+        val cell00 = updatedTiles.find { it.row == 0 && it.col == 0 }!!
+
+        assertEquals("1", cell33.digit)
+        assertEquals("2", cell22.digit)
+        assertEquals("3", cell11.digit)
+        assertEquals("4", cell00.digit)
+
+        val hintEn = ArtistPathManager.generateRuleHint(paintedPath, "Blue", isGerman = false)
+        val hintDe = ArtistPathManager.generateRuleHint(paintedPath, "Königsblau", isGerman = true)
+        assertEquals("Read Blue tiles diagonally up-left starting at Row 4, Col 4", hintEn)
+        assertEquals("Königsblau-Kacheln diagonal nach links-oben ab Zeile 4, Spalte 4 lesen", hintDe)
+    }
+
+    @Test
+    fun `paint diagonal down-left places digits and generates down-left hint`() {
+        val paintedPath = listOf(
+            PaintedCell(0, 3),
+            PaintedCell(1, 2),
+            PaintedCell(2, 1),
+            PaintedCell(3, 0)
+        )
+        val digitString = "1234"
+        val emptyTiles = createEmpty6x7Matrix()
+
+        val updatedTiles = ArtistPathManager.mapDigitsToPath(
+            paintedPath = paintedPath,
+            digitString = digitString,
+            secretColor = "amber",
+            existingTiles = emptyTiles
+        )
+
+        assertEquals("1", updatedTiles.find { it.row == 0 && it.col == 3 }!!.digit)
+        assertEquals("2", updatedTiles.find { it.row == 1 && it.col == 2 }!!.digit)
+        assertEquals("3", updatedTiles.find { it.row == 2 && it.col == 1 }!!.digit)
+        assertEquals("4", updatedTiles.find { it.row == 3 && it.col == 0 }!!.digit)
+
+        val hintEn = ArtistPathManager.generateRuleHint(paintedPath, "Amber", isGerman = false)
+        val hintDe = ArtistPathManager.generateRuleHint(paintedPath, "Bernstein", isGerman = true)
+        assertEquals("Read Amber tiles diagonally down-left starting at Row 1, Col 4", hintEn)
+        assertEquals("Bernstein-Kacheln diagonal nach links-unten ab Zeile 1, Spalte 4 lesen", hintDe)
+    }
+
+    @Test
+    fun `paint diagonal up-right places digits and generates up-right hint`() {
+        val paintedPath = listOf(
+            PaintedCell(3, 0),
+            PaintedCell(2, 1),
+            PaintedCell(1, 2),
+            PaintedCell(0, 3)
+        )
+        val digitString = "1234"
+        val emptyTiles = createEmpty6x7Matrix()
+
+        val updatedTiles = ArtistPathManager.mapDigitsToPath(
+            paintedPath = paintedPath,
+            digitString = digitString,
+            secretColor = "cyan",
+            existingTiles = emptyTiles
+        )
+
+        assertEquals("1", updatedTiles.find { it.row == 3 && it.col == 0 }!!.digit)
+        assertEquals("2", updatedTiles.find { it.row == 2 && it.col == 1 }!!.digit)
+        assertEquals("3", updatedTiles.find { it.row == 1 && it.col == 2 }!!.digit)
+        assertEquals("4", updatedTiles.find { it.row == 0 && it.col == 3 }!!.digit)
+
+        val hintEn = ArtistPathManager.generateRuleHint(paintedPath, "Cyan", isGerman = false)
+        val hintDe = ArtistPathManager.generateRuleHint(paintedPath, "Cyan", isGerman = true)
+        assertEquals("Read Cyan tiles diagonally up-right starting at Row 4, Col 1", hintEn)
+        assertEquals("Cyan-Kacheln diagonal nach rechts-oben ab Zeile 4, Spalte 1 lesen", hintDe)
+    }
+
+    @Test
+    fun `radial activation threshold rejects diagonal corner transit zone preventing corner-clipping`() {
+        val tileSize = 50f
+        val spacing = 10f
+        val padding = 12f
+        val cols = 6
+        val rows = 7
+        val maxRadius = tileSize * 0.52f // 26f
+
+        // Center of (0,0) is at (37f, 37f)
+        val atCenter00 = ArtistPathManager.findCellAtOffset(
+            x = 37f, y = 37f,
+            cols = cols, rows = rows,
+            tileSizePx = tileSize, spacingPx = spacing, paddingPx = padding,
+            maxRadiusPx = maxRadius
+        )
+        assertNotNull(atCenter00)
+        assertEquals(0, atCenter00!!.row)
+        assertEquals(0, atCenter00.col)
+
+        // Midpoint on diagonal path towards (1,1): (67f, 67f).
+        // Distance to (0,1) center (97f, 37f) is sqrt(30^2 + 30^2) = 42.4f > 26f.
+        // Distance to (1,0) center (37f, 97f) is 42.4f > 26f.
+        // Distance to (0,0) and (1,1) is also 42.4f > 26f.
+        // In the transit zone, findCellAtOffset must return null!
+        val inDiagonalTransit = ArtistPathManager.findCellAtOffset(
+            x = 67f, y = 67f,
+            cols = cols, rows = rows,
+            tileSizePx = tileSize, spacingPx = spacing, paddingPx = padding,
+            maxRadiusPx = maxRadius
+        )
+        assertNull("Transit point must return null so orthogonal neighbors are never clipped", inDiagonalTransit)
+
+        // As finger reaches near (1,1) center (97f, 97f), say at (95f, 95f):
+        val atTarget11 = ArtistPathManager.findCellAtOffset(
+            x = 95f, y = 95f,
+            cols = cols, rows = rows,
+            tileSizePx = tileSize, spacingPx = spacing, paddingPx = padding,
+            maxRadiusPx = maxRadius
+        )
+        assertNotNull(atTarget11)
+        assertEquals(1, atTarget11!!.row)
+        assertEquals(1, atTarget11.col)
+    }
+
+    @Test
+    fun `interpolateBetween fills in skipped diagonal intermediate cells during fast swipes`() {
+        val from = PaintedCell(0, 0)
+        val to = PaintedCell(3, 3)
+
+        val interpolated = ArtistPathManager.interpolateBetween(from, to)
+        assertEquals(3, interpolated.size)
+        assertEquals(PaintedCell(1, 1), interpolated[0])
+        assertEquals(PaintedCell(2, 2), interpolated[1])
+        assertEquals(PaintedCell(3, 3), interpolated[2])
+    }
+
+    @Test
+    fun `interpolateBetween fills in skipped horizontal and vertical cells`() {
+        val horiz = ArtistPathManager.interpolateBetween(PaintedCell(1, 0), PaintedCell(1, 3))
+        assertEquals(3, horiz.size)
+        assertEquals(PaintedCell(1, 1), horiz[0])
+        assertEquals(PaintedCell(1, 2), horiz[1])
+        assertEquals(PaintedCell(1, 3), horiz[2])
+
+        val vert = ArtistPathManager.interpolateBetween(PaintedCell(3, 2), PaintedCell(0, 2))
+        assertEquals(3, vert.size)
+        assertEquals(PaintedCell(2, 2), vert[0])
+        assertEquals(PaintedCell(1, 2), vert[1])
+        assertEquals(PaintedCell(0, 2), vert[2])
+    }
 }

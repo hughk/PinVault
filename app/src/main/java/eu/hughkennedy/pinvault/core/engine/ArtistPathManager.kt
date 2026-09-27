@@ -76,6 +76,9 @@ object ArtistPathManager {
 
     /**
      * Computes the bounding slot for a cell given pixel coordinates on the matrix canvas.
+     * When [maxRadiusPx] is provided, only offsets within that Euclidean distance from the
+     * cell's center are accepted. This creates a deadband between tiles that prevents
+     * accidental diagonal corner-clipping of orthogonal neighbor cells.
      */
     fun findCellAtOffset(
         x: Float,
@@ -84,7 +87,8 @@ object ArtistPathManager {
         rows: Int,
         tileSizePx: Float,
         spacingPx: Float,
-        paddingPx: Float
+        paddingPx: Float,
+        maxRadiusPx: Float? = null
     ): PaintedCell? {
         val slotSize = tileSizePx + spacingPx
         val relX = x - paddingPx
@@ -95,11 +99,77 @@ object ArtistPathManager {
         val col = ((relX + spacingPx / 2f) / slotSize).toInt()
         val row = ((relY + spacingPx / 2f) / slotSize).toInt()
 
-        return if (col in 0 until cols && row in 0 until rows) {
-            PaintedCell(row, col)
-        } else {
-            null
+        if (col !in 0 until cols || row !in 0 until rows) return null
+
+        if (maxRadiusPx != null) {
+            val centerX = paddingPx + col * slotSize + tileSizePx / 2f
+            val centerY = paddingPx + row * slotSize + tileSizePx / 2f
+            val dx = x - centerX
+            val dy = y - centerY
+            if (dx * dx + dy * dy > maxRadiusPx * maxRadiusPx) {
+                return null
+            }
         }
+
+        return PaintedCell(row, col)
+    }
+
+    /**
+     * Interpolates intermediate cells between [from] and [to] during fast drag gestures
+     * so that high-velocity swipes do not skip cells along diagonal, horizontal, or vertical paths.
+     */
+    fun interpolateBetween(from: PaintedCell, to: PaintedCell): List<PaintedCell> {
+        val dr = to.row - from.row
+        val dc = to.col - from.col
+        val absDr = kotlin.math.abs(dr)
+        val absDc = kotlin.math.abs(dc)
+
+        // Directly adjacent or identical
+        if (maxOf(absDr, absDc) <= 1) {
+            return listOf(to)
+        }
+
+        val result = mutableListOf<PaintedCell>()
+
+        // Pure diagonal jump (e.g. absDr == absDc)
+        if (absDr == absDc) {
+            val stepR = if (dr > 0) 1 else -1
+            val stepC = if (dc > 0) 1 else -1
+            for (i in 1..absDr) {
+                result.add(PaintedCell(from.row + i * stepR, from.col + i * stepC))
+            }
+            return result
+        }
+
+        // Pure horizontal jump
+        if (absDr == 0) {
+            val stepC = if (dc > 0) 1 else -1
+            for (i in 1..absDc) {
+                result.add(PaintedCell(from.row, from.col + i * stepC))
+            }
+            return result
+        }
+
+        // Pure vertical jump
+        if (absDc == 0) {
+            val stepR = if (dr > 0) 1 else -1
+            for (i in 1..absDr) {
+                result.add(PaintedCell(from.row + i * stepR, from.col))
+            }
+            return result
+        }
+
+        // General linear interpolation
+        val steps = maxOf(absDr, absDc)
+        for (i in 1..steps) {
+            val r = kotlin.math.round(from.row + (dr.toFloat() * i / steps)).toInt()
+            val c = kotlin.math.round(from.col + (dc.toFloat() * i / steps)).toInt()
+            val cell = PaintedCell(r, c)
+            if (result.isEmpty() || result.last() != cell) {
+                result.add(cell)
+            }
+        }
+        return result
     }
 
     /**
@@ -164,9 +234,10 @@ object ArtistPathManager {
         // Diagonal checks
         val dRow = second.row - first.row
         val dCol = second.col - first.col
-        val isStrictDiagonal = paintedPath.zipWithNext().all { (a, b) ->
-            (b.row - a.row) == dRow && (b.col - a.col) == dCol
-        }
+        val isStrictDiagonal = kotlin.math.abs(dRow) == 1 && kotlin.math.abs(dCol) == 1 &&
+            paintedPath.zipWithNext().all { (a, b) ->
+                (b.row - a.row) == dRow && (b.col - a.col) == dCol
+            }
 
         if (isStrictDiagonal) {
             val dirDesc = when {
