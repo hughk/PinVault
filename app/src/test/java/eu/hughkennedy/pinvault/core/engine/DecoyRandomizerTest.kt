@@ -113,4 +113,50 @@ class DecoyRandomizerTest {
         assertEquals(42, blank.size)
         assertTrue(blank.all { it.digit == "?" && !it.isPinTile })
     }
+
+    @Test
+    fun testRandomizeEverythingExceptManuallySetPinDigits() {
+        val secretColor = "blue"
+        val cols = 6
+        val rows = 7
+        val blank = DecoyRandomizer.createBlankMatrix(cols = cols, rows = rows, defaultColor = secretColor)
+
+        // User placed PIN path (0,0) -> (1,1) -> (2,2) -> (3,3) and entered "1234"
+        val paintedPath = listOf(
+            PaintedCell(0, 0),
+            PaintedCell(1, 1),
+            PaintedCell(2, 2),
+            PaintedCell(3, 3)
+        )
+        val matrixWithPin = ArtistPathManager.mapDigitsToPath(
+            paintedPath = paintedPath,
+            digitString = "1234",
+            secretColor = secretColor,
+            existingTiles = blank
+        )
+
+        val randomized = DecoyRandomizer.randomizeDecoys(matrixWithPin, secretColor)
+
+        // 1. Manually set PIN tiles MUST stay intact
+        val pin0 = randomized.first { it.row == 0 && it.col == 0 }
+        val pin1 = randomized.first { it.row == 1 && it.col == 1 }
+        val pin2 = randomized.first { it.row == 2 && it.col == 2 }
+        val pin3 = randomized.first { it.row == 3 && it.col == 3 }
+
+        assertEquals("1", pin0.digit)
+        assertEquals("2", pin1.digit)
+        assertEquals("3", pin2.digit)
+        assertEquals("4", pin3.digit)
+        assertTrue(pin0.isPinTile)
+        assertTrue(pin1.isPinTile)
+        assertTrue(pin2.isPinTile)
+        assertTrue(pin3.isPinTile)
+        assertEquals(secretColor, pin0.colorId)
+
+        // 2. EVERYTHING ELSE (all 38 other tiles) MUST be randomized
+        val decoys = randomized.filter { !it.isPinTile }
+        assertEquals("All 38 non-PIN tiles must be decoys", 38, decoys.size)
+        assertTrue("All decoys must have numeric digits (no '?' remaining)", decoys.all { it.digit in "0".."9" })
+        assertFalse("Decoys must not remain unassigned", decoys.any { it.digit == "?" })
+    }
 }

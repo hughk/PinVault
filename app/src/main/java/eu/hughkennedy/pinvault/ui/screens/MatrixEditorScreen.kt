@@ -548,7 +548,7 @@ fun MatrixEditorScreen(
                                             paintedPath = remainingCells,
                                             digitString = artistPinString,
                                             secretColor = secretColor,
-                                            existingTiles = DecoyRandomizer.createBlankMatrix(cols, rows, secretColor)
+                                            existingTiles = tiles
                                         )
                                     }
                                 },
@@ -598,7 +598,13 @@ fun MatrixEditorScreen(
                             // Randomize Decoys
                             OutlinedButton(
                                 onClick = {
-                                    tiles = DecoyRandomizer.randomizeDecoys(tiles, secretColor)
+                                    val syncedTiles = ArtistPathManager.mapDigitsToPath(
+                                        paintedPath = paintedPath,
+                                        digitString = artistPinString,
+                                        secretColor = secretColor,
+                                        existingTiles = tiles
+                                    )
+                                    tiles = DecoyRandomizer.randomizeDecoys(syncedTiles, secretColor)
                                 },
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.height(34.dp)

@@ -1991,7 +1991,7 @@
             onmousedown="startArtistDrag(${tile.r}, ${tile.c})"
             onmouseenter="continueArtistDrag(${tile.r}, ${tile.c})"
             onclick="if (wizardDesignMode === 'manual') openTileEditor(${tile.r}, ${tile.c})" 
-            class="pin-tile relative ${isSet ? pal.bg + ' ' + pal.text + ' border-2 border-white font-bold shadow ring-2 ring-indigo-500/40' : (flatPath.length > 0 ? 'bg-slate-800/40 text-slate-600 border border-slate-800' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:border-indigo-400')} flex items-center justify-center font-mono cursor-pointer transition select-none">
+            class="pin-tile relative ${isSet ? pal.bg + ' ' + pal.text + ' border-2 border-white font-bold shadow ring-2 ring-indigo-500/40' : (tile.digit !== '?' ? pal.bg + ' ' + pal.text + ' border border-white/20' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:border-indigo-400')} flex items-center justify-center font-mono cursor-pointer transition select-none">
             ${tile.digit}
             ${pathIdx >= 0 ? `<span class="absolute -top-1 -right-1 text-[8px] font-bold px-1 rounded-full bg-white text-slate-900 border border-slate-400 shadow-sm leading-tight">#${pathIdx + 1}</span>` : ''}
           </div>
@@ -2037,6 +2037,7 @@
     }
 
     function randomizeDecoyTilesInEditor() {
+      remapArtistDigits();
       const pinCells = wizardTiles.filter(t => t.isPinTile).map(t => ({ r: t.r, c: t.c, digit: t.digit }));
       wizardTiles = generateSampleMatrix(wizardCols, wizardRows, wizardSecretColor, pinCells);
       renderEditorGrid();

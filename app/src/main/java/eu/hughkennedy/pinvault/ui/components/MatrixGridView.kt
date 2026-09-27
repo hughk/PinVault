@@ -174,7 +174,7 @@ fun MatrixGridView(
                                 } else -1
 
                                 val isDimmed = if (isArtistMode) {
-                                    paintedPath.isNotEmpty() && pathIndex < 0
+                                    false
                                 } else {
                                     isPeeking && !isPin
                                 }
