@@ -187,5 +187,21 @@
     <string name="about_toast_no_browser">Browser konnte nicht geöffnet werden</string>
     <string name="about_toast_url_copied">URL in die Zwischenablage kopiert!</string>
     <string name="about_license_footer">Freie und quelloffene Software unter der GNU General Public License v3.0 (GPL-3.0). Quellcode verfügbar unter %1$s</string>
+    <!-- Artist Fingerpainting Mode -->
+    <string name="editor_mode_artist">Künstler-Malmodus</string>
+    <string name="editor_mode_manual">Manuelles Antippen</string>
+    <string name="editor_artist_instructions">Ziehen Sie Ihren Finger über die Matrix, um Ihren geheimen PIN-Pfad zu zeichnen, und geben Sie dann die Ziffern ein.</string>
+    <string name="editor_artist_pin_label">PIN / Ziffernfolge eingeben</string>
+    <string name="editor_artist_pin_placeholder">z.B. 1234</string>
+    <string name="editor_artist_status_empty">👆 Ziehen Sie Ihren Finger über die leere Matrix, um einen Pfad zu zeichnen.</string>
+    <string name="editor_artist_status_enter_pin">%1$d Kacheln gezeichnet. Geben Sie oben die PIN-Ziffern ein.</string>
+    <string name="editor_artist_status_partial">%1$d von %2$d Ziffern auf dem gezeichneten Pfad platziert.</string>
+    <string name="editor_artist_status_need_more_tiles">Zeichnen Sie %1$d weitere Kacheln auf der Matrix.</string>
+    <string name="editor_artist_status_complete">✓ Alle %1$d Ziffern auf dem gezeichneten Pfad platziert!</string>
+    <string name="editor_artist_clear_path">Pfad löschen</string>
+    <string name="editor_artist_undo_stroke">Rückgängig</string>
+    <string name="editor_artist_empty_matrix">Matrix leeren</string>
+    <string name="editor_artist_suggest_hint">Regel vorschlagen</string>
+    <string name="editor_artist_hint_copied_toast">Entschlüsselungshinweis aus Pfad übernommen!</string>
     <string name="action_close">Schließen</string>
 </resources>

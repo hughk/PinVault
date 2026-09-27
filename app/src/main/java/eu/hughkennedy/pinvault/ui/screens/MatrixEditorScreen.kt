@@ -1,5 +1,6 @@
 package eu.hughkennedy.pinvault.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -16,14 +17,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.AutoFixHigh
+import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.Casino
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Pin
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -36,6 +45,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -52,19 +62,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import eu.hughkennedy.pinvault.R
+import eu.hughkennedy.pinvault.core.engine.ArtistPathManager
 import eu.hughkennedy.pinvault.core.engine.DecoyRandomizer
+import eu.hughkennedy.pinvault.core.engine.PaintedCell
 import eu.hughkennedy.pinvault.core.model.CardCategory
 import eu.hughkennedy.pinvault.core.model.CardEntity
 import eu.hughkennedy.pinvault.core.model.PaletteColor
 import eu.hughkennedy.pinvault.core.model.TileData
 import eu.hughkennedy.pinvault.ui.components.ColorPickerRow
 import eu.hughkennedy.pinvault.ui.components.MatrixGridView
+
+enum class MatrixDesignMode {
+    ARTIST,
+    MANUAL
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,6 +96,7 @@ fun MatrixEditorScreen(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val isNew = initialCard == null
 
     var name by remember { mutableStateOf(initialCard?.name ?: "") }
@@ -85,6 +106,43 @@ fun MatrixEditorScreen(
     var rows by remember { mutableStateOf(initialCard?.rows ?: 7) }
     var secretColor by remember { mutableStateOf(initialCard?.secretColor ?: "blue") }
     var ruleHint by remember { mutableStateOf(initialCard?.ruleHint ?: "") }
+
+    var designMode by remember { mutableStateOf(MatrixDesignMode.ARTIST) }
+
+    // Initialize existing PIN tiles if editing an existing card
+    val initialPinTiles = initialCard?.tiles?.filter { it.isPinTile && !it.isBlank } ?: emptyList()
+
+    var strokes by remember {
+        mutableStateOf<List<List<PaintedCell>>>(
+            if (initialPinTiles.isNotEmpty()) {
+                listOf(initialPinTiles.map { PaintedCell(it.row, it.col) })
+            } else {
+                emptyList()
+            }
+        )
+    }
+
+    var activeStroke by remember { mutableStateOf<List<PaintedCell>>(emptyList()) }
+
+    var artistPinString by remember {
+        mutableStateOf(
+            if (initialPinTiles.isNotEmpty()) {
+                initialPinTiles.joinToString("") { it.digit }
+            } else {
+                ""
+            }
+        )
+    }
+
+    // Flat ordered sequence of all painted cells across all strokes
+    val paintedPath = remember(strokes, activeStroke) {
+        val completed = strokes.flatten()
+        if (activeStroke.isNotEmpty()) {
+            completed + activeStroke
+        } else {
+            completed
+        }
+    }
 
     var tiles by remember {
         mutableStateOf(
@@ -260,6 +318,8 @@ fun MatrixEditorScreen(
                                         onClick = {
                                             cols = c
                                             rows = r
+                                            strokes = emptyList()
+                                            activeStroke = emptyList()
                                             tiles = DecoyRandomizer.createBlankMatrix(c, r, secretColor)
                                             gridSizeDropdownExpanded = false
                                         }
@@ -344,7 +404,7 @@ fun MatrixEditorScreen(
                 }
             }
 
-            // Interactive Matrix Designer
+            // Interactive Matrix Designer Card
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
@@ -352,36 +412,226 @@ fun MatrixEditorScreen(
             ) {
                 Column(
                     modifier = Modifier.padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    // Mode Selector Toggle: Artist Fingerpaint vs Manual Tap
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Column {
+                        Button(
+                            onClick = { designMode = MatrixDesignMode.ARTIST },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (designMode == MatrixDesignMode.ARTIST) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                contentColor = if (designMode == MatrixDesignMode.ARTIST) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f),
+                            elevation = if (designMode == MatrixDesignMode.ARTIST) ButtonDefaults.buttonElevation(defaultElevation = 2.dp) else null
+                        ) {
+                            Icon(Icons.Default.Brush, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(stringResource(R.string.editor_mode_artist), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+
+                        Button(
+                            onClick = { designMode = MatrixDesignMode.MANUAL },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (designMode == MatrixDesignMode.MANUAL) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                contentColor = if (designMode == MatrixDesignMode.MANUAL) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f),
+                            elevation = if (designMode == MatrixDesignMode.MANUAL) ButtonDefaults.buttonElevation(defaultElevation = 2.dp) else null
+                        ) {
+                            Icon(Icons.Default.TouchApp, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(stringResource(R.string.editor_mode_manual), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                    }
+
+                    if (designMode == MatrixDesignMode.ARTIST) {
+                        // Artist Mode Instructions & Digit Input
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                text = stringResource(R.string.editor_grid_title),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
+                                text = stringResource(R.string.editor_artist_instructions),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+
+                            // PIN String Input Field
+                            OutlinedTextField(
+                                value = artistPinString,
+                                onValueChange = { input ->
+                                    val filtered = input.filter { it.isDigit() }
+                                    artistPinString = filtered
+                                    tiles = ArtistPathManager.mapDigitsToPath(
+                                        paintedPath = paintedPath,
+                                        digitString = filtered,
+                                        secretColor = secretColor,
+                                        existingTiles = tiles
+                                    )
+                                },
+                                label = { Text(stringResource(R.string.editor_artist_pin_label)) },
+                                placeholder = { Text(stringResource(R.string.editor_artist_pin_placeholder)) },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Pin, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                },
+                                trailingIcon = {
+                                    if (artistPinString.isNotEmpty()) {
+                                        IconButton(onClick = {
+                                            artistPinString = ""
+                                            tiles = ArtistPathManager.mapDigitsToPath(
+                                                paintedPath = paintedPath,
+                                                digitString = "",
+                                                secretColor = secretColor,
+                                                existingTiles = tiles
+                                            )
+                                        }) {
+                                            Icon(Icons.Default.Clear, contentDescription = null)
+                                        }
+                                    }
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                singleLine = true,
+                                textStyle = LocalTextStyle.current.copy(
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = FontFamily.Monospace,
+                                    letterSpacing = 2.sp
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            // Status Indicator
+                            val statusText = when {
+                                paintedPath.isEmpty() -> stringResource(R.string.editor_artist_status_empty)
+                                artistPinString.isEmpty() -> stringResource(R.string.editor_artist_status_enter_pin, paintedPath.size)
+                                artistPinString.length < paintedPath.size -> stringResource(R.string.editor_artist_status_partial, artistPinString.length, paintedPath.size)
+                                artistPinString.length > paintedPath.size -> stringResource(R.string.editor_artist_status_need_more_tiles, artistPinString.length - paintedPath.size)
+                                else -> stringResource(R.string.editor_artist_status_complete, paintedPath.size)
+                            }
+
+                            val statusColor = when {
+                                artistPinString.isNotEmpty() && artistPinString.length == paintedPath.size -> MaterialTheme.colorScheme.primary
+                                artistPinString.isNotEmpty() && artistPinString.length != paintedPath.size -> MaterialTheme.colorScheme.error
+                                else -> MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+
+                            Text(
+                                text = statusText,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = statusColor,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        // Artist Action Toolbar
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Undo Last Stroke
+                            OutlinedButton(
+                                onClick = {
+                                    if (strokes.isNotEmpty()) {
+                                        strokes = strokes.dropLast(1)
+                                        val remainingCells = strokes.flatten()
+                                        tiles = ArtistPathManager.mapDigitsToPath(
+                                            paintedPath = remainingCells,
+                                            digitString = artistPinString,
+                                            secretColor = secretColor,
+                                            existingTiles = DecoyRandomizer.createBlankMatrix(cols, rows, secretColor)
+                                        )
+                                    }
+                                },
+                                enabled = strokes.isNotEmpty(),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.height(34.dp)
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(stringResource(R.string.editor_artist_undo_stroke), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            // Clear Path
+                            OutlinedButton(
+                                onClick = {
+                                    strokes = emptyList()
+                                    activeStroke = emptyList()
+                                    tiles = DecoyRandomizer.createBlankMatrix(cols, rows, secretColor)
+                                },
+                                enabled = paintedPath.isNotEmpty(),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.height(34.dp)
+                            ) {
+                                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(stringResource(R.string.editor_artist_clear_path), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            // Suggest Rule Hint
+                            if (paintedPath.size >= 2) {
+                                OutlinedButton(
+                                    onClick = {
+                                        val colorName = context.getString(PaletteColor.find(secretColor).nameRes)
+                                        val isGerman = java.util.Locale.getDefault().language.startsWith("de")
+                                        ruleHint = ArtistPathManager.generateRuleHint(paintedPath, colorName, isGerman)
+                                        Toast.makeText(context, context.getString(R.string.editor_artist_hint_copied_toast), Toast.LENGTH_SHORT).show()
+                                    },
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.height(34.dp)
+                                ) {
+                                    Icon(Icons.Default.AutoFixHigh, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(stringResource(R.string.editor_artist_suggest_hint), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+
+                            // Randomize Decoys
+                            OutlinedButton(
+                                onClick = {
+                                    tiles = DecoyRandomizer.randomizeDecoys(tiles, secretColor)
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.height(34.dp)
+                            ) {
+                                Icon(Icons.Default.Casino, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(stringResource(R.string.action_randomize_decoys), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    } else {
+                        // Manual Mode Header with Randomize
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
                                 text = stringResource(R.string.editor_grid_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        }
 
-                        OutlinedButton(
-                            onClick = {
-                                tiles = DecoyRandomizer.randomizeDecoys(tiles, secretColor)
-                            },
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.height(34.dp)
-                        ) {
-                            Icon(Icons.Default.Casino, contentDescription = null, modifier = Modifier.size(14.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(R.string.action_randomize_decoys), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            OutlinedButton(
+                                onClick = {
+                                    tiles = DecoyRandomizer.randomizeDecoys(tiles, secretColor)
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.height(34.dp)
+                            ) {
+                                Icon(Icons.Default.Casino, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(stringResource(R.string.action_randomize_decoys), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
 
@@ -396,8 +646,32 @@ fun MatrixEditorScreen(
                             cols = cols,
                             rows = rows,
                             tiles = tiles,
+                            isArtistMode = (designMode == MatrixDesignMode.ARTIST),
+                            paintedPath = paintedPath,
+                            strokes = strokes,
+                            activeStroke = activeStroke,
+                            secretColorId = secretColor,
                             onTileClick = { clickedTile ->
                                 selectedTileForEdit = clickedTile
+                            },
+                            onCellTraversed = { cell ->
+                                if (!strokes.flatten().contains(cell) && !activeStroke.contains(cell)) {
+                                    val updatedActive = activeStroke + cell
+                                    activeStroke = updatedActive
+                                    val currentFull = strokes.flatten() + updatedActive
+                                    tiles = ArtistPathManager.mapDigitsToPath(
+                                        paintedPath = currentFull,
+                                        digitString = artistPinString,
+                                        secretColor = secretColor,
+                                        existingTiles = tiles
+                                    )
+                                }
+                            },
+                            onStrokeFinished = {
+                                if (activeStroke.isNotEmpty()) {
+                                    strokes = strokes + listOf(activeStroke)
+                                    activeStroke = emptyList()
+                                }
                             }
                         )
                     }
@@ -437,7 +711,7 @@ fun MatrixEditorScreen(
         }
     }
 
-    // Modal to set digit on a specific tile
+    // Modal to set digit on a specific tile (used in Manual Mode)
     if (selectedTileForEdit != null) {
         val targetTile = selectedTileForEdit!!
         AlertDialog(

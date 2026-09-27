@@ -1,0 +1,192 @@
+package eu.hughkennedy.pinvault.core.engine
+
+import eu.hughkennedy.pinvault.core.model.PaletteColor
+import eu.hughkennedy.pinvault.core.model.TileData
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class PaintedCell(
+    val row: Int,
+    val col: Int
+)
+
+object ArtistPathManager {
+
+    /**
+     * Maps a string of digits (e.g. "1234") onto a sequence of fingerpainted cells
+     * in the exact order and direction they were drawn.
+     *
+     * For example, if a line of 4 cells is drawn from right to left along Row 1:
+     * - paintedPath[0] = (1, 3) receives '1'
+     * - paintedPath[1] = (1, 2) receives '2'
+     * - paintedPath[2] = (1, 1) receives '3'
+     * - paintedPath[3] = (1, 0) receives '4'
+     *
+     * Looking at Row 1 left-to-right, the matrix displays: 4, 3, 2, 1.
+     *
+     * @param paintedPath The flat list of unique cells in chronological traversal order.
+     * @param digitString The user's entered PIN or digit sequence.
+     * @param secretColor The secret color ID chosen for this matrix.
+     * @param existingTiles The current list of tiles in the matrix.
+     * @return Updated list of tiles with digits placed on painted cells.
+     */
+    fun mapDigitsToPath(
+        paintedPath: List<PaintedCell>,
+        digitString: String,
+        secretColor: String,
+        existingTiles: List<TileData>
+    ): List<TileData> {
+        val cellIndexMap = paintedPath.mapIndexed { idx, cell -> cell to idx }.toMap()
+
+        return existingTiles.map { tile ->
+            val cell = PaintedCell(tile.row, tile.col)
+            val pathIndex = cellIndexMap[cell]
+
+            if (pathIndex != null) {
+                // This tile is part of the painted path
+                if (pathIndex < digitString.length) {
+                    val digitChar = digitString[pathIndex].toString()
+                    tile.copy(
+                        digit = digitChar,
+                        colorId = secretColor,
+                        isPinTile = true
+                    )
+                } else {
+                    // Painted cell awaiting digit entry
+                    tile.copy(
+                        digit = "?",
+                        colorId = secretColor,
+                        isPinTile = true
+                    )
+                }
+            } else {
+                // Not in painted path: if it was previously marked as PIN tile in artist mode, clear it
+                if (tile.isPinTile) {
+                    tile.copy(
+                        digit = "?",
+                        colorId = secretColor,
+                        isPinTile = false
+                    )
+                } else {
+                    tile
+                }
+            }
+        }
+    }
+
+    /**
+     * Computes the bounding slot for a cell given pixel coordinates on the matrix canvas.
+     */
+    fun findCellAtOffset(
+        x: Float,
+        y: Float,
+        cols: Int,
+        rows: Int,
+        tileSizePx: Float,
+        spacingPx: Float,
+        paddingPx: Float
+    ): PaintedCell? {
+        val slotSize = tileSizePx + spacingPx
+        val relX = x - paddingPx
+        val relY = y - paddingPx
+
+        if (relX < -spacingPx / 2f || relY < -spacingPx / 2f) return null
+
+        val col = ((relX + spacingPx / 2f) / slotSize).toInt()
+        val row = ((relY + spacingPx / 2f) / slotSize).toInt()
+
+        return if (col in 0 until cols && row in 0 until rows) {
+            PaintedCell(row, col)
+        } else {
+            null
+        }
+    }
+
+    /**
+     * Automatically generates a natural-language description / hint of the painted path direction.
+     * Supports horizontal (left-to-right, right-to-left), vertical (top-to-bottom, bottom-to-top),
+     * diagonal directions, and arbitrary multi-point paths.
+     */
+    fun generateRuleHint(
+        paintedPath: List<PaintedCell>,
+        secretColorName: String,
+        isGerman: Boolean = false
+    ): String {
+        if (paintedPath.size < 2) {
+            return if (isGerman) {
+                "Geheime $secretColorName-Kacheln in der markierten Reihenfolge lesen"
+            } else {
+                "Read $secretColorName tiles in the marked order"
+            }
+        }
+
+        val first = paintedPath.first()
+        val second = paintedPath[1]
+        val allSameRow = paintedPath.all { it.row == first.row }
+        val allSameCol = paintedPath.all { it.col == first.col }
+
+        // Horizontal line
+        if (allSameRow) {
+            val isLeftToRight = second.col > first.col
+            return if (isGerman) {
+                if (isLeftToRight) {
+                    "$secretColorName-Kacheln von links nach rechts in Zeile ${first.row + 1} lesen"
+                } else {
+                    "$secretColorName-Kacheln von rechts nach links in Zeile ${first.row + 1} lesen"
+                }
+            } else {
+                if (isLeftToRight) {
+                    "Read $secretColorName tiles left-to-right along Row ${first.row + 1}"
+                } else {
+                    "Read $secretColorName tiles right-to-left along Row ${first.row + 1}"
+                }
+            }
+        }
+
+        // Vertical line
+        if (allSameCol) {
+            val isTopToBottom = second.row > first.row
+            return if (isGerman) {
+                if (isTopToBottom) {
+                    "$secretColorName-Kacheln von oben nach unten in Spalte ${first.col + 1} lesen"
+                } else {
+                    "$secretColorName-Kacheln von unten nach oben in Spalte ${first.col + 1} lesen"
+                }
+            } else {
+                if (isTopToBottom) {
+                    "Read $secretColorName tiles top-to-bottom along Column ${first.col + 1}"
+                } else {
+                    "Read $secretColorName tiles bottom-to-top along Column ${first.col + 1}"
+                }
+            }
+        }
+
+        // Diagonal checks
+        val dRow = second.row - first.row
+        val dCol = second.col - first.col
+        val isStrictDiagonal = paintedPath.zipWithNext().all { (a, b) ->
+            (b.row - a.row) == dRow && (b.col - a.col) == dCol
+        }
+
+        if (isStrictDiagonal) {
+            val dirDesc = when {
+                dRow > 0 && dCol > 0 -> if (isGerman) "diagonal nach rechts-unten" else "diagonally down-right"
+                dRow > 0 && dCol < 0 -> if (isGerman) "diagonal nach links-unten" else "diagonally down-left"
+                dRow < 0 && dCol > 0 -> if (isGerman) "diagonal nach rechts-oben" else "diagonally up-right"
+                else -> if (isGerman) "diagonal nach links-oben" else "diagonally up-left"
+            }
+            return if (isGerman) {
+                "$secretColorName-Kacheln $dirDesc ab Zeile ${first.row + 1}, Spalte ${first.col + 1} lesen"
+            } else {
+                "Read $secretColorName tiles $dirDesc starting at Row ${first.row + 1}, Col ${first.col + 1}"
+            }
+        }
+
+        // Arbitrary / Custom stroke path
+        return if (isGerman) {
+            "$secretColorName-Kacheln in der gezeichneten Reihenfolge lesen (${paintedPath.size} Kacheln)"
+        } else {
+            "Read $secretColorName tiles in painted stroke order (${paintedPath.size} tiles)"
+        }
+    }
+}

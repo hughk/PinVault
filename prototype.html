@@ -625,17 +625,63 @@
                 </div>
               </div>
 
-              <!-- Interactive Setup Grid -->
-              <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <span class="ui-app-subtitle text-slate-300 font-semibold">Tap tile to set digit:</span>
-                  <button onclick="randomizeDecoyTilesInEditor()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold ui-btn-sub flex items-center gap-1.5 shadow">
+              <!-- Interactive Setup Grid Card -->
+              <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-3">
+                <!-- Mode Switch Tabs -->
+                <div class="grid grid-cols-2 p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold">
+                  <button type="button" id="tabArtistModeBtn" onclick="setWizardDesignMode('artist')" class="py-1.5 rounded-lg bg-indigo-600 text-white flex items-center justify-center gap-1.5 transition shadow">
+                    <i class="fa-solid fa-paintbrush"></i> Artist Fingerpaint
+                  </button>
+                  <button type="button" id="tabManualModeBtn" onclick="setWizardDesignMode('manual')" class="py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center justify-center gap-1.5 transition">
+                    <i class="fa-solid fa-hand-pointer"></i> Manual Tap
+                  </button>
+                </div>
+
+                <!-- Artist Mode Controls -->
+                <div id="artistControlsContainer" class="space-y-2.5">
+                  <p class="ui-micro text-slate-400 leading-relaxed">
+                    🎨 <strong>Artist Mode:</strong> Drag your mouse or finger across the empty matrix to paint your secret line(s). Then enter your PIN digits to place them along your path in order.
+                  </p>
+
+                  <div>
+                    <label class="block ui-label text-slate-400 uppercase tracking-wider mb-1">PIN / Digits to Place</label>
+                    <div class="relative flex items-center">
+                      <i class="fa-solid fa-hashtag absolute left-3 text-slate-500 text-xs"></i>
+                      <input id="wizardArtistPin" type="text" placeholder="e.g. 1234" maxlength="10" oninput="handleArtistPinInput(this.value)" class="w-full pl-8 pr-3.5 py-1.5 bg-slate-900 border border-slate-700/80 rounded-xl ui-search-input text-white font-mono font-bold tracking-widest placeholder-slate-600 focus:outline-none focus:border-indigo-500 text-base">
+                    </div>
+                    <span id="artistStatusText" class="ui-micro text-slate-400 block mt-1 font-medium">👆 Drag across the matrix to paint your secret path.</span>
+                  </div>
+
+                  <!-- Artist Toolbar -->
+                  <div class="flex items-center gap-1.5 flex-wrap pt-0.5">
+                    <button type="button" onclick="undoArtistStroke()" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1 border border-slate-700 transition">
+                      <i class="fa-solid fa-rotate-left text-xs"></i> Undo
+                    </button>
+                    <button type="button" onclick="clearArtistPath()" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1 border border-slate-700 transition">
+                      <i class="fa-solid fa-trash-can text-xs text-rose-400"></i> Clear Path
+                    </button>
+                    <button type="button" id="suggestHintBtn" onclick="suggestArtistRuleHint()" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1 border border-slate-700 transition">
+                      <i class="fa-solid fa-wand-magic-sparkles text-amber-400 text-xs"></i> Suggest Hint
+                    </button>
+                    <button type="button" onclick="randomizeDecoyTilesInEditor()" class="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1 shadow transition ml-auto">
+                      <i class="fa-solid fa-dice text-xs"></i> Randomize
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Manual Mode Controls (Shown only in manual mode) -->
+                <div id="manualControlsContainer" class="hidden flex items-center justify-between">
+                  <span class="ui-app-subtitle text-slate-300 font-semibold">Tap any tile to set digit:</span>
+                  <button type="button" onclick="randomizeDecoyTilesInEditor()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold ui-btn-sub flex items-center gap-1.5 shadow">
                     <i class="fa-solid fa-dice"></i> Randomize Decoys
                   </button>
                 </div>
 
-                <div id="editorMatrixGrid" class="w-full aspect-[6/7] grid gap-1.5 p-2 rounded-xl bg-slate-900 border border-slate-800">
-                  <!-- Editor Tiles -->
+                <!-- Matrix View Container -->
+                <div class="relative w-full aspect-[6/7]">
+                  <div id="editorMatrixGrid" class="w-full h-full grid gap-1.5 p-2 rounded-xl bg-slate-900 border border-slate-800 select-none touch-none">
+                    <!-- Editor Tiles -->
+                  </div>
                 </div>
                 <p class="ui-micro text-slate-500 text-center">Remaining tiles showing '?' will be randomly filled with decoy numbers and camouflage colors.</p>
               </div>
@@ -1750,18 +1796,189 @@
       document.getElementById('editCardFolder').value = name;
     }
 
+    let wizardDesignMode = 'artist';
+    let wizardStrokes = [];
+    let wizardActiveStroke = [];
+    let wizardIsDragging = false;
+
+    function setWizardDesignMode(mode) {
+      wizardDesignMode = mode;
+      const btnArtist = document.getElementById('tabArtistModeBtn');
+      const btnManual = document.getElementById('tabManualModeBtn');
+      const artistCtrls = document.getElementById('artistControlsContainer');
+      const manualCtrls = document.getElementById('manualControlsContainer');
+
+      if (mode === 'artist') {
+        btnArtist.className = 'py-1.5 rounded-lg bg-indigo-600 text-white flex items-center justify-center gap-1.5 transition shadow';
+        btnManual.className = 'py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center justify-center gap-1.5 transition';
+        artistCtrls.classList.remove('hidden');
+        manualCtrls.classList.add('hidden');
+      } else {
+        btnManual.className = 'py-1.5 rounded-lg bg-indigo-600 text-white flex items-center justify-center gap-1.5 transition shadow';
+        btnArtist.className = 'py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center justify-center gap-1.5 transition';
+        manualCtrls.classList.remove('hidden');
+        artistCtrls.classList.add('hidden');
+      }
+      renderEditorGrid();
+    }
+
+    function getFlatPaintedPath() {
+      return [...wizardStrokes.flat(), ...wizardActiveStroke];
+    }
+
+    function handleArtistPinInput(val) {
+      remapArtistDigits();
+      updateArtistStatus();
+    }
+
+    function updateArtistStatus() {
+      const pin = (document.getElementById('wizardArtistPin').value || '').trim();
+      const path = getFlatPaintedPath();
+      const status = document.getElementById('artistStatusText');
+
+      if (path.length === 0) {
+        status.textContent = '👆 Drag across the matrix to paint your secret path.';
+        status.className = 'ui-micro text-slate-400 block mt-1 font-medium';
+      } else if (pin.length === 0) {
+        status.textContent = `${path.length} tiles painted. Enter PIN digits above to place them.`;
+        status.className = 'ui-micro text-amber-400 block mt-1 font-medium';
+      } else if (pin.length < path.length) {
+        status.textContent = `${pin.length} of ${path.length} digits placed along painted path.`;
+        status.className = 'ui-micro text-amber-400 block mt-1 font-medium';
+      } else if (pin.length > path.length) {
+        status.textContent = `Paint ${pin.length - path.length} more tiles on matrix for remaining digits.`;
+        status.className = 'ui-micro text-amber-400 block mt-1 font-medium';
+      } else {
+        status.textContent = `✓ All ${pin.length} digits placed along painted path in stroke order!`;
+        status.className = 'ui-micro text-emerald-400 block mt-1 font-medium';
+      }
+    }
+
+    function remapArtistDigits() {
+      const pin = (document.getElementById('wizardArtistPin').value || '').trim();
+      const path = getFlatPaintedPath();
+      const palette = PALETTE.find(p => p.id === wizardSecretColor) || PALETTE[0];
+
+      // Reset all tiles to unassigned unless in path
+      wizardTiles.forEach(t => {
+        const pathIdx = path.findIndex(p => p.r === t.r && p.c === t.c);
+        if (pathIdx >= 0) {
+          t.isPinTile = true;
+          t.colorId = wizardSecretColor;
+          if (pathIdx < pin.length) {
+            t.digit = pin[pathIdx];
+          } else {
+            t.digit = '?';
+          }
+        } else {
+          t.isPinTile = false;
+          t.digit = '?';
+        }
+      });
+      renderEditorGrid();
+    }
+
+    function startArtistDrag(r, c) {
+      if (wizardDesignMode !== 'artist') return;
+      wizardIsDragging = true;
+      const all = getFlatPaintedPath();
+      if (!all.some(p => p.r === r && p.c === c)) {
+        wizardActiveStroke = [{ r, c }];
+        remapArtistDigits();
+        updateArtistStatus();
+      }
+    }
+
+    function continueArtistDrag(r, c) {
+      if (wizardDesignMode !== 'artist' || !wizardIsDragging) return;
+      const all = getFlatPaintedPath();
+      if (!all.some(p => p.r === r && p.c === c)) {
+        wizardActiveStroke.push({ r, c });
+        remapArtistDigits();
+        updateArtistStatus();
+      }
+    }
+
+    function endArtistDrag() {
+      if (!wizardIsDragging) return;
+      wizardIsDragging = false;
+      if (wizardActiveStroke.length > 0) {
+        wizardStrokes.push([...wizardActiveStroke]);
+        wizardActiveStroke = [];
+        remapArtistDigits();
+        updateArtistStatus();
+      }
+    }
+
+    window.addEventListener('mouseup', endArtistDrag);
+    window.addEventListener('touchend', endArtistDrag);
+
+    function clearArtistPath() {
+      wizardStrokes = [];
+      wizardActiveStroke = [];
+      wizardTiles.forEach(t => {
+        t.isPinTile = false;
+        t.digit = '?';
+      });
+      renderEditorGrid();
+      updateArtistStatus();
+    }
+
+    function undoArtistStroke() {
+      if (wizardStrokes.length > 0) {
+        wizardStrokes.pop();
+        remapArtistDigits();
+        updateArtistStatus();
+      }
+    }
+
+    function suggestArtistRuleHint() {
+      const path = getFlatPaintedPath();
+      if (path.length < 2) return alert('Paint at least 2 tiles to generate a directional rule hint.');
+      const first = path[0];
+      const second = path[1];
+      const allSameRow = path.every(p => p.r === first.r);
+      const allSameCol = path.every(p => p.c === first.c);
+      const pal = PALETTE.find(p => p.id === wizardSecretColor) || PALETTE[0];
+      let hint = '';
+
+      if (allSameRow) {
+        const isLeftToRight = second.c > first.c;
+        hint = isLeftToRight 
+          ? `Read ${pal.name} tiles left-to-right along Row ${first.r + 1}`
+          : `Read ${pal.name} tiles right-to-left along Row ${first.r + 1}`;
+      } else if (allSameCol) {
+        const isTopToBottom = second.r > first.r;
+        hint = isTopToBottom
+          ? `Read ${pal.name} tiles top-to-bottom along Column ${first.c + 1}`
+          : `Read ${pal.name} tiles bottom-to-top along Column ${first.c + 1}`;
+      } else {
+        hint = `Read ${pal.name} tiles in painted stroke order (${path.length} tiles)`;
+      }
+
+      document.getElementById('editRuleHint').value = hint;
+      alert(`Rule Hint suggested: "${hint}"`);
+    }
+
     function renderEditorGrid() {
       const grid = document.getElementById('editorMatrixGrid');
       grid.style.gridTemplateColumns = `repeat(${wizardCols}, minmax(0, 1fr))`;
       const palette = PALETTE.find(p => p.id === wizardSecretColor) || PALETTE[0];
+      const flatPath = getFlatPaintedPath();
 
       grid.innerHTML = wizardTiles.map(tile => {
         const pal = PALETTE.find(p => p.id === tile.colorId) || palette;
-        const isSet = tile.isPinTile;
+        const pathIdx = flatPath.findIndex(p => p.r === tile.r && p.c === tile.c);
+        const isSet = tile.isPinTile || pathIdx >= 0;
+
         return `
-          <div onclick="openTileEditor(${tile.r}, ${tile.c})" 
-            class="pin-tile ${isSet ? pal.bg + ' ' + pal.text + ' border-2 border-white font-bold shadow' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:border-indigo-400'} flex items-center justify-center font-mono cursor-pointer transition">
+          <div 
+            onmousedown="startArtistDrag(${tile.r}, ${tile.c})"
+            onmouseenter="continueArtistDrag(${tile.r}, ${tile.c})"
+            onclick="if (wizardDesignMode === 'manual') openTileEditor(${tile.r}, ${tile.c})" 
+            class="pin-tile relative ${isSet ? pal.bg + ' ' + pal.text + ' border-2 border-white font-bold shadow ring-2 ring-indigo-500/40' : (flatPath.length > 0 ? 'bg-slate-800/40 text-slate-600 border border-slate-800' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:border-indigo-400')} flex items-center justify-center font-mono cursor-pointer transition select-none">
             ${tile.digit}
+            ${pathIdx >= 0 ? `<span class="absolute -top-1 -right-1 text-[8px] font-bold px-1 rounded-full bg-white text-slate-900 border border-slate-400 shadow-sm leading-tight">#${pathIdx + 1}</span>` : ''}
           </div>
         `;
       }).join('');
