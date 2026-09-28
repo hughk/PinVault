@@ -164,7 +164,7 @@ object DecoyRandomizer {
         secretColor: String,
         random: Random = Random.Default
     ): List<TileData> {
-        val pinTiles = tiles.filter { it.isPinTile }
+        val pinTiles = tiles.filter { it.isPinTile && !it.isBlank }
         val rows = (tiles.maxOfOrNull { it.row } ?: 0) + 1
         val cols = (tiles.maxOfOrNull { it.col } ?: 0) + 1
 
@@ -182,8 +182,8 @@ object DecoyRandomizer {
         val decoyLineColor = decoyLineResult?.second
 
         return tiles.map { tile ->
-            if (tile.isPinTile) {
-                // Keep genuine PIN tile intact (whether digit is manually set or awaiting entry)
+            if (tile.isPinTile && !tile.isBlank) {
+                // Keep genuine PIN tile intact (manually set digit)
                 tile.copy()
             } else if (decoyLineCells.contains(Pair(tile.row, tile.col)) && decoyLineColor != null) {
                 // Part of the linear decoy PIN (uniform color)

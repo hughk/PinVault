@@ -207,6 +207,15 @@ fun MatrixEditorScreen(
                     IconButton(
                         onClick = {
                             if (name.isBlank()) return@IconButton
+                            if (designMode == MatrixDesignMode.ARTIST && artistPinString.isNotEmpty() && strokes.flatten().size > artistPinString.length) {
+                                strokes = ArtistPathManager.trimStrokes(strokes, artistPinString.length)
+                                tiles = ArtistPathManager.mapDigitsToPath(
+                                    paintedPath = strokes.flatten(),
+                                    digitString = artistPinString,
+                                    secretColor = secretColor,
+                                    existingTiles = tiles
+                                )
+                            }
                             // Auto-randomize any remaining '?' tiles
                             val finalizedTiles = DecoyRandomizer.randomizeDecoys(tiles, secretColor)
                             val updatedCard = (initialCard ?: CardEntity(name = name)).copy(
@@ -580,8 +589,16 @@ fun MatrixEditorScreen(
                             // Randomize Decoys
                             OutlinedButton(
                                 onClick = {
+                                    val effectiveStrokes = if (artistPinString.isNotEmpty() && strokes.flatten().size > artistPinString.length) {
+                                        val trimmed = ArtistPathManager.trimStrokes(strokes, artistPinString.length)
+                                        strokes = trimmed
+                                        trimmed
+                                    } else {
+                                        strokes
+                                    }
+                                    val effectivePath = effectiveStrokes.flatten()
                                     val syncedTiles = ArtistPathManager.mapDigitsToPath(
-                                        paintedPath = paintedPath,
+                                        paintedPath = effectivePath,
                                         digitString = artistPinString,
                                         secretColor = secretColor,
                                         existingTiles = tiles

@@ -453,4 +453,24 @@ class ArtistPathManagerTest {
         assertEquals(PaintedCell(1, 2), vert[1])
         assertEquals(PaintedCell(0, 2), vert[2])
     }
+
+    @Test
+    fun `trimStrokes retains target count of cells preserving stroke structure`() {
+        val stroke1 = listOf(PaintedCell(0, 0), PaintedCell(0, 1), PaintedCell(0, 2))
+        val stroke2 = listOf(PaintedCell(1, 0), PaintedCell(1, 1), PaintedCell(1, 2))
+        val strokes = listOf(stroke1, stroke2) // Total 6 cells
+
+        // Trim to 4 cells: keeps stroke1 (3 cells) and first 1 cell of stroke2
+        val trimmed = ArtistPathManager.trimStrokes(strokes, 4)
+        assertEquals(2, trimmed.size)
+        assertEquals(stroke1, trimmed[0])
+        assertEquals(listOf(PaintedCell(1, 0)), trimmed[1])
+        assertEquals(4, trimmed.flatten().size)
+
+        // Trim to 0 or negative returns empty
+        assertTrue(ArtistPathManager.trimStrokes(strokes, 0).isEmpty())
+
+        // Trim with target >= total returns original strokes
+        assertEquals(strokes, ArtistPathManager.trimStrokes(strokes, 10))
+    }
 }

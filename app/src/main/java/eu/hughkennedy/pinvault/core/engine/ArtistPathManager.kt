@@ -75,6 +75,27 @@ object ArtistPathManager {
     }
 
     /**
+     * Trims a list of strokes to retain at most [targetCellCount] cells in total,
+     * preserving stroke sequence and order.
+     */
+    fun trimStrokes(strokes: List<List<PaintedCell>>, targetCellCount: Int): List<List<PaintedCell>> {
+        if (targetCellCount <= 0) return emptyList()
+        var remaining = targetCellCount
+        val result = mutableListOf<List<PaintedCell>>()
+        for (stroke in strokes) {
+            if (remaining <= 0) break
+            if (stroke.size <= remaining) {
+                result.add(stroke)
+                remaining -= stroke.size
+            } else {
+                result.add(stroke.take(remaining))
+                remaining = 0
+            }
+        }
+        return result
+    }
+
+    /**
      * Computes the bounding slot for a cell given pixel coordinates on the matrix canvas.
      * When [maxRadiusPx] is provided, only offsets within that Euclidean distance from the
      * cell's center are accepted. This creates a deadband between tiles that prevents
