@@ -176,15 +176,18 @@
         </button>
       </div>
 
-      <!-- Language Selector (EN / DE) -->
+      <!-- Language Selector (US / UK / DE) -->
       <div class="bg-slate-900 border border-emerald-500/40 rounded-xl p-1 flex items-center gap-1 shadow-md">
         <span class="text-[11px] font-bold text-slate-400 px-2 flex items-center gap-1.5">
           <i class="fa-solid fa-language text-emerald-400"></i> Lang:
         </span>
-        <button id="toggleLangEn" onclick="setLanguage('en')" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold transition shadow">
-          🇬🇧 EN
+        <button id="toggleLangUs" onclick="setLanguage('en')" class="px-2 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold transition shadow" title="English (US)">
+          🇺🇸 US
         </button>
-        <button id="toggleLangDe" onclick="setLanguage('de')" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white text-xs font-medium transition">
+        <button id="toggleLangGb" onclick="setLanguage('en-gb')" class="px-2 py-1 rounded-lg text-slate-400 hover:text-white text-xs font-medium transition" title="English (UK - British)">
+          🇬🇧 UK
+        </button>
+        <button id="toggleLangDe" onclick="setLanguage('de')" class="px-2 py-1 rounded-lg text-slate-400 hover:text-white text-xs font-medium transition" title="Deutsch">
           🇩🇪 DE
         </button>
       </div>
@@ -1208,7 +1211,7 @@
       }
     }
 
-    // INTERNATIONALIZATION (I18N) SYSTEM: ENGLISH & GERMAN
+    // INTERNATIONALIZATION (I18N) SYSTEM: US ENGLISH, BRITISH ENGLISH & GERMAN
     let currentLang = 'en';
 
     const I18N = {
@@ -1235,6 +1238,33 @@
         secretDecryptionRule: "Secret Decryption Rule:",
         discreetHint: "Discreet Decryption Hint:",
         lowVisibility: "Low-Visibility",
+        helpTitle: "Help & Guide",
+        aboutTitle: "About Pin Vault",
+        hardwareKeystore: "Hardware Keystore Protected"
+      },
+      'en-gb': {
+        appTitle: "Pin Vault",
+        appSubtitle: "Visual Steganography",
+        searchPlaceholder: "Search card, folder, account, or rule...",
+        storedCount: (count) => `${count} ${count === 1 ? 'Matrix' : 'Matrices'} Stored`,
+        noCardsFound: "No PIN matrices found",
+        noCardsDesc: "Try adjusting your search query or folder filter.",
+        all: "All",
+        camouflageGrid: "Camouflage Grid",
+        categories: {
+          credit: "Credit Card",
+          debit: "Debit Card",
+          banking: "Telephone Banking",
+          safe: "Safe & Door Access",
+          other: "Other PIN"
+        },
+        btnRevealConcealed: "Tap for Biometric Reveal",
+        btnRevealConcealedSub: "12s timed window • Tap again to extinguish",
+        btnRevealPeeking: (sec) => `Pattern Revealed (${sec}s) • Tap to Conceal`,
+        btnRevealPeekingSub: "Tap anywhere on this button to extinguish immediately",
+        secretDecryptionRule: "Secret Decryption Rule:",
+        discreetHint: "Discreet Decryption Hint:",
+        lowVisibility: "Shoulder-surf protected",
         helpTitle: "Help & Guide",
         aboutTitle: "About Pin Vault",
         hardwareKeystore: "Hardware Keystore Protected"
@@ -1270,15 +1300,16 @@
 
     function setLanguage(lang) {
       currentLang = lang;
-      const btnEn = document.getElementById('toggleLangEn');
+      const btnUs = document.getElementById('toggleLangUs');
+      const btnGb = document.getElementById('toggleLangGb');
       const btnDe = document.getElementById('toggleLangDe');
-      if (lang === 'de') {
-        btnDe.className = 'px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold transition shadow';
-        btnEn.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white text-xs font-medium transition';
-      } else {
-        btnEn.className = 'px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold transition shadow';
-        btnDe.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white text-xs font-medium transition';
-      }
+
+      const activeClass = 'px-2 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold transition shadow';
+      const inactiveClass = 'px-2 py-1 rounded-lg text-slate-400 hover:text-white text-xs font-medium transition';
+
+      if (btnUs) btnUs.className = (lang === 'en') ? activeClass : inactiveClass;
+      if (btnGb) btnGb.className = (lang === 'en-gb') ? activeClass : inactiveClass;
+      if (btnDe) btnDe.className = (lang === 'de') ? activeClass : inactiveClass;
 
       // Update category names
       Object.keys(CATEGORIES).forEach(k => {
