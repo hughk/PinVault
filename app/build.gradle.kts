@@ -12,7 +12,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 994
-        versionName = "0.994-Artist"
+        versionName = "0.994"
     }
 
     buildTypes {
