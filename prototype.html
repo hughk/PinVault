@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pin Vault v0.994 - Interactive Typography, Multi-Language & Feature Prototype</title>
+  <title>Pin Vault v0.995 - Interactive Typography, Dynamic TOTP PIN & Feature Prototype</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -154,7 +154,7 @@
         <div class="flex items-center gap-2">
           <h1 class="text-2xl font-extrabold text-white tracking-tight">Pin Vault</h1>
           <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
-            v0.993 Prototype
+            v0.995 Prototype
           </span>
         </div>
         <p class="text-xs text-slate-400 mt-0.5">Visual Steganography PIN Vault • High-Legibility Typography Evaluation • GPL-3.0</p>
@@ -375,10 +375,15 @@
                   <p class="ui-micro text-slate-400" id="detailSecurityHint">Shoulder-surf protected</p>
                 </div>
               </div>
-              <!-- Randomize Decoys Button -->
-              <button onclick="reRandomizeCurrentDecoys()" title="Regenerate Decoy Digits" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 ui-btn-sub font-semibold border border-slate-700 flex items-center gap-1.5 transition">
-                <i class="fa-solid fa-arrows-rotate text-indigo-400"></i> Refresh Decoys
-              </button>
+              <div class="flex items-center gap-2">
+                <span id="totpDetailPill" class="hidden px-2 py-1 rounded-md text-[11px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1">
+                  <i class="fa-solid fa-clock text-[10px]"></i> 30s
+                </span>
+                <!-- Randomize Decoys Button -->
+                <button onclick="reRandomizeCurrentDecoys()" title="Regenerate Decoy Digits" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 ui-btn-sub font-semibold border border-slate-700 flex items-center gap-1.5 transition">
+                  <i class="fa-solid fa-arrows-rotate text-indigo-400"></i> Refresh Decoys
+                </button>
+              </div>
             </div>
 
             <!-- THE MATRIX CONTAINER (Numeric tile font size strictly untouched) -->
@@ -550,7 +555,7 @@
               <!-- About Card Button -->
               <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between gap-3">
                 <div>
-                  <h5 class="ui-card-title text-white">Pin Vault v0.994</h5>
+                  <h5 class="ui-card-title text-white">Pin Vault v0.995</h5>
                   <p class="ui-app-subtitle text-slate-400">Created by Hugh Kennedy</p>
                 </div>
                 <button onclick="openAboutModal()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 ui-btn-main transition">
@@ -826,7 +831,7 @@
         </div>
         <div>
           <h4 class="ui-about-title text-white">Pin Vault</h4>
-          <span class="ui-about-badge text-indigo-400 font-mono font-bold">v0.994 (Beta)</span>
+          <span class="ui-about-badge text-indigo-400 font-mono font-bold">v0.995 (Release)</span>
         </div>
       </div>
 
@@ -1109,11 +1114,36 @@
       debit: { name: 'Debit Card', icon: 'fa-wallet', color: '#2dd4bf', bg: 'rgba(45, 212, 191, 0.2)', border: 'rgba(45, 212, 191, 0.8)' },
       banking: { name: 'Telephone Banking', icon: 'fa-building-columns', color: '#4ade80', bg: 'rgba(74, 222, 128, 0.2)', border: 'rgba(74, 222, 128, 0.8)' },
       safe: { name: 'Safe & Door Access', icon: 'fa-lock', color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.2)', border: 'rgba(251, 191, 36, 0.8)' },
+      authenticator: { name: 'Authenticator (TOTP)', icon: 'fa-key', color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.2)', border: 'rgba(244, 63, 94, 0.8)' },
       other: { name: 'Other PIN', icon: 'fa-shield', color: '#c084fc', bg: 'rgba(192, 132, 252, 0.2)', border: 'rgba(192, 132, 252, 0.8)' }
     };
 
     // SAMPLE STORED CARDS
     let CARDS = [
+      {
+        id: 'card-totp',
+        name: 'GitHub 2FA Authenticator',
+        category: 'authenticator',
+        folder: 'Work',
+        cols: 6,
+        rows: 7,
+        secretColor: 'rose',
+        ruleHint: 'Dynamic 6-digit rolling TOTP code along top snake path from (0, 0)',
+        isTotp: true,
+        totpSecret: 'JBSWY3DPEHPK3PXP',
+        totpDigits: 6,
+        totpPeriod: 30,
+        totpIssuer: 'GitHub',
+        pinCells: [
+          { r: 0, c: 0, digit: '4' },
+          { r: 0, c: 1, digit: '8' },
+          { r: 0, c: 2, digit: '1' },
+          { r: 1, c: 2, digit: '9' },
+          { r: 1, c: 1, digit: '2' },
+          { r: 1, c: 0, digit: '7' }
+        ],
+        tiles: []
+      },
       {
         id: 'card-1',
         name: 'Barclays Visa Debit',
@@ -1229,6 +1259,7 @@
           debit: "Debit Card",
           banking: "Telephone Banking",
           safe: "Safe & Door Access",
+          authenticator: "Authenticator (TOTP)",
           other: "Other PIN"
         },
         btnRevealConcealed: "Tap for Biometric Reveal",
@@ -1256,6 +1287,7 @@
           debit: "Debit Card",
           banking: "Telephone Banking",
           safe: "Safe & Door Access",
+          authenticator: "Authenticator (TOTP)",
           other: "Other PIN"
         },
         btnRevealConcealed: "Tap for Biometric Reveal",
@@ -1283,6 +1315,7 @@
           debit: "Debitkarte",
           banking: "Telefon-Banking",
           safe: "Tresor & Zugang",
+          authenticator: "Authenticator (TOTP)",
           other: "Sonstige PIN"
         },
         btnRevealConcealed: "Antippen für biometrische Aufdeckung",
@@ -1509,6 +1542,11 @@
                       style="background-color: ${cat.bg}; color: ${cat.color}; border: 1px solid ${cat.border}">
                       ${cat.name}
                     </span>
+                    ${card.isTotp ? `
+                      <span class="ui-card-badge px-2 py-0.5 rounded-md font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1">
+                        <i class="fa-solid fa-bolt text-[10px] text-amber-400"></i> TOTP
+                      </span>
+                    ` : ''}
                     ${card.folder ? `
                       <span class="ui-card-badge px-2 py-0.5 rounded-md font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 flex items-center gap-1">
                         <i class="fa-solid fa-folder text-[10px] text-amber-400"></i> ${card.folder}
@@ -1594,8 +1632,64 @@
 
       document.getElementById('secretRuleInstructions').textContent = card.ruleHint;
 
+      const totpPill = document.getElementById('totpDetailPill');
+      if (totpPill) {
+        if (card.isTotp) {
+          totpPill.classList.remove('hidden');
+          const epoch = Math.floor(Date.now() / 1000);
+          const rem = 30 - (epoch % 30);
+          totpPill.innerHTML = `<i class="fa-solid fa-clock text-[10px]"></i> ${rem}s`;
+          document.getElementById('detailPatternType').textContent = 'Dynamic TOTP PIN';
+          document.getElementById('detailSecurityHint').textContent = 'Rolling 30s code camouflaged on secret path';
+        } else {
+          totpPill.classList.add('hidden');
+          document.getElementById('detailPatternType').textContent = 'Steganographic Camouflage';
+          document.getElementById('detailSecurityHint').textContent = 'Shoulder-surf protected';
+        }
+      }
+
       renderMatrixGrid(card);
     }
+
+    // Dynamic TOTP Simulation Loop for Prototype
+    setInterval(() => {
+      const card = CARDS.find(c => c.id === currentCardId);
+      if (card && card.isTotp) {
+        const epoch = Math.floor(Date.now() / 1000);
+        const period = card.totpPeriod || 30;
+        const remaining = period - (epoch % period);
+        const counter = Math.floor(epoch / period);
+        let hash = 0;
+        const str = (card.totpSecret || 'JBSWY3DPEHPK3PXP') + counter;
+        for (let i = 0; i < str.length; i++) {
+          hash = ((hash << 5) - hash) + str.charCodeAt(i);
+          hash |= 0;
+        }
+        const code = Math.abs(hash % 1000000).toString().padStart(6, '0');
+        if (card.pinCells && card.pinCells.length >= 6) {
+          let changed = false;
+          for (let i = 0; i < 6; i++) {
+            if (card.pinCells[i].digit !== code[i]) {
+              card.pinCells[i].digit = code[i];
+              changed = true;
+            }
+          }
+          if (changed) {
+            card.tiles.forEach(tile => {
+              const pin = card.pinCells.find(p => p.r === tile.r && p.c === tile.c);
+              if (pin) {
+                tile.digit = pin.digit;
+              }
+            });
+            renderMatrixGrid(card);
+          }
+        }
+        const statusPill = document.getElementById('totpDetailPill');
+        if (statusPill && !statusPill.classList.contains('hidden')) {
+          statusPill.innerHTML = `<i class="fa-solid fa-clock text-[10px]"></i> ${remaining}s`;
+        }
+      }
+    }, 1000);
 
     function renderMatrixGrid(card) {
       const grid = document.getElementById('matrixGrid');

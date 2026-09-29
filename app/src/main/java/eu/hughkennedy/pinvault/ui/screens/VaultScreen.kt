@@ -523,6 +523,23 @@ private fun CardItemRow(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
+                        // Dynamic TOTP Badge
+                        if (card.isTotp) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.8f))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "⚡ TOTP",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            }
+                        }
+
                         // Folder Tag (if defined)
                         if (card.folder.isNotBlank()) {
                             Box(

@@ -1,5 +1,6 @@
 package eu.hughkennedy.pinvault.ui.screens
 
+import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,12 +24,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -55,14 +58,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import eu.hughkennedy.pinvault.R
+import eu.hughkennedy.pinvault.core.engine.ArtistPathManager
 import eu.hughkennedy.pinvault.core.engine.DecoyRandomizer
 import eu.hughkennedy.pinvault.core.model.CardEntity
 import eu.hughkennedy.pinvault.core.model.PaletteColor
+import eu.hughkennedy.pinvault.core.totp.TotpManager
 import eu.hughkennedy.pinvault.ui.components.CategoryIconBadge
 import eu.hughkennedy.pinvault.ui.components.MatrixGridView
 import kotlinx.coroutines.delay
@@ -77,12 +86,59 @@ fun MatrixDetailScreen(
     onBiometricAuthRequested: (() -> Unit) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     var currentTiles by remember(card) { mutableStateOf(card.tiles) }
     var isPeeking by remember { mutableStateOf(false) }
     var countdownSeconds by remember { mutableIntStateOf(0) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var totpRemainingSeconds by remember { mutableIntStateOf(0) }
+    var currentTotpCode by remember { mutableStateOf("") }
 
     val palette = PaletteColor.find(card.secretColor)
+
+    // Dynamic TOTP ticker: updates rolling PIN code and matrix cells along secret path
+    LaunchedEffect(card.isTotp, card.totpSecret, card.totpPeriod, card.totpDigits, card.pinPath) {
+        if (card.isTotp && !card.totpSecret.isNullOrBlank()) {
+            while (true) {
+                val now = System.currentTimeMillis()
+                totpRemainingSeconds = TotpManager.getRemainingSeconds(now, card.totpPeriod)
+                val code = TotpManager.generateCode(
+                    secret = card.totpSecret,
+                    timeMillis = now,
+                    periodSeconds = card.totpPeriod,
+                    digits = card.totpDigits
+                )
+                if (currentTotpCode != code) {
+                    currentTotpCode = code
+                    if (card.pinPath.isNotEmpty()) {
+                        currentTiles = ArtistPathManager.mapDigitsToPath(
+                            paintedPath = card.pinPath,
+                            digitString = code,
+                            secretColor = card.secretColor,
+                            existingTiles = currentTiles
+                        )
+                    } else {
+                        // Fallback for non-painted secret cells
+                        val secretIndices = currentTiles.indices.filter { currentTiles[it].isPinTile }
+                        if (secretIndices.isNotEmpty()) {
+                            val mutable = currentTiles.toMutableList()
+                            for (i in 0 until minOf(code.length, secretIndices.size)) {
+                                val idx = secretIndices[i]
+                                mutable[idx] = mutable[idx].copy(
+                                    digit = code[i].toString(),
+                                    colorId = card.secretColor,
+                                    isPinTile = true
+                                )
+                            }
+                            currentTiles = mutable
+                        }
+                    }
+                }
+                delay(1000L)
+            }
+        }
+    }
 
     // Timed reveal window: 12-second countdown with automatic re-camouflage
     LaunchedEffect(isPeeking) {
@@ -221,6 +277,8 @@ fun MatrixDetailScreen(
                     TopSecurityBar(
                         isPeeking = isPeeking,
                         palette = palette,
+                        isTotp = card.isTotp,
+                        totpRemainingSeconds = totpRemainingSeconds,
                         onRefreshDecoys = {
                             currentTiles = DecoyRandomizer.randomizeDecoys(currentTiles, card.secretColor)
                         }
@@ -245,6 +303,13 @@ fun MatrixDetailScreen(
                         palette = palette,
                         isPeeking = isPeeking,
                         countdownSeconds = countdownSeconds,
+                        isTotp = card.isTotp,
+                        totpRemainingSeconds = totpRemainingSeconds,
+                        currentTotpCode = currentTotpCode,
+                        onCopyTotpCode = {
+                            clipboardManager.setText(AnnotatedString(currentTotpCode))
+                            Toast.makeText(context, context.getString(R.string.totp_code_copied), Toast.LENGTH_SHORT).show()
+                        },
                         onToggleReveal = {
                             if (isPeeking) {
                                 // Tap again to extinguish immediately
@@ -270,6 +335,8 @@ fun MatrixDetailScreen(
                     TopSecurityBar(
                         isPeeking = isPeeking,
                         palette = palette,
+                        isTotp = card.isTotp,
+                        totpRemainingSeconds = totpRemainingSeconds,
                         onRefreshDecoys = {
                             currentTiles = DecoyRandomizer.randomizeDecoys(currentTiles, card.secretColor)
                         }
@@ -299,6 +366,13 @@ fun MatrixDetailScreen(
                         palette = palette,
                         isPeeking = isPeeking,
                         countdownSeconds = countdownSeconds,
+                        isTotp = card.isTotp,
+                        totpRemainingSeconds = totpRemainingSeconds,
+                        currentTotpCode = currentTotpCode,
+                        onCopyTotpCode = {
+                            clipboardManager.setText(AnnotatedString(currentTotpCode))
+                            Toast.makeText(context, context.getString(R.string.totp_code_copied), Toast.LENGTH_SHORT).show()
+                        },
                         onToggleReveal = {
                             if (isPeeking) {
                                 // Tap again to extinguish immediately
@@ -321,6 +395,8 @@ fun MatrixDetailScreen(
 private fun TopSecurityBar(
     isPeeking: Boolean,
     palette: PaletteColor,
+    isTotp: Boolean = false,
+    totpRemainingSeconds: Int = 0,
     onRefreshDecoys: () -> Unit
 ) {
     Row(
@@ -352,27 +428,81 @@ private fun TopSecurityBar(
             Spacer(modifier = Modifier.width(8.dp))
             Column {
                 Text(
-                    text = stringResource(R.string.detail_steganographic_camouflage),
+                    text = if (isTotp) {
+                        stringResource(R.string.totp_setup_title)
+                    } else {
+                        stringResource(R.string.detail_steganographic_camouflage)
+                    },
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = if (isPeeking) stringResource(R.string.detail_pattern_revealed) else stringResource(R.string.detail_shoulder_surf_protected),
+                    text = if (isPeeking) {
+                        stringResource(R.string.detail_pattern_revealed)
+                    } else if (isTotp) {
+                        stringResource(R.string.totp_countdown_label, totpRemainingSeconds)
+                    } else {
+                        stringResource(R.string.detail_shoulder_surf_protected)
+                    },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
-        OutlinedButton(
-            onClick = onRefreshDecoys,
-            shape = RoundedCornerShape(10.dp),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-            modifier = Modifier.height(34.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(14.dp))
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(stringResource(R.string.action_refresh_decoys), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            if (isTotp) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(
+                            if (totpRemainingSeconds <= 5) {
+                                MaterialTheme.colorScheme.errorContainer
+                            } else {
+                                MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f)
+                            }
+                        )
+                        .padding(horizontal = 7.dp, vertical = 4.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Timer,
+                            contentDescription = null,
+                            tint = if (totpRemainingSeconds <= 5) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onTertiaryContainer
+                            },
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text(
+                            text = "${totpRemainingSeconds}s",
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (totpRemainingSeconds <= 5) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onTertiaryContainer
+                            }
+                        )
+                    }
+                }
+            }
+
+            OutlinedButton(
+                onClick = onRefreshDecoys,
+                shape = RoundedCornerShape(10.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                modifier = Modifier.height(34.dp)
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(14.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(stringResource(R.string.action_refresh_decoys), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }
@@ -383,6 +513,10 @@ private fun RuleAndRevealCard(
     palette: PaletteColor,
     isPeeking: Boolean,
     countdownSeconds: Int,
+    isTotp: Boolean = false,
+    totpRemainingSeconds: Int = 0,
+    currentTotpCode: String = "",
+    onCopyTotpCode: (() -> Unit)? = null,
     onToggleReveal: () -> Unit
 ) {
     Card(
@@ -413,7 +547,11 @@ private fun RuleAndRevealCard(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = stringResource(R.string.detail_secret_rule_title),
+                        text = if (isTotp) {
+                            stringResource(R.string.totp_setup_title)
+                        } else {
+                            stringResource(R.string.detail_secret_rule_title)
+                        },
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -428,7 +566,11 @@ private fun RuleAndRevealCard(
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Text(
-                            text = stringResource(R.string.detail_tokens_badge, stringResource(palette.nameRes)),
+                            text = if (isTotp) {
+                                stringResource(R.string.totp_active_badge, totpRemainingSeconds)
+                            } else {
+                                stringResource(R.string.detail_tokens_badge, stringResource(palette.nameRes))
+                            },
                             color = palette.textColor,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold
@@ -442,7 +584,11 @@ private fun RuleAndRevealCard(
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Text(
-                            text = stringResource(R.string.detail_encrypted_badge),
+                            text = if (isTotp) {
+                                stringResource(R.string.totp_active_badge, totpRemainingSeconds)
+                            } else {
+                                stringResource(R.string.detail_encrypted_badge)
+                            },
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold
@@ -454,14 +600,67 @@ private fun RuleAndRevealCard(
             // Description: Does NOT interpolate the color name unless isPeeking is true
             Text(
                 text = if (isPeeking) {
-                    if (card.ruleHint.isNotBlank()) card.ruleHint else stringResource(R.string.detail_rule_default_peeking, stringResource(palette.nameRes))
+                    if (card.ruleHint.isNotBlank()) {
+                        card.ruleHint
+                    } else if (isTotp) {
+                        stringResource(R.string.totp_setup_desc)
+                    } else {
+                        stringResource(R.string.detail_rule_default_peeking, stringResource(palette.nameRes))
+                    }
                 } else {
-                    if (card.ruleHint.isNotBlank()) card.ruleHint else stringResource(R.string.detail_rule_default_concealed)
+                    if (card.ruleHint.isNotBlank()) {
+                        card.ruleHint
+                    } else if (isTotp) {
+                        stringResource(R.string.totp_setup_desc)
+                    } else {
+                        stringResource(R.string.detail_rule_default_concealed)
+                    }
                 },
                 fontSize = 11.5.sp,
                 lineHeight = 16.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
             )
+
+            // When peeking a TOTP card, show the clear-text rolling code + quick copy button
+            if (isPeeking && isTotp && currentTotpCode.isNotBlank()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.totp_countdown_label, totpRemainingSeconds),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+                        )
+                        Text(
+                            text = currentTotpCode.chunked(3).joinToString(" "),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+
+                    if (onCopyTotpCode != null) {
+                        OutlinedButton(
+                            onClick = onCopyTotpCode,
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            modifier = Modifier.height(36.dp)
+                        ) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(stringResource(R.string.totp_copy_code), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
 
             // TIMED BIOMETRIC REVEAL BUTTON (Tap to Reveal + Tap to Extinguish)
             val peekerContainerColor by animateColorAsState(

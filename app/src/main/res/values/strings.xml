@@ -7,6 +7,7 @@
     <string name="category_debit">Debit Card</string>
     <string name="category_banking">Telephone Banking</string>
     <string name="category_safe">Safe &amp; Door Access</string>
+    <string name="category_authenticator">Authenticator (2FA / TOTP)</string>
     <string name="category_other">Other PIN</string>
 
     <!-- Palette Colors -->
@@ -204,4 +205,27 @@
     <string name="editor_artist_suggest_hint">Suggest Rule Hint</string>
     <string name="editor_artist_hint_copied_toast">Rule hint updated from painted path!</string>
     <string name="action_close">Close</string>
+
+    <!-- Dynamic TOTP Authenticator -->
+    <string name="totp_setup_title">Dynamic TOTP PIN</string>
+    <string name="totp_setup_desc">Initialize from a QR code. Your 6-digit rolling code is camouflaged along your secret path.</string>
+    <string name="action_scan_qr">Photograph / Scan QR Code</string>
+    <string name="action_enter_key_manually">Enter Secret Key</string>
+    <string name="action_choose_photo">Choose Photo</string>
+    <string name="action_take_photo">Photograph QR</string>
+    <string name="totp_qr_scanner_title">Photograph 2FA QR Code</string>
+    <string name="totp_qr_scanner_subtitle">Point camera at QR code or photograph from screen</string>
+    <string name="totp_qr_permission_required">Camera permission is required to photograph QR codes.</string>
+    <string name="totp_qr_grant_permission">Grant Camera Permission</string>
+    <string name="totp_qr_error_no_code">No valid QR code found in photograph. Try holding closer or tapping focus.</string>
+    <string name="totp_manual_dialog_title">Enter TOTP Secret Key</string>
+    <string name="totp_manual_secret_label">Base32 Secret Key</string>
+    <string name="totp_manual_issuer_label">Account / Service Name</string>
+    <string name="totp_manual_save">Apply Key</string>
+    <string name="totp_active_badge">Dynamic TOTP (%1$ds)</string>
+    <string name="totp_countdown_label">%1$ds remaining</string>
+    <string name="totp_secret_imported">✓ QR code imported: %1$s. Now define your secret path on the matrix.</string>
+    <string name="totp_copy_code">Copy 2FA Code</string>
+    <string name="totp_code_copied">2FA code copied to clipboard</string>
+    <string name="totp_remove_totp">Remove TOTP Mode</string>
 </resources>

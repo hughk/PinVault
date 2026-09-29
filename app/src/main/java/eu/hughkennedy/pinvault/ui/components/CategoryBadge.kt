@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,6 +33,7 @@ object CategoryVisuals {
             CardCategory.DEBIT -> Icons.Default.Payment
             CardCategory.BANKING -> Icons.Default.AccountBalance
             CardCategory.SAFE -> Icons.Default.Lock
+            CardCategory.AUTHENTICATOR -> Icons.Default.VpnKey
             CardCategory.OTHER -> Icons.Default.Shield
         }
     }
@@ -42,6 +44,7 @@ object CategoryVisuals {
             CardCategory.DEBIT -> if (isDark) Color(0xFF2DD4BF) else Color(0xFF0F766E) // Mint Teal
             CardCategory.BANKING -> if (isDark) Color(0xFF4ADE80) else Color(0xFF15803D) // Emerald Green
             CardCategory.SAFE -> if (isDark) Color(0xFFFBBF24) else Color(0xFFB45309) // Amber Gold
+            CardCategory.AUTHENTICATOR -> if (isDark) Color(0xFFFB7185) else Color(0xFFE11D48) // Vibrant Rose
             CardCategory.OTHER -> if (isDark) Color(0xFFC084FC) else Color(0xFF7E22CE) // Vibrant Purple
         }
     }

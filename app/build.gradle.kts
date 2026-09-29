@@ -11,8 +11,8 @@ android {
         applicationId = "eu.hughkennedy.pinvault"
         minSdk = 26
         targetSdk = 36
-        versionCode = 994
-        versionName = "0.994"
+        versionCode = 995
+        versionName = "0.995"
     }
 
     buildTypes {
@@ -71,6 +71,12 @@ dependencies {
   // Biometrics & Security
   implementation(libs.androidx.biometric)
   implementation(libs.androidx.fragment.ktx)
+
+  // QR Code Decoding & Camera
+  implementation(libs.zxing.core)
+  implementation(libs.androidx.camera.camera2)
+  implementation(libs.androidx.camera.lifecycle)
+  implementation(libs.androidx.camera.view)
 
   // Serialization
   implementation(libs.kotlinx.serialization.json)
