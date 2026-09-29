@@ -64,7 +64,7 @@ fun MatrixGridView(
         contentAlignment = Alignment.Center
     ) {
         val spacing = 6.dp
-        val padding = 12.dp
+        val padding = 10.dp
 
         val availableW = maxWidth - (padding * 2) - (spacing * (cols - 1))
         val availableH = maxHeight - (padding * 2) - (spacing * (rows - 1))

@@ -420,10 +420,18 @@ fun MatrixEditorScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(14.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 14.dp, bottom = 14.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Mode Selector Toggle: Artist Fingerpaint vs Manual Tap
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Mode Selector Toggle: Artist Fingerpaint vs Manual Tap
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -639,12 +647,14 @@ fun MatrixEditorScreen(
                             }
                         }
                     }
+                    }
 
                     // Matrix View inside Editor
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(380.dp),
+                            .padding(horizontal = 4.dp)
+                            .height(440.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         MatrixGridView(
@@ -694,7 +704,8 @@ fun MatrixEditorScreen(
                     Text(
                         text = stringResource(R.string.editor_unassigned_tiles_note),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 14.dp)
                     )
                 }
             }
