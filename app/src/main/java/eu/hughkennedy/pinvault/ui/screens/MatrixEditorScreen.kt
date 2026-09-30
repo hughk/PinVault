@@ -697,6 +697,17 @@ fun MatrixEditorScreen(
                                     strokes = strokes + listOf(activeStroke)
                                     activeStroke = emptyList()
                                 }
+                            },
+                            onCellRemoved = { cellToRemove ->
+                                strokes = ArtistPathManager.removeCellFromStrokes(strokes, cellToRemove)
+                                activeStroke = activeStroke.filter { it != cellToRemove }
+                                val remainingPath = strokes.flatten() + activeStroke
+                                tiles = ArtistPathManager.mapDigitsToPath(
+                                    paintedPath = remainingPath,
+                                    digitString = artistPinString,
+                                    secretColor = secretColor,
+                                    existingTiles = tiles
+                                )
                             }
                         )
                     }

@@ -473,4 +473,102 @@ class ArtistPathManagerTest {
         // Trim with target >= total returns original strokes
         assertEquals(strokes, ArtistPathManager.trimStrokes(strokes, 10))
     }
+
+    @Test
+    fun `removing position 4 from path of 7 cells renumbers positions 5 to 7 to 4 to 6`() {
+        // Path with 7 cells in order (positions 1 to 7)
+        val stroke = listOf(
+            PaintedCell(0, 0), // #1
+            PaintedCell(0, 1), // #2
+            PaintedCell(0, 2), // #3
+            PaintedCell(0, 3), // #4 - accidental cell
+            PaintedCell(1, 3), // #5
+            PaintedCell(2, 3), // #6
+            PaintedCell(3, 3)  // #7
+        )
+        val strokes = listOf(stroke)
+        val accidentalCell = PaintedCell(0, 3)
+
+        // Remove position 4
+        val updatedStrokes = ArtistPathManager.removeCellFromStrokes(strokes, accidentalCell)
+        val newPath = updatedStrokes.flatten()
+
+        // Path now has 6 cells
+        assertEquals(6, newPath.size)
+        assertEquals(PaintedCell(0, 0), newPath[0]) // #1
+        assertEquals(PaintedCell(0, 1), newPath[1]) // #2
+        assertEquals(PaintedCell(0, 2), newPath[2]) // #3
+        assertEquals(PaintedCell(1, 3), newPath[3]) // #4 (renumbered from #5!)
+        assertEquals(PaintedCell(2, 3), newPath[4]) // #5 (renumbered from #6!)
+        assertEquals(PaintedCell(3, 3), newPath[5]) // #6 (renumbered from #7!)
+
+        // Verify digits are correctly placed and mapped onto the new path
+        val tiles = ArtistPathManager.mapDigitsToPath(
+            paintedPath = newPath,
+            digitString = "123456",
+            secretColor = "blue",
+            existingTiles = createEmpty6x7Matrix()
+        )
+
+        // The accidental cell (0, 3) is no longer a PIN tile
+        val accidentalTile = tiles.first { it.row == 0 && it.col == 3 }
+        assertFalse(accidentalTile.isPinTile)
+
+        // Renumbered cells receive the corresponding digits in order
+        assertEquals("1", tiles.first { it.row == 0 && it.col == 0 }.digit)
+        assertEquals("2", tiles.first { it.row == 0 && it.col == 1 }.digit)
+        assertEquals("3", tiles.first { it.row == 0 && it.col == 2 }.digit)
+        assertEquals("4", tiles.first { it.row == 1 && it.col == 3 }.digit)
+        assertEquals("5", tiles.first { it.row == 2 && it.col == 3 }.digit)
+        assertEquals("6", tiles.first { it.row == 3 && it.col == 3 }.digit)
+    }
+
+    @Test
+    fun `removing cell from multi-stroke path preserves subsequent strokes and renumbers`() {
+        val strokes = listOf(
+            listOf(PaintedCell(0, 0), PaintedCell(0, 1), PaintedCell(0, 2), PaintedCell(0, 3)), // #1..#4
+            listOf(PaintedCell(1, 3), PaintedCell(2, 3), PaintedCell(3, 3))                      // #5..#7
+        )
+        val updatedStrokes = ArtistPathManager.removeCellFromStrokes(strokes, PaintedCell(0, 3))
+        val newPath = updatedStrokes.flatten()
+
+        assertEquals(6, newPath.size)
+        assertEquals(PaintedCell(1, 3), newPath[3]) // was #5, now #4
+        assertEquals(PaintedCell(2, 3), newPath[4]) // was #6, now #5
+        assertEquals(PaintedCell(3, 3), newPath[5]) // was #7, now #6
+    }
+
+    @Test
+    fun `removing single-cell stroke drops the empty stroke from strokes list`() {
+        val strokes = listOf(
+            listOf(PaintedCell(0, 0), PaintedCell(0, 1)),
+            listOf(PaintedCell(0, 2)), // single-cell stroke
+            listOf(PaintedCell(0, 3), PaintedCell(0, 4))
+        )
+        val updatedStrokes = ArtistPathManager.removeCellFromStrokes(strokes, PaintedCell(0, 2))
+        assertEquals(2, updatedStrokes.size)
+        assertEquals(listOf(PaintedCell(0, 0), PaintedCell(0, 1)), updatedStrokes[0])
+        assertEquals(listOf(PaintedCell(0, 3), PaintedCell(0, 4)), updatedStrokes[1])
+        assertEquals(4, updatedStrokes.flatten().size)
+    }
+
+    @Test
+    fun `removing first cell #1 shifts all remaining positions down by 1`() {
+        val strokes = listOf(listOf(PaintedCell(1, 1), PaintedCell(1, 2), PaintedCell(1, 3)))
+        val updated = ArtistPathManager.removeCellFromStrokes(strokes, PaintedCell(1, 1))
+        val newPath = updated.flatten()
+        assertEquals(2, newPath.size)
+        assertEquals(PaintedCell(1, 2), newPath[0]) // was #2, now #1
+        assertEquals(PaintedCell(1, 3), newPath[1]) // was #3, now #2
+    }
+
+    @Test
+    fun `removing last cell keeps earlier positions unchanged`() {
+        val strokes = listOf(listOf(PaintedCell(1, 1), PaintedCell(1, 2), PaintedCell(1, 3)))
+        val updated = ArtistPathManager.removeCellFromStrokes(strokes, PaintedCell(1, 3))
+        val newPath = updated.flatten()
+        assertEquals(2, newPath.size)
+        assertEquals(PaintedCell(1, 1), newPath[0])
+        assertEquals(PaintedCell(1, 2), newPath[1])
+    }
 }

@@ -62,16 +62,42 @@ object ArtistPathManager {
             } else {
                 // Not in painted path: if it was previously marked as PIN tile in artist mode, clear it
                 if (tile.isPinTile) {
-                    tile.copy(
-                        digit = "?",
-                        colorId = secretColor,
-                        isPinTile = false
-                    )
+                    val decoysActive = existingTiles.any { !it.isPinTile && !it.isBlank }
+                    if (decoysActive) {
+                        val decoyColor = DecoyRandomizer.pickDecoyColor(tile.row, tile.col, secretColor, emptyList())
+                        val randomDigit = (0..9).random().toString()
+                        tile.copy(
+                            digit = randomDigit,
+                            colorId = decoyColor,
+                            isPinTile = false
+                        )
+                    } else {
+                        tile.copy(
+                            digit = "?",
+                            colorId = secretColor,
+                            isPinTile = false
+                        )
+                    }
                 } else {
                     tile
                 }
             }
         }
+    }
+
+    /**
+     * Removes a specific [cellToRemove] from the list of [strokes].
+     * Preserves the relative order of all other cells and drops any strokes
+     * that become empty as a result.
+     * Subsequent cells in the flattened path are automatically renumbered.
+     */
+    fun removeCellFromStrokes(
+        strokes: List<List<PaintedCell>>,
+        cellToRemove: PaintedCell
+    ): List<List<PaintedCell>> {
+        return strokes.map { stroke ->
+            stroke.filter { it != cellToRemove }
+        }.filter { it.isNotEmpty() }
     }
 
     /**

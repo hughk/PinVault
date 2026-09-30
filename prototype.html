@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pin Vault v0.994 - Interactive Typography, Multi-Language & Feature Prototype</title>
+  <title>Pin Vault v0.996 - Interactive Typography, Multi-Language & Feature Prototype</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -154,7 +154,7 @@
         <div class="flex items-center gap-2">
           <h1 class="text-2xl font-extrabold text-white tracking-tight">Pin Vault</h1>
           <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
-            v0.993 Prototype
+            v0.996 Prototype
           </span>
         </div>
         <p class="text-xs text-slate-400 mt-0.5">Visual Steganography PIN Vault • High-Legibility Typography Evaluation • GPL-3.0</p>
@@ -550,7 +550,7 @@
               <!-- About Card Button -->
               <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between gap-3">
                 <div>
-                  <h5 class="ui-card-title text-white">Pin Vault v0.994</h5>
+                  <h5 class="ui-card-title text-white">Pin Vault v0.996</h5>
                   <p class="ui-app-subtitle text-slate-400">Created by Hugh Kennedy</p>
                 </div>
                 <button onclick="openAboutModal()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 ui-btn-main transition">
@@ -826,7 +826,7 @@
         </div>
         <div>
           <h4 class="ui-about-title text-white">Pin Vault</h4>
-          <span class="ui-about-badge text-indigo-400 font-mono font-bold">v0.994 (Beta)</span>
+          <span class="ui-about-badge text-indigo-400 font-mono font-bold">v0.996 (Release)</span>
         </div>
       </div>
 
@@ -1828,6 +1828,8 @@
     let wizardStrokes = [];
     let wizardActiveStroke = [];
     let wizardIsDragging = false;
+    let wizardStartCell = null;
+    let wizardHasDraggedOther = false;
 
     function setWizardDesignMode(mode) {
       wizardDesignMode = mode;
@@ -1906,9 +1908,18 @@
       renderEditorGrid();
     }
 
+    function removeCellFromWizardPath(r, c) {
+      wizardStrokes = wizardStrokes.map(stroke => stroke.filter(p => !(p.r === r && p.c === c))).filter(s => s.length > 0);
+      wizardActiveStroke = wizardActiveStroke.filter(p => !(p.r === r && p.c === c));
+      remapArtistDigits();
+      updateArtistStatus();
+    }
+
     function startArtistDrag(r, c) {
       if (wizardDesignMode !== 'artist') return;
       wizardIsDragging = true;
+      wizardStartCell = { r, c };
+      wizardHasDraggedOther = false;
       const all = getFlatPaintedPath();
       if (!all.some(p => p.r === r && p.c === c)) {
         wizardActiveStroke = [{ r, c }];
@@ -1919,6 +1930,9 @@
 
     function continueArtistDrag(r, c) {
       if (wizardDesignMode !== 'artist' || !wizardIsDragging) return;
+      if (wizardStartCell && (wizardStartCell.r !== r || wizardStartCell.c !== c)) {
+        wizardHasDraggedOther = true;
+      }
       const all = getFlatPaintedPath();
       if (!all.some(p => p.r === r && p.c === c)) {
         wizardActiveStroke.push({ r, c });
@@ -1930,6 +1944,15 @@
     function endArtistDrag() {
       if (!wizardIsDragging) return;
       wizardIsDragging = false;
+      if (!wizardHasDraggedOther && wizardStartCell) {
+        const all = getFlatPaintedPath();
+        if (all.some(p => p.r === wizardStartCell.r && p.c === wizardStartCell.c)) {
+          removeCellFromWizardPath(wizardStartCell.r, wizardStartCell.c);
+          wizardStartCell = null;
+          return;
+        }
+      }
+      wizardStartCell = null;
       if (wizardActiveStroke.length > 0) {
         wizardStrokes.push([...wizardActiveStroke]);
         wizardActiveStroke = [];

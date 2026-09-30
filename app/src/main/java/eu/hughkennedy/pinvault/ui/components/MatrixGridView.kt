@@ -54,7 +54,8 @@ fun MatrixGridView(
     secretColorId: String = "blue",
     onTileClick: ((TileData) -> Unit)? = null,
     onCellTraversed: ((PaintedCell) -> Unit)? = null,
-    onStrokeFinished: (() -> Unit)? = null
+    onStrokeFinished: (() -> Unit)? = null,
+    onCellRemoved: ((PaintedCell) -> Unit)? = null
 ) {
     // Collect genuine PIN tiles to determine sequence order during peeking
     val pinTiles = tiles.filter { it.isPinTile && !it.isBlank }
@@ -120,31 +121,56 @@ fun MatrixGridView(
                     )
                     .then(
                         if (isArtistMode && onCellTraversed != null) {
-                            Modifier.pointerInput(cols, rows, tileSizePx, spacingPx, paddingPx) {
+                            Modifier.pointerInput(cols, rows, tileSizePx, spacingPx, paddingPx, paintedPath) {
                                 awaitEachGesture {
                                     val down = awaitFirstDown(requireUnconsumed = false)
                                     down.consume()
-                                    ArtistPathManager.findCellAtOffset(
+                                    val startCell = ArtistPathManager.findCellAtOffset(
                                         down.position.x, down.position.y,
                                         cols, rows, tileSizePx, spacingPx, paddingPx
-                                    )?.let { cell ->
-                                        onCellTraversed(cell)
-                                    }
+                                    )
 
-                                    while (true) {
-                                        val event = awaitPointerEvent()
-                                        val change = event.changes.firstOrNull() ?: break
-                                        if (!change.pressed) break
-                                        change.consume()
-                                        ArtistPathManager.findCellAtOffset(
-                                            change.position.x, change.position.y,
-                                            cols, rows, tileSizePx, spacingPx, paddingPx,
-                                            maxRadiusPx = tileSizePx * 0.52f
-                                        )?.let { cell ->
-                                            onCellTraversed(cell)
+                                    var hasDraggedToDifferentCell = false
+
+                                    if (startCell != null) {
+                                        val isAlreadyInPath = paintedPath.contains(startCell)
+                                        if (!isAlreadyInPath) {
+                                            onCellTraversed(startCell)
                                         }
+
+                                        while (true) {
+                                            val event = awaitPointerEvent()
+                                            val change = event.changes.firstOrNull() ?: break
+                                            if (!change.pressed) break
+                                            change.consume()
+                                            val currentCell = ArtistPathManager.findCellAtOffset(
+                                                change.position.x, change.position.y,
+                                                cols, rows, tileSizePx, spacingPx, paddingPx,
+                                                maxRadiusPx = tileSizePx * 0.52f
+                                            )
+                                            if (currentCell != null) {
+                                                if (currentCell != startCell) {
+                                                    hasDraggedToDifferentCell = true
+                                                }
+                                                onCellTraversed(currentCell)
+                                            }
+                                        }
+
+                                        if (!hasDraggedToDifferentCell && isAlreadyInPath) {
+                                            // Tapped on an existing painted cell to remove it and renumber subsequent cells
+                                            onCellRemoved?.invoke(startCell)
+                                        } else {
+                                            onStrokeFinished?.invoke()
+                                        }
+                                    } else {
+                                        while (true) {
+                                            val event = awaitPointerEvent()
+                                            val change = event.changes.firstOrNull() ?: break
+                                            if (!change.pressed) break
+                                            change.consume()
+                                        }
+                                        onStrokeFinished?.invoke()
                                     }
-                                    onStrokeFinished?.invoke()
                                 }
                             }
                         } else {
