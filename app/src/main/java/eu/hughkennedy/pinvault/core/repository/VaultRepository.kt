@@ -1,6 +1,7 @@
 package eu.hughkennedy.pinvault.core.repository
 
 import android.content.Context
+import eu.hughkennedy.pinvault.core.backup.BackupMigrationManager
 import eu.hughkennedy.pinvault.core.engine.ArtistPathManager
 import eu.hughkennedy.pinvault.core.engine.DecoyRandomizer
 import eu.hughkennedy.pinvault.core.engine.PaintedCell
@@ -13,17 +14,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import java.io.File
 import java.security.MessageDigest
 
 class VaultRepository(private val context: Context) {
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        prettyPrint = true
-        encodeDefaults = true
-    }
 
     private val vaultFile: File get() = File(context.filesDir, "vault_cards.json")
     private val prefs = context.getSharedPreferences("pin_keeper_prefs", Context.MODE_PRIVATE)
@@ -36,26 +30,58 @@ class VaultRepository(private val context: Context) {
     }
 
     private fun loadCards() {
-        if (!vaultFile.exists()) {
+        val legacyCandidates = listOf(
+            vaultFile,
+            File(context.filesDir, "cards.json"),
+            File(context.filesDir, "pin_keeper_cards.json")
+        )
+
+        val targetFile = legacyCandidates.firstOrNull { it.exists() && it.length() > 0 }
+
+        if (targetFile == null) {
             val initialCards = createSampleCards()
             saveCards(initialCards)
             _cards.value = initialCards
-        } else {
-            try {
-                val content = vaultFile.readText(Charsets.UTF_8)
-                val loaded = json.decodeFromString<List<CardEntity>>(content)
+            return
+        }
+
+        try {
+            val content = targetFile.readText(Charsets.UTF_8)
+            val loaded = BackupMigrationManager.parseCardsJson(content)
+            if (loaded.isNotEmpty()) {
                 _cards.value = loaded
-            } catch (e: Exception) {
+                // If loaded from a legacy file or if primary vaultFile needs syncing
+                if (targetFile != vaultFile || !vaultFile.exists()) {
+                    saveCards(loaded)
+                }
+            } else {
+                // Preserve the corrupt file before sample cards overwrite
+                createCorruptBackup(targetFile)
                 val initialCards = createSampleCards()
                 saveCards(initialCards)
                 _cards.value = initialCards
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            createCorruptBackup(targetFile)
+            val initialCards = createSampleCards()
+            saveCards(initialCards)
+            _cards.value = initialCards
+        }
+    }
+
+    private fun createCorruptBackup(file: File) {
+        try {
+            val backup = File(context.filesDir, "vault_cards.json.corrupt_bak")
+            file.copyTo(backup, overwrite = true)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
     private fun saveCards(cardList: List<CardEntity>) {
         try {
-            val serialized = json.encodeToString(cardList)
+            val serialized = BackupMigrationManager.json.encodeToString(cardList)
             vaultFile.writeText(serialized, Charsets.UTF_8)
             _cards.value = cardList
         } catch (e: Exception) {
@@ -64,13 +90,15 @@ class VaultRepository(private val context: Context) {
     }
 
     fun addCard(card: CardEntity) {
-        val updated = _cards.value + card
+        val normalized = BackupMigrationManager.normalizeCard(card)
+        val updated = _cards.value + normalized
         saveCards(updated)
     }
 
     fun updateCard(updatedCard: CardEntity) {
+        val normalized = BackupMigrationManager.normalizeCard(updatedCard)
         val updated = _cards.value.map {
-            if (it.id == updatedCard.id) updatedCard else it
+            if (it.id == normalized.id) normalized else it
         }
         saveCards(updated)
     }
@@ -81,11 +109,12 @@ class VaultRepository(private val context: Context) {
     }
 
     fun restoreBackup(importedCards: List<CardEntity>, replace: Boolean) {
+        val normalized = importedCards.map { BackupMigrationManager.normalizeCard(it) }
         val updated = if (replace) {
-            importedCards
+            normalized
         } else {
             val currentMap = _cards.value.associateBy { it.id }.toMutableMap()
-            importedCards.forEach { currentMap[it.id] = it }
+            normalized.forEach { currentMap[it.id] = it }
             currentMap.values.toList()
         }
         saveCards(updated)
