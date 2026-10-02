@@ -571,4 +571,34 @@ class ArtistPathManagerTest {
         assertEquals(PaintedCell(1, 1), newPath[0])
         assertEquals(PaintedCell(1, 2), newPath[1])
     }
+
+    @Test
+    fun `drawing path over existing tiles preserves their existing digits when digitString is shorter or empty`() {
+        val existingTiles = createEmpty6x7Matrix().map { tile ->
+            tile.copy(digit = ((tile.row * 6 + tile.col) % 10).toString())
+        }
+
+        val paintedPath = listOf(
+            PaintedCell(0, 0),
+            PaintedCell(0, 1),
+            PaintedCell(0, 2),
+            PaintedCell(0, 3)
+        )
+
+        // When digitString is empty, tiles in path keep their existing digits
+        val mappedTiles = ArtistPathManager.mapDigitsToPath(
+            paintedPath = paintedPath,
+            digitString = "",
+            secretColor = "emerald",
+            existingTiles = existingTiles
+        )
+
+        val pathTiles = mappedTiles.filter { it.isPinTile }
+        assertEquals(4, pathTiles.size)
+        assertEquals("0", pathTiles.first { it.row == 0 && it.col == 0 }.digit)
+        assertEquals("1", pathTiles.first { it.row == 0 && it.col == 1 }.digit)
+        assertEquals("2", pathTiles.first { it.row == 0 && it.col == 2 }.digit)
+        assertEquals("3", pathTiles.first { it.row == 0 && it.col == 3 }.digit)
+    }
 }
+

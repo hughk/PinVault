@@ -162,13 +162,13 @@ class DecoyRandomizerTest {
     }
 
     @Test
-    fun testRandomizeOverwritesUnassignedPathCellsWhenDigitsFewerThanPath() {
+    fun testRandomizeDoesNotRandomiseDigitsOnDrawnPath() {
         val secretColor = "blue"
         val cols = 6
         val rows = 7
         val blank = DecoyRandomizer.createBlankMatrix(cols = cols, rows = rows, defaultColor = secretColor)
 
-        // Draw 8 cells and enter "1234" (only 4 digits)
+        // Draw 8 cells and enter "1234"
         val paintedPath = (0 until 8).map { PaintedCell(it / cols, it % cols) }
         val matrixWithPin = ArtistPathManager.mapDigitsToPath(
             paintedPath = paintedPath,
@@ -177,36 +177,40 @@ class DecoyRandomizerTest {
             existingTiles = blank
         )
 
-        // Verify initial state before randomize:
+        // Verify initial state:
         // First 4 cells have digits "1", "2", "3", "4"
         // Next 4 cells (indices 4..7) have "?"
         assertEquals("1", matrixWithPin.first { it.row == paintedPath[0].row && it.col == paintedPath[0].col }.digit)
         assertEquals("?", matrixWithPin.first { it.row == paintedPath[4].row && it.col == paintedPath[4].col }.digit)
 
-        // Now randomize
+        // Now randomize decoys
         val randomized = DecoyRandomizer.randomizeDecoys(matrixWithPin, secretColor)
 
-        // 1. Manually set PIN tiles (first 4 cells) remain intact
+        // 1. All cells on the drawn path MUST NOT be randomised
         for (i in 0 until 4) {
             val cell = paintedPath[i]
             val tile = randomized.first { it.row == cell.row && it.col == cell.col }
             assertEquals((i + 1).toString(), tile.digit)
-            assertTrue(tile.isPinTile)
+            assertTrue("Path cell must remain a PIN tile", tile.isPinTile)
             assertEquals(secretColor, tile.colorId)
         }
 
-        // 2. Positions 5, 6, 7, 8 (cells 4..7) where number was not set MUST be overwritten as decoys
         for (i in 4 until 8) {
             val cell = paintedPath[i]
             val tile = randomized.first { it.row == cell.row && it.col == cell.col }
-            assertNotEquals("?", tile.digit)
-            assertTrue("Overwritten cell must have a numeric digit", tile.digit in "0".."9")
-            assertFalse("Positions 5..8 must not remain PIN tiles", tile.isPinTile)
+            assertEquals("?", tile.digit)
+            assertTrue("Path cell must remain a PIN tile", tile.isPinTile)
+            assertEquals(secretColor, tile.colorId)
         }
 
-        // 3. No question marks remain anywhere on the board
-        assertFalse("All question marks must be randomized", randomized.any { it.digit == "?" })
-        assertEquals("Exactly 4 PIN tiles must remain on the matrix", 4, randomized.count { it.isPinTile })
+        // Exactly 8 PIN tiles on the drawn path
+        assertEquals(8, randomized.count { it.isPinTile })
+
+        // 2. All tiles OUTSIDE the drawn path (34 tiles) MUST be randomized as decoys
+        val nonPathTiles = randomized.filter { !it.isPinTile }
+        assertEquals(34, nonPathTiles.size)
+        assertTrue("Non-path decoys must have numeric digits", nonPathTiles.all { it.digit in "0".."9" })
+        assertFalse("Decoys must not have '?'", nonPathTiles.any { it.digit == "?" })
     }
 
     @Test

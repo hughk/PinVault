@@ -52,9 +52,10 @@ object ArtistPathManager {
                         isPinTile = true
                     )
                 } else {
-                    // Painted cell awaiting digit entry
+                    // Painted cell: preserve existing digit if already numeric, otherwise '?'
+                    val preservedDigit = if (tile.digit.isNotEmpty() && tile.digit != "?") tile.digit else "?"
                     tile.copy(
-                        digit = "?",
+                        digit = preservedDigit,
                         colorId = secretColor,
                         isPinTile = true
                     )
