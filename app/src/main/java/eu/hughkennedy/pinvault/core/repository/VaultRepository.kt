@@ -1,11 +1,14 @@
 package eu.hughkennedy.pinvault.core.repository
 
 import android.content.Context
+import eu.hughkennedy.pinvault.core.engine.ArtistPathManager
 import eu.hughkennedy.pinvault.core.engine.DecoyRandomizer
+import eu.hughkennedy.pinvault.core.engine.PaintedCell
 import eu.hughkennedy.pinvault.core.model.CardCategory
 import eu.hughkennedy.pinvault.core.model.CardEntity
 import eu.hughkennedy.pinvault.core.model.TileData
 import eu.hughkennedy.pinvault.core.security.CryptoManager
+import eu.hughkennedy.pinvault.core.totp.TotpManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -158,6 +161,20 @@ class VaultRepository(private val context: Context) {
         }
         val card3Randomized = DecoyRandomizer.randomizeDecoys(card3Tiles, "amber")
 
+        // Sample 4: GitHub 2FA Authenticator (6x7, Rose, TOTP Authenticator, 6-digit rolling code)
+        val card4Path = listOf(
+            PaintedCell(0, 0), PaintedCell(0, 1), PaintedCell(0, 2),
+            PaintedCell(0, 3), PaintedCell(0, 4), PaintedCell(0, 5)
+        )
+        val card4TotpCode = TotpManager.generateCode("JBSWY3DPEHPK3PXP", digits = 6)
+        val card4Tiles = ArtistPathManager.mapDigitsToPath(
+            paintedPath = card4Path,
+            digitString = card4TotpCode,
+            secretColor = "rose",
+            existingTiles = DecoyRandomizer.createBlankMatrix(6, 7, "rose")
+        )
+        val card4Randomized = DecoyRandomizer.randomizeDecoys(card4Tiles, "rose", decoyLength = 6)
+
         return listOf(
             CardEntity(
                 id = "sample-card-1",
@@ -191,6 +208,24 @@ class VaultRepository(private val context: Context) {
                 secretColor = "amber",
                 ruleHint = "Amber tiles in reverse L-shape: Row 1 across, then down Col 4",
                 tiles = card3Randomized
+            ),
+            CardEntity(
+                id = "sample-card-4",
+                name = "GitHub 2FA Authenticator",
+                category = CardCategory.AUTHENTICATOR,
+                folder = "Work",
+                cols = 6,
+                rows = 7,
+                secretColor = "rose",
+                ruleHint = "Dynamic 6-digit rolling TOTP code along top row: (Row 1, Cols 1 to 6)",
+                tiles = card4Randomized,
+                isTotp = true,
+                totpSecret = "JBSWY3DPEHPK3PXP",
+                totpDigits = 6,
+                totpPeriod = 30,
+                totpAlgorithm = "SHA1",
+                totpIssuer = "GitHub",
+                pinPath = card4Path
             )
         )
     }

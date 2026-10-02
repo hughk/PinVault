@@ -156,27 +156,51 @@ object DecoyRandomizer {
 
     /**
      * Re-randomizes all decoy tiles in the matrix while keeping all genuine PIN tiles unchanged.
-     * Places a linear decoy PIN of at least 4 tiles (horizontal, vertical, or diagonal)
-     * where every tile in the line has the same uniform color.
+     * Places a linear decoy PIN (horizontal, vertical, or diagonal) where every tile in the line
+     * has the same uniform color.
+     * For 6-digit PINs (e.g. TOTP authenticators), the decoy line is 6 digits long.
+     * For shorter PINs, the decoy line matches the PIN length (minimum 4).
      */
+    @JvmOverloads
     fun randomizeDecoys(
         tiles: List<TileData>,
         secretColor: String,
+        decoyLength: Int? = null,
         random: Random = Random.Default
     ): List<TileData> {
         val pinTiles = tiles.filter { it.isPinTile && !it.isBlank }
         val rows = (tiles.maxOfOrNull { it.row } ?: 0) + 1
         val cols = (tiles.maxOfOrNull { it.col } ?: 0) + 1
 
-        // Find a linear decoy PIN candidate (length 4, uniform color)
-        val decoyLineResult = findValidDecoyLine(
+        val targetLength = decoyLength ?: when {
+            pinTiles.size >= 6 -> 6
+            pinTiles.isNotEmpty() -> pinTiles.size.coerceAtLeast(4)
+            else -> 4
+        }
+
+        // Try placing a linear decoy PIN of targetLength (or fallback down to 4 if needed)
+        var decoyLineResult = findValidDecoyLine(
             rows = rows,
             cols = cols,
             pinTiles = pinTiles,
             secretColor = secretColor,
-            length = 4,
+            length = targetLength,
             random = random
         )
+
+        if (decoyLineResult == null && targetLength > 4) {
+            for (fallbackLen in (targetLength - 1) downTo 4) {
+                decoyLineResult = findValidDecoyLine(
+                    rows = rows,
+                    cols = cols,
+                    pinTiles = pinTiles,
+                    secretColor = secretColor,
+                    length = fallbackLen,
+                    random = random
+                )
+                if (decoyLineResult != null) break
+            }
+        }
 
         val decoyLineCells = decoyLineResult?.first?.tiles?.toSet() ?: emptySet()
         val decoyLineColor = decoyLineResult?.second

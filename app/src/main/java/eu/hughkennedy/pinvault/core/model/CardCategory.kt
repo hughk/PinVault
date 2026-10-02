@@ -13,5 +13,6 @@ enum class CardCategory(
     DEBIT("Debit Card", R.string.category_debit),
     BANKING("Telephone Banking", R.string.category_banking),
     SAFE("Safe & Door Access", R.string.category_safe),
+    AUTHENTICATOR("Authenticator (TOTP)", R.string.category_authenticator),
     OTHER("Other PIN", R.string.category_other)
 }

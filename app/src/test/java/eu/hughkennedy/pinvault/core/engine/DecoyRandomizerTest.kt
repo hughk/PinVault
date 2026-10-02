@@ -208,4 +208,88 @@ class DecoyRandomizerTest {
         assertFalse("All question marks must be randomized", randomized.any { it.digit == "?" })
         assertEquals("Exactly 4 PIN tiles must remain on the matrix", 4, randomized.count { it.isPinTile })
     }
+
+    @Test
+    fun testLinearDecoyPinCreatedWithUniformColorFor6DigitPinAndTotp() {
+        val secretColor = "rose"
+        val rows = 7
+        val cols = 6
+        // Define a 6-digit PIN (such as a TOTP code along top row: (0,0)..(0,5))
+        val initialTiles = DecoyRandomizer.createBlankMatrix(cols = cols, rows = rows, defaultColor = secretColor)
+        val pinPositions = (0 until 6).map { Pair(0, it) }.toSet()
+
+        val matrixWithPin = initialTiles.map { tile ->
+            if (Pair(tile.row, tile.col) in pinPositions) {
+                tile.copy(digit = (tile.col + 1).toString(), colorId = secretColor, isPinTile = true)
+            } else {
+                tile
+            }
+        }
+
+        val allLines6 = DecoyRandomizer.generateAllLineCandidates(rows, cols, 6)
+        assertTrue("Grid must have 6-tile line candidates", allLines6.isNotEmpty())
+
+        repeat(50) { iteration ->
+            // Randomize decoys for this 6-digit PIN
+            val randomized = DecoyRandomizer.randomizeDecoys(matrixWithPin, secretColor)
+            val decoyTilesMap = randomized.filter { !it.isPinTile }.associateBy { Pair(it.row, it.col) }
+
+            // Verify that at least one straight line of length 6 exists where all tiles have the SAME color
+            val hasUniformDecoyLine6 = allLines6.any { line ->
+                val lineTiles = line.tiles.mapNotNull { decoyTilesMap[it] }
+                lineTiles.size == 6 && lineTiles.map { it.colorId }.distinct().size == 1
+            }
+
+            assertTrue(
+                "A straight line (horizontal, vertical, or diagonal) of length 6 with uniform color must exist for 6-digit PIN (iteration $iteration)",
+                hasUniformDecoyLine6
+            )
+        }
+    }
+
+    @Test
+    fun testLinearDecoyPinWithExplicitDecoyLength6() {
+        val secretColor = "blue"
+        val rows = 7
+        val cols = 6
+        // Matrix in TOTP mode with blank tiles and explicit decoyLength = 6
+        val blank = DecoyRandomizer.createBlankMatrix(cols = cols, rows = rows, defaultColor = secretColor)
+        val allLines6 = DecoyRandomizer.generateAllLineCandidates(rows, cols, 6)
+
+        repeat(20) { iteration ->
+            val randomized = DecoyRandomizer.randomizeDecoys(blank, secretColor, decoyLength = 6)
+            val decoyTilesMap = randomized.associateBy { Pair(it.row, it.col) }
+
+            val hasUniformDecoyLine6 = allLines6.any { line ->
+                val lineTiles = line.tiles.mapNotNull { decoyTilesMap[it] }
+                lineTiles.size == 6 && lineTiles.map { it.colorId }.distinct().size == 1
+            }
+
+            assertTrue(
+                "A straight line of length 6 with uniform color must exist when decoyLength=6 is specified (iteration $iteration)",
+                hasUniformDecoyLine6
+            )
+        }
+    }
+
+    @Test
+    fun testFallbackWhen6DigitLineCannotFitOnSmall5x5Matrix() {
+        val secretColor = "amber"
+        val rows = 5
+        val cols = 5
+        val blank5x5 = DecoyRandomizer.createBlankMatrix(cols = cols, rows = rows, defaultColor = secretColor)
+        val allLines4 = DecoyRandomizer.generateAllLineCandidates(rows, cols, 4)
+
+        // Requesting 6-digit decoy line on a 5x5 matrix must gracefully fall back to 4 without error
+        val randomized = DecoyRandomizer.randomizeDecoys(blank5x5, secretColor, decoyLength = 6)
+        assertEquals(25, randomized.size)
+        assertTrue(randomized.all { it.digit in "0".."9" })
+
+        val decoyTilesMap = randomized.associateBy { Pair(it.row, it.col) }
+        val hasUniformDecoyLine4 = allLines4.any { line ->
+            val lineTiles = line.tiles.mapNotNull { decoyTilesMap[it] }
+            lineTiles.size == 4 && lineTiles.map { it.colorId }.distinct().size == 1
+        }
+        assertTrue("Must fall back to at least a length-4 uniform decoy line on 5x5 grid", hasUniformDecoyLine4)
+    }
 }

@@ -54,8 +54,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -78,8 +83,12 @@ import eu.hughkennedy.pinvault.core.model.CardCategory
 import eu.hughkennedy.pinvault.core.model.CardEntity
 import eu.hughkennedy.pinvault.core.model.PaletteColor
 import eu.hughkennedy.pinvault.core.model.TileData
+import eu.hughkennedy.pinvault.core.totp.TotpManager
+import eu.hughkennedy.pinvault.core.totp.TotpUriData
 import eu.hughkennedy.pinvault.ui.components.ColorPickerRow
 import eu.hughkennedy.pinvault.ui.components.MatrixGridView
+import eu.hughkennedy.pinvault.ui.components.QrScannerDialog
+import kotlinx.coroutines.delay
 
 enum class MatrixDesignMode {
     ARTIST,
@@ -109,8 +118,20 @@ fun MatrixEditorScreen(
 
     var designMode by remember { mutableStateOf(MatrixDesignMode.ARTIST) }
 
+    var isTotp by remember { mutableStateOf(initialCard?.isTotp ?: false) }
+    var totpSecret by remember { mutableStateOf(initialCard?.totpSecret ?: "") }
+    var totpIssuer by remember { mutableStateOf(initialCard?.totpIssuer ?: "") }
+    var totpPeriod by remember { mutableIntStateOf(initialCard?.totpPeriod ?: 30) }
+    var totpDigits by remember { mutableIntStateOf(initialCard?.totpDigits ?: 6) }
+    var showQrScannerDialog by remember { mutableStateOf(false) }
+    var totpRemainingSeconds by remember { mutableIntStateOf(30) }
+
     // Initialize existing PIN tiles if editing an existing card
-    val initialPinTiles = initialCard?.tiles?.filter { it.isPinTile && !it.isBlank } ?: emptyList()
+    val initialPinTiles = if (initialCard != null && initialCard.pinPath.isNotEmpty()) {
+        initialCard.pinPath.mapNotNull { cell -> initialCard.tiles.find { it.row == cell.row && it.col == cell.col } }
+    } else {
+        initialCard?.tiles?.filter { it.isPinTile && !it.isBlank } ?: emptyList()
+    }
 
     var strokes by remember {
         mutableStateOf<List<List<PaintedCell>>>(
@@ -126,7 +147,13 @@ fun MatrixEditorScreen(
 
     var artistPinString by remember {
         mutableStateOf(
-            if (initialPinTiles.isNotEmpty()) {
+            if (initialCard?.isTotp == true && !initialCard.totpSecret.isNullOrBlank()) {
+                TotpManager.generateCode(
+                    secret = initialCard.totpSecret,
+                    periodSeconds = initialCard.totpPeriod,
+                    digits = initialCard.totpDigits
+                )
+            } else if (initialPinTiles.isNotEmpty()) {
                 initialPinTiles.joinToString("") { it.digit }
             } else {
                 ""
@@ -148,6 +175,34 @@ fun MatrixEditorScreen(
         mutableStateOf(
             initialCard?.tiles ?: DecoyRandomizer.createBlankMatrix(cols, rows, secretColor)
         )
+    }
+
+    // Dynamic TOTP ticker: continuously updates rolling PIN and matrix when TOTP is active
+    LaunchedEffect(isTotp, totpSecret, totpPeriod, totpDigits) {
+        if (isTotp && totpSecret.isNotBlank()) {
+            while (true) {
+                val now = System.currentTimeMillis()
+                totpRemainingSeconds = TotpManager.getRemainingSeconds(now, totpPeriod)
+                val code = TotpManager.generateCode(
+                    secret = totpSecret,
+                    timeMillis = now,
+                    periodSeconds = totpPeriod,
+                    digits = totpDigits
+                )
+                if (artistPinString != code) {
+                    artistPinString = code
+                    if (paintedPath.isNotEmpty()) {
+                        tiles = ArtistPathManager.mapDigitsToPath(
+                            paintedPath = paintedPath,
+                            digitString = code,
+                            secretColor = secretColor,
+                            existingTiles = tiles
+                        )
+                    }
+                }
+                delay(1000L)
+            }
+        }
     }
 
     var selectedTileForEdit by remember { mutableStateOf<TileData?>(null) }
@@ -217,7 +272,16 @@ fun MatrixEditorScreen(
                                 )
                             }
                             // Auto-randomize any remaining '?' tiles
-                            val finalizedTiles = DecoyRandomizer.randomizeDecoys(tiles, secretColor)
+                            val finalizedTiles = DecoyRandomizer.randomizeDecoys(
+                                tiles = tiles,
+                                secretColor = secretColor,
+                                decoyLength = if (isTotp || artistPinString.length >= 6) 6 else null
+                            )
+                            val path = if (designMode == MatrixDesignMode.ARTIST) {
+                                strokes.flatten()
+                            } else {
+                                finalizedTiles.filter { it.isPinTile && !it.isBlank }.map { PaintedCell(it.row, it.col) }
+                            }
                             val updatedCard = (initialCard ?: CardEntity(name = name)).copy(
                                 name = name.trim(),
                                 category = category,
@@ -227,7 +291,14 @@ fun MatrixEditorScreen(
                                 secretColor = secretColor,
                                 ruleHint = ruleHint.trim(),
                                 tiles = finalizedTiles,
-                                lastModified = System.currentTimeMillis()
+                                lastModified = System.currentTimeMillis(),
+                                isTotp = isTotp,
+                                totpSecret = if (isTotp) totpSecret.trim() else null,
+                                totpDigits = totpDigits,
+                                totpPeriod = totpPeriod,
+                                totpAlgorithm = "SHA1",
+                                totpIssuer = if (isTotp) totpIssuer.trim() else null,
+                                pinPath = path
                             )
                             onSaveCard(updatedCard)
                         }
@@ -377,6 +448,106 @@ fun MatrixEditorScreen(
                             }
                         }
                     }
+
+                    // Dynamic TOTP 2FA Section
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isTotp) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                            else MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.QrCodeScanner,
+                                        contentDescription = null,
+                                        tint = if (isTotp) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.totp_setup_title),
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                }
+
+                                if (isTotp) {
+                                    TextButton(
+                                        onClick = {
+                                            isTotp = false
+                                            totpSecret = ""
+                                            totpIssuer = ""
+                                        }
+                                    ) {
+                                        Text(stringResource(R.string.totp_remove_totp), fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
+                                    }
+                                }
+                            }
+
+                            if (!isTotp) {
+                                Text(
+                                    text = stringResource(R.string.totp_setup_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                Button(
+                                    onClick = { showQrScannerDialog = true },
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(stringResource(R.string.action_scan_qr), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                            } else {
+                                // TOTP Active Status Banner
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = stringResource(R.string.totp_secret_imported, totpIssuer.ifBlank { name }),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            text = "Rolling PIN: $artistPinString • ${totpRemainingSeconds}s remaining",
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 11.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    OutlinedButton(
+                                        onClick = { showQrScannerDialog = true },
+                                        shape = RoundedCornerShape(8.dp),
+                                        modifier = Modifier.height(32.dp)
+                                    ) {
+                                        Text("Re-scan", fontSize = 11.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -484,22 +655,34 @@ fun MatrixEditorScreen(
                             OutlinedTextField(
                                 value = artistPinString,
                                 onValueChange = { input ->
-                                    val filtered = input.filter { it.isDigit() }
-                                    artistPinString = filtered
-                                    tiles = ArtistPathManager.mapDigitsToPath(
-                                        paintedPath = paintedPath,
-                                        digitString = filtered,
-                                        secretColor = secretColor,
-                                        existingTiles = tiles
+                                    if (!isTotp) {
+                                        val filtered = input.filter { it.isDigit() }
+                                        artistPinString = filtered
+                                        tiles = ArtistPathManager.mapDigitsToPath(
+                                            paintedPath = paintedPath,
+                                            digitString = filtered,
+                                            secretColor = secretColor,
+                                            existingTiles = tiles
+                                        )
+                                    }
+                                },
+                                readOnly = isTotp,
+                                label = {
+                                    Text(
+                                        if (isTotp) "Dynamic TOTP PIN (${totpRemainingSeconds}s)"
+                                        else stringResource(R.string.editor_artist_pin_label)
                                     )
                                 },
-                                label = { Text(stringResource(R.string.editor_artist_pin_label)) },
                                 placeholder = { Text(stringResource(R.string.editor_artist_pin_placeholder)) },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Pin, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    Icon(
+                                        if (isTotp) Icons.Default.Timer else Icons.Default.Pin,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
                                 },
                                 trailingIcon = {
-                                    if (artistPinString.isNotEmpty()) {
+                                    if (!isTotp && artistPinString.isNotEmpty()) {
                                         IconButton(onClick = {
                                             artistPinString = ""
                                             tiles = ArtistPathManager.mapDigitsToPath(
@@ -611,7 +794,11 @@ fun MatrixEditorScreen(
                                         secretColor = secretColor,
                                         existingTiles = tiles
                                     )
-                                    tiles = DecoyRandomizer.randomizeDecoys(syncedTiles, secretColor)
+                                    tiles = DecoyRandomizer.randomizeDecoys(
+                                        tiles = syncedTiles,
+                                        secretColor = secretColor,
+                                        decoyLength = if (isTotp || artistPinString.length >= 6) 6 else null
+                                    )
                                 },
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.height(34.dp)
@@ -636,7 +823,11 @@ fun MatrixEditorScreen(
 
                             OutlinedButton(
                                 onClick = {
-                                    tiles = DecoyRandomizer.randomizeDecoys(tiles, secretColor)
+                                    tiles = DecoyRandomizer.randomizeDecoys(
+                                        tiles = tiles,
+                                        secretColor = secretColor,
+                                        decoyLength = if (isTotp) 6 else null
+                                    )
                                 },
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.height(34.dp)
@@ -833,6 +1024,39 @@ fun MatrixEditorScreen(
                 TextButton(onClick = { selectedTileForEdit = null }) {
                     Text(stringResource(R.string.action_cancel))
                 }
+            }
+        )
+    }
+
+    if (showQrScannerDialog) {
+        QrScannerDialog(
+            onDismiss = { showQrScannerDialog = false },
+            onTotpParsed = { data ->
+                isTotp = true
+                totpSecret = data.secret
+                totpIssuer = data.issuer.ifBlank { data.label }
+                totpPeriod = data.period
+                totpDigits = data.digits
+                category = CardCategory.AUTHENTICATOR
+                if (name.isBlank() && totpIssuer.isNotBlank()) {
+                    name = totpIssuer
+                }
+                val code = TotpManager.generateCode(
+                    secret = data.secret,
+                    timeMillis = System.currentTimeMillis(),
+                    periodSeconds = data.period,
+                    digits = data.digits
+                )
+                artistPinString = code
+                if (paintedPath.isNotEmpty()) {
+                    tiles = ArtistPathManager.mapDigitsToPath(
+                        paintedPath = paintedPath,
+                        digitString = code,
+                        secretColor = secretColor,
+                        existingTiles = tiles
+                    )
+                }
+                showQrScannerDialog = false
             }
         )
     }
