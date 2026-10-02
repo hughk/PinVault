@@ -18,6 +18,7 @@ import androidx.fragment.app.FragmentActivity
 import eu.hughkennedy.pinvault.core.model.CardEntity
 import eu.hughkennedy.pinvault.core.repository.VaultRepository
 import eu.hughkennedy.pinvault.core.security.BiometricAuthHelper
+import eu.hughkennedy.pinvault.core.security.BiometricKeyManager
 import eu.hughkennedy.pinvault.theme.PinVaultTheme
 import eu.hughkennedy.pinvault.ui.components.AboutDialog
 import eu.hughkennedy.pinvault.ui.components.BackupRestoreDialog
@@ -62,11 +63,18 @@ class MainActivity : FragmentActivity() {
                 ) {
                     PinVaultAppRoot(
                         repository = repository,
-                        onBiometricAuth = { title, onSuccess ->
-                            BiometricAuthHelper.promptBiometric(
+                        onBiometricUnlock = { onSuccess ->
+                            BiometricAuthHelper.promptBiometricUnlock(
                                 activity = this@MainActivity,
-                                title = title,
                                 onSuccess = onSuccess,
+                                onError = { }
+                            )
+                        },
+                        onBiometricReveal = { encryptedSecret, onRevealed ->
+                            BiometricAuthHelper.promptBiometricReveal(
+                                activity = this@MainActivity,
+                                encryptedCardSecretBase64 = encryptedSecret,
+                                onSuccess = onRevealed,
                                 onError = { }
                             )
                         }
@@ -80,7 +88,8 @@ class MainActivity : FragmentActivity() {
 @Composable
 fun PinVaultAppRoot(
     repository: VaultRepository,
-    onBiometricAuth: (String, () -> Unit) -> Unit
+    onBiometricUnlock: (() -> Unit) -> Unit,
+    onBiometricReveal: (String, (BiometricKeyManager.DecryptedCardSecret) -> Unit) -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val cards by repository.cards.collectAsState()
@@ -93,7 +102,7 @@ fun PinVaultAppRoot(
         LockScreen(
             onUnlockSuccess = { isLocked = false },
             onBiometricRequested = {
-                onBiometricAuth(context.getString(R.string.biometric_prompt_unlock)) {
+                onBiometricUnlock {
                     isLocked = false
                 }
             },
@@ -127,11 +136,7 @@ fun PinVaultAppRoot(
                             repository.deleteCard(card.id)
                             currentScreen = AppScreen.Vault
                         },
-                        onBiometricAuthRequested = { revealCallback ->
-                            onBiometricAuth(context.getString(R.string.biometric_prompt_reveal)) {
-                                revealCallback()
-                            }
-                        }
+                        onBiometricRevealRequested = onBiometricReveal
                     )
                 }
             }

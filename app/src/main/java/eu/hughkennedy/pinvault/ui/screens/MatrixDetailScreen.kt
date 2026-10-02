@@ -71,6 +71,7 @@ import eu.hughkennedy.pinvault.core.engine.ArtistPathManager
 import eu.hughkennedy.pinvault.core.engine.DecoyRandomizer
 import eu.hughkennedy.pinvault.core.model.CardEntity
 import eu.hughkennedy.pinvault.core.model.PaletteColor
+import eu.hughkennedy.pinvault.core.security.BiometricKeyManager
 import eu.hughkennedy.pinvault.core.totp.TotpManager
 import eu.hughkennedy.pinvault.ui.components.CategoryIconBadge
 import eu.hughkennedy.pinvault.ui.components.MatrixGridView
@@ -83,19 +84,25 @@ fun MatrixDetailScreen(
     onBack: () -> Unit,
     onEditCard: () -> Unit,
     onDeleteCard: () -> Unit,
-    onBiometricAuthRequested: (() -> Unit) -> Unit,
+    onBiometricRevealRequested: (String, (BiometricKeyManager.DecryptedCardSecret) -> Unit) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     var currentTiles by remember(card) { mutableStateOf(card.tiles) }
-    var isPeeking by remember { mutableStateOf(false) }
+    val encryptedCardSecret = remember(card.id, card.secretColor, card.ruleHint, card.totpSecret) {
+        BiometricKeyManager.encryptCardSecret(card.secretColor, card.ruleHint, card.totpSecret)
+    }
+    var revealedCardSecret by remember { mutableStateOf<BiometricKeyManager.DecryptedCardSecret?>(null) }
+    val isPeeking = revealedCardSecret != null
+    val activeSecretColor = revealedCardSecret?.secretColor ?: card.secretColor
+    val activeRuleHint = revealedCardSecret?.ruleHint ?: card.ruleHint
     var countdownSeconds by remember { mutableIntStateOf(0) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var totpRemainingSeconds by remember { mutableIntStateOf(0) }
     var currentTotpCode by remember { mutableStateOf("") }
 
-    val palette = PaletteColor.find(card.secretColor)
+    val palette = PaletteColor.find(activeSecretColor)
 
     // Dynamic TOTP ticker: updates rolling PIN code and matrix cells along secret path
     LaunchedEffect(card.isTotp, card.totpSecret, card.totpPeriod, card.totpDigits, card.pinPath) {
@@ -148,7 +155,7 @@ fun MatrixDetailScreen(
                 delay(1000L)
                 countdownSeconds -= 1
             }
-            isPeeking = false
+            revealedCardSecret = null
         } else {
             countdownSeconds = 0
         }
@@ -298,12 +305,13 @@ fun MatrixDetailScreen(
                             cols = card.cols,
                             rows = card.rows,
                             tiles = currentTiles,
-                            isPeeking = isPeeking
+                            isPeeking = isPeeking,
+                            secretColorId = activeSecretColor
                         )
                     }
 
                     RuleAndRevealCard(
-                        card = card,
+                        card = card.copy(ruleHint = activeRuleHint, secretColor = activeSecretColor),
                         palette = palette,
                         isPeeking = isPeeking,
                         countdownSeconds = countdownSeconds,
@@ -317,11 +325,11 @@ fun MatrixDetailScreen(
                         onToggleReveal = {
                             if (isPeeking) {
                                 // Tap again to extinguish immediately
-                                isPeeking = false
+                                revealedCardSecret = null
                             } else {
                                 // Tap to trigger biometric auth
-                                onBiometricAuthRequested {
-                                    isPeeking = true
+                                onBiometricRevealRequested(encryptedCardSecret) { decryptedSecret ->
+                                    revealedCardSecret = decryptedSecret
                                 }
                             }
                         }
@@ -363,14 +371,15 @@ fun MatrixDetailScreen(
                             cols = card.cols,
                             rows = card.rows,
                             tiles = currentTiles,
-                            isPeeking = isPeeking
+                            isPeeking = isPeeking,
+                            secretColorId = activeSecretColor
                         )
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     RuleAndRevealCard(
-                        card = card,
+                        card = card.copy(ruleHint = activeRuleHint, secretColor = activeSecretColor),
                         palette = palette,
                         isPeeking = isPeeking,
                         countdownSeconds = countdownSeconds,
@@ -384,11 +393,11 @@ fun MatrixDetailScreen(
                         onToggleReveal = {
                             if (isPeeking) {
                                 // Tap again to extinguish immediately
-                                isPeeking = false
+                                revealedCardSecret = null
                             } else {
                                 // Tap to trigger biometric auth
-                                onBiometricAuthRequested {
-                                    isPeeking = true
+                                onBiometricRevealRequested(encryptedCardSecret) { decryptedSecret ->
+                                    revealedCardSecret = decryptedSecret
                                 }
                             }
                         }
