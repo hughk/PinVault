@@ -280,7 +280,11 @@ fun MatrixDetailScreen(
                         isTotp = card.isTotp,
                         totpRemainingSeconds = totpRemainingSeconds,
                         onRefreshDecoys = {
-                            currentTiles = DecoyRandomizer.randomizeDecoys(currentTiles, card.secretColor)
+                            currentTiles = DecoyRandomizer.randomizeDecoys(
+                                currentTiles,
+                                card.secretColor,
+                                decoyLength = if (card.isTotp || card.pinPath.size >= 6) 6 else null
+                            )
                         }
                     )
 
@@ -338,7 +342,11 @@ fun MatrixDetailScreen(
                         isTotp = card.isTotp,
                         totpRemainingSeconds = totpRemainingSeconds,
                         onRefreshDecoys = {
-                            currentTiles = DecoyRandomizer.randomizeDecoys(currentTiles, card.secretColor)
+                            currentTiles = DecoyRandomizer.randomizeDecoys(
+                                currentTiles,
+                                card.secretColor,
+                                decoyLength = if (card.isTotp || card.pinPath.size >= 6) 6 else null
+                            )
                         }
                     )
 

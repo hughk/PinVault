@@ -272,7 +272,11 @@ fun MatrixEditorScreen(
                                 )
                             }
                             // Auto-randomize any remaining '?' tiles
-                            val finalizedTiles = DecoyRandomizer.randomizeDecoys(tiles, secretColor)
+                            val finalizedTiles = DecoyRandomizer.randomizeDecoys(
+                                tiles = tiles,
+                                secretColor = secretColor,
+                                decoyLength = if (isTotp || artistPinString.length >= 6) 6 else null
+                            )
                             val path = if (designMode == MatrixDesignMode.ARTIST) {
                                 strokes.flatten()
                             } else {
@@ -790,7 +794,11 @@ fun MatrixEditorScreen(
                                         secretColor = secretColor,
                                         existingTiles = tiles
                                     )
-                                    tiles = DecoyRandomizer.randomizeDecoys(syncedTiles, secretColor)
+                                    tiles = DecoyRandomizer.randomizeDecoys(
+                                        tiles = syncedTiles,
+                                        secretColor = secretColor,
+                                        decoyLength = if (isTotp || artistPinString.length >= 6) 6 else null
+                                    )
                                 },
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.height(34.dp)
@@ -815,7 +823,11 @@ fun MatrixEditorScreen(
 
                             OutlinedButton(
                                 onClick = {
-                                    tiles = DecoyRandomizer.randomizeDecoys(tiles, secretColor)
+                                    tiles = DecoyRandomizer.randomizeDecoys(
+                                        tiles = tiles,
+                                        secretColor = secretColor,
+                                        decoyLength = if (isTotp) 6 else null
+                                    )
                                 },
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.height(34.dp)

@@ -1202,7 +1202,7 @@
     // Initialize Card Matrices with Camouflage Decoys
     function initCardTiles() {
       CARDS.forEach(card => {
-        card.tiles = generateSampleMatrix(card.cols, card.rows, card.secretColor, card.pinCells);
+        card.tiles = generateSampleMatrix(card.cols, card.rows, card.secretColor, card.pinCells, !!card.isTotp);
       });
     }
 
@@ -1382,7 +1382,85 @@
       }
     }
 
-    function generateSampleMatrix(cols, rows, secretColor, pinTiles) {
+    function generateLineCandidates(rows, cols, length) {
+      const candidates = [];
+      if (rows < length && cols < length) return candidates;
+      // 1. Horizontal
+      if (cols >= length) {
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c <= cols - length; c++) {
+            const cells = [];
+            for (let i = 0; i < length; i++) cells.push({ r, c: c + i });
+            candidates.push(cells);
+          }
+        }
+      }
+      // 2. Vertical
+      if (rows >= length) {
+        for (let r = 0; r <= rows - length; r++) {
+          for (let c = 0; c < cols; c++) {
+            const cells = [];
+            for (let i = 0; i < length; i++) cells.push({ r: r + i, c });
+            candidates.push(cells);
+          }
+        }
+      }
+      // 3. Diagonal Down-Right
+      if (rows >= length && cols >= length) {
+        for (let r = 0; r <= rows - length; r++) {
+          for (let c = 0; c <= cols - length; c++) {
+            const cells = [];
+            for (let i = 0; i < length; i++) cells.push({ r: r + i, c: c + i });
+            candidates.push(cells);
+          }
+        }
+      }
+      // 4. Diagonal Down-Left
+      if (rows >= length && cols >= length) {
+        for (let r = 0; r <= rows - length; r++) {
+          for (let c = length - 1; c < cols; c++) {
+            const cells = [];
+            for (let i = 0; i < length; i++) cells.push({ r: r + i, c: c - i });
+            candidates.push(cells);
+          }
+        }
+      }
+      return candidates;
+    }
+
+    function findValidDecoyLine(rows, cols, pinTiles, secretColor, length) {
+      const allLines = generateLineCandidates(rows, cols, length);
+      if (allLines.length === 0) return null;
+      const shuffledPalette = [...PALETTE].sort(() => 0.5 - Math.random());
+      for (const color of shuffledPalette) {
+        const valid = allLines.filter(line => {
+          const noOverlap = line.every(pt => !pinTiles.some(p => p.r === pt.r && p.c === pt.c));
+          const nonAdjacent = color.id === secretColor
+            ? line.every(pt => !isAdjacentToPin(pt.r, pt.c, pinTiles, secretColor))
+            : true;
+          return noOverlap && nonAdjacent;
+        });
+        if (valid.length > 0) {
+          return { line: valid[Math.floor(Math.random() * valid.length)], colorId: color.id };
+        }
+      }
+      return null;
+    }
+
+    function generateSampleMatrix(cols, rows, secretColor, pinTiles, isTotp = false) {
+      const pinCount = pinTiles.filter(p => p.digit !== undefined && p.digit !== '?').length;
+      const targetLen = (isTotp || pinCount >= 6) ? 6 : (pinCount >= 4 ? pinCount : 4);
+      let decoyLine = findValidDecoyLine(rows, cols, pinTiles, secretColor, targetLen);
+      if (!decoyLine && targetLen > 4) {
+        for (let len = targetLen - 1; len >= 4; len--) {
+          decoyLine = findValidDecoyLine(rows, cols, pinTiles, secretColor, len);
+          if (decoyLine) break;
+        }
+      }
+
+      const decoyLineCells = decoyLine ? new Set(decoyLine.line.map(p => `${p.r},${p.c}`)) : new Set();
+      const decoyLineColor = decoyLine ? decoyLine.colorId : null;
+
       const matrix = [];
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
@@ -1394,6 +1472,14 @@
               digit: pin.digit,
               colorId: secretColor,
               isPinTile: true
+            });
+          } else if (decoyLineCells.has(`${r},${c}`) && decoyLineColor) {
+            matrix.push({
+              r,
+              c,
+              digit: Math.floor(Math.random() * 10).toString(),
+              colorId: decoyLineColor,
+              isPinTile: false
             });
           } else {
             matrix.push({
@@ -1781,7 +1867,7 @@
     function reRandomizeCurrentDecoys() {
       const card = CARDS.find(c => c.id === currentCardId);
       if (!card) return;
-      card.tiles = generateSampleMatrix(card.cols, card.rows, card.secretColor, card.pinCells);
+      card.tiles = generateSampleMatrix(card.cols, card.rows, card.secretColor, card.pinCells, !!card.isTotp);
       renderMatrixGrid(card);
     }
 
@@ -2188,7 +2274,8 @@
       }
       remapArtistDigits();
       const pinCells = wizardTiles.filter(t => t.isPinTile && t.digit !== '?').map(t => ({ r: t.r, c: t.c, digit: t.digit }));
-      wizardTiles = generateSampleMatrix(wizardCols, wizardRows, wizardSecretColor, pinCells);
+      const isTotpCard = document.getElementById('editCardCategory')?.value === 'authenticator' || (editingCardId && CARDS.find(c => c.id === editingCardId)?.isTotp);
+      wizardTiles = generateSampleMatrix(wizardCols, wizardRows, wizardSecretColor, pinCells, !!isTotpCard);
       updateArtistStatus();
       renderEditorGrid();
     }
@@ -2214,7 +2301,8 @@
       remapArtistDigits();
 
       const pinCells = wizardTiles.filter(t => t.isPinTile && t.digit !== '?').map(t => ({ r: t.r, c: t.c, digit: t.digit }));
-      const finalizedTiles = generateSampleMatrix(wizardCols, wizardRows, wizardSecretColor, pinCells);
+      const isTotpCard = category === 'authenticator' || (editingCardId && CARDS.find(c => c.id === editingCardId)?.isTotp);
+      const finalizedTiles = generateSampleMatrix(wizardCols, wizardRows, wizardSecretColor, pinCells, !!isTotpCard);
 
       if (editingCardId) {
         const idx = CARDS.findIndex(c => c.id === editingCardId);
