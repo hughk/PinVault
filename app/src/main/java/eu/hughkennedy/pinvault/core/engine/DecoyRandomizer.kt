@@ -82,9 +82,8 @@ object DecoyRandomizer {
     }
 
     /**
-     * Finds a valid decoy line of at least 4 tiles where all tiles share the same color.
-     * If the chosen color is the secret PIN color, none of the line tiles may be adjacent
-     * to any genuine PIN tile.
+     * Finds a valid decoy line of at least 4 tiles where all tiles share the same uniform decoy color.
+     * Decoy lines strictly use non-secret colors so they never impersonate or randomize genuine PIN tiles.
      */
     fun findValidDecoyLine(
         rows: Int,
@@ -98,23 +97,15 @@ object DecoyRandomizer {
         val allLines = generateAllLineCandidates(rows, cols, length)
         if (allLines.isEmpty()) return null
 
-        val shuffledPalette = palette.shuffled(random)
+        // Decoy lines must NEVER use the secretColor
+        val decoyPalette = palette.filter { it != secretColor }.shuffled(random)
 
-        for (candidateColor in shuffledPalette) {
+        for (candidateColor in decoyPalette) {
             val validLinesForColor = allLines.filter { line ->
                 // No cell in the decoy line can overlap a genuine PIN tile
-                val noOverlap = line.tiles.none { (r, c) ->
+                line.tiles.none { (r, c) ->
                     pinTiles.any { p -> p.row == r && p.col == c }
                 }
-
-                // If the decoy line shares the secret PIN color, none of its tiles can be adjacent to the PIN
-                val nonAdjacentIfSecret = if (candidateColor == secretColor) {
-                    line.tiles.none { (r, c) -> isAdjacentToPin(r, c, pinTiles, secretColor) }
-                } else {
-                    true
-                }
-
-                noOverlap && nonAdjacentIfSecret
             }
 
             if (validLinesForColor.isNotEmpty()) {
@@ -128,7 +119,8 @@ object DecoyRandomizer {
 
     /**
      * Picks a decoy color adhering strictly to the user requirement:
-     * "No decoy of the same colour appears adjacent to the pin"
+     * Decoy tiles must NEVER use secretColor, ensuring ONLY genuine PIN positions share secretColor
+     * and preventing spurious secret-color tiles from masquerading as randomized PIN positions.
      */
     fun pickDecoyColor(
         r: Int,
@@ -138,20 +130,8 @@ object DecoyRandomizer {
         palette: List<String> = PaletteColor.ALL.map { it.id },
         random: Random = Random.Default
     ): String {
-        val adjacent = isAdjacentToPin(r, c, pinTiles, secretColor)
         val otherColors = palette.filter { it != secretColor }
-
-        return if (adjacent) {
-            // STRICT RULE: No decoy of the same color may appear adjacent to the PIN
-            otherColors.random(random)
-        } else {
-            // Non-adjacent decoy: 15% probability of using secretColor for statistical camouflage
-            if (random.nextFloat() < 0.15f) {
-                secretColor
-            } else {
-                otherColors.random(random)
-            }
-        }
+        return otherColors.random(random)
     }
 
     /**

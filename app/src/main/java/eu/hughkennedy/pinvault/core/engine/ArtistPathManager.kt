@@ -131,9 +131,10 @@ object ArtistPathManager {
                             isPinTile = false
                         )
                     } else {
+                        val fallbackColor = PaletteColor.ALL.map { it.id }.firstOrNull { it != secretColor } ?: "blue"
                         tile.copy(
                             digit = "?",
-                            colorId = secretColor,
+                            colorId = fallbackColor,
                             isPinTile = false
                         )
                     }

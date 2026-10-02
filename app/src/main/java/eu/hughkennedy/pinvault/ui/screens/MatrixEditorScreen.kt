@@ -262,22 +262,39 @@ fun MatrixEditorScreen(
                     IconButton(
                         onClick = {
                             if (name.isBlank()) return@IconButton
+                            var effectiveTiles = tiles
                             if (designMode == MatrixDesignMode.ARTIST) {
-                                tiles = ArtistPathManager.mapDigitsToPath(
-                                    paintedPath = strokes.flatten(),
-                                    digitString = artistPinString,
+                                val currentPath = strokes.flatten() + activeStroke
+                                var effectivePin = artistPinString
+                                if (currentPath.isNotEmpty() && effectivePin.length < currentPath.size) {
+                                    val needed = currentPath.size - effectivePin.length
+                                    effectivePin += (1..needed).map { (0..9).random() }.joinToString("")
+                                    artistPinString = effectivePin
+                                }
+                                effectiveTiles = ArtistPathManager.mapDigitsToPath(
+                                    paintedPath = currentPath,
+                                    digitString = effectivePin,
                                     secretColor = secretColor,
                                     existingTiles = tiles
                                 )
+                            } else {
+                                // Fill any unset digits ('?') on manually defined PIN tiles without altering position or secretColor
+                                effectiveTiles = tiles.map { tile ->
+                                    if (tile.isPinTile && (tile.digit == "?" || tile.digit.isBlank())) {
+                                        tile.copy(digit = (0..9).random().toString(), colorId = secretColor)
+                                    } else {
+                                        tile
+                                    }
+                                }
                             }
-                            // Auto-randomize any remaining '?' tiles
+                            // Auto-randomize any remaining unset decoys while strictly preserving PIN tiles
                             val finalizedTiles = DecoyRandomizer.randomizeDecoys(
-                                tiles = tiles,
+                                tiles = effectiveTiles,
                                 secretColor = secretColor,
                                 decoyLength = if (isTotp || artistPinString.length >= 6) 6 else null
                             )
                             val path = if (designMode == MatrixDesignMode.ARTIST) {
-                                strokes.flatten()
+                                strokes.flatten() + activeStroke
                             } else {
                                 finalizedTiles.filter { it.isPinTile && !it.isBlank }.map { PaintedCell(it.row, it.col) }
                             }
@@ -366,6 +383,13 @@ fun MatrixEditorScreen(
                                         text = { Text(stringResource(cat.titleRes)) },
                                         onClick = {
                                             category = cat
+                                            if (cat == CardCategory.AUTHENTICATOR) {
+                                                isTotp = true
+                                            } else {
+                                                isTotp = false
+                                                totpSecret = ""
+                                                totpIssuer = ""
+                                            }
                                             categoryDropdownExpanded = false
                                         }
                                     )
@@ -448,100 +472,105 @@ fun MatrixEditorScreen(
                         }
                     }
 
-                    // Dynamic TOTP 2FA Section
-                    Card(
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isTotp) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                            else MaterialTheme.colorScheme.surfaceContainerHigh
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                    // Dynamic TOTP 2FA Section (only visible for AUTHENTICATOR category or existing TOTP card)
+                    if (category == CardCategory.AUTHENTICATOR || isTotp) {
+                        Card(
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isTotp) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                                else MaterialTheme.colorScheme.surfaceContainerHigh
+                            ),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth()
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.QrCodeScanner,
-                                        contentDescription = null,
-                                        tint = if (isTotp) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.totp_setup_title),
-                                        fontWeight = FontWeight.Bold,
-                                        style = MaterialTheme.typography.titleSmall
-                                    )
-                                }
-
-                                if (isTotp) {
-                                    TextButton(
-                                        onClick = {
-                                            isTotp = false
-                                            totpSecret = ""
-                                            totpIssuer = ""
-                                        }
-                                    ) {
-                                        Text(stringResource(R.string.totp_remove_totp), fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
-                                    }
-                                }
-                            }
-
-                            if (!isTotp) {
-                                Text(
-                                    text = stringResource(R.string.totp_setup_desc),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-
-                                Button(
-                                    onClick = { showQrScannerDialog = true },
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(stringResource(R.string.action_scan_qr), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                }
-                            } else {
-                                // TOTP Active Status Banner
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = stringResource(R.string.totp_secret_imported, totpIssuer.ifBlank { name }),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.Medium,
-                                            color = MaterialTheme.colorScheme.primary
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.QrCodeScanner,
+                                            contentDescription = null,
+                                            tint = if (isTotp) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(20.dp)
                                         )
                                         Text(
-                                            text = "Rolling PIN: $artistPinString • ${totpRemainingSeconds}s remaining",
-                                            fontFamily = FontFamily.Monospace,
-                                            fontSize = 11.sp,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            text = stringResource(R.string.totp_setup_title),
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.titleSmall
                                         )
                                     }
 
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    if (isTotp) {
+                                        TextButton(
+                                            onClick = {
+                                                isTotp = false
+                                                totpSecret = ""
+                                                totpIssuer = ""
+                                                if (category == CardCategory.AUTHENTICATOR) {
+                                                    category = CardCategory.CREDIT
+                                                }
+                                            }
+                                        ) {
+                                            Text(stringResource(R.string.totp_remove_totp), fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
+                                        }
+                                    }
+                                }
 
-                                    OutlinedButton(
+                                if (!isTotp) {
+                                    Text(
+                                        text = stringResource(R.string.totp_setup_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+
+                                    Button(
                                         onClick = { showQrScannerDialog = true },
-                                        shape = RoundedCornerShape(8.dp),
-                                        modifier = Modifier.height(32.dp)
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Text("Re-scan", fontSize = 11.sp)
+                                        Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(stringResource(R.string.action_scan_qr), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                } else {
+                                    // TOTP Active Status Banner
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = stringResource(R.string.totp_secret_imported, totpIssuer.ifBlank { name }),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                fontWeight = FontWeight.Medium,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                            Text(
+                                                text = "Rolling PIN: $artistPinString • ${totpRemainingSeconds}s remaining",
+                                                fontFamily = FontFamily.Monospace,
+                                                fontSize = 11.sp,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.width(8.dp))
+
+                                        OutlinedButton(
+                                            onClick = { showQrScannerDialog = true },
+                                            shape = RoundedCornerShape(8.dp),
+                                            modifier = Modifier.height(32.dp)
+                                        ) {
+                                            Text("Re-scan", fontSize = 11.sp)
+                                        }
                                     }
                                 }
                             }
@@ -611,7 +640,23 @@ fun MatrixEditorScreen(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Button(
-                            onClick = { designMode = MatrixDesignMode.ARTIST },
+                            onClick = {
+                                if (designMode != MatrixDesignMode.ARTIST) {
+                                    if (strokes.isEmpty() || strokes.flatten().isEmpty()) {
+                                        val manualPinCells = tiles.filter { it.isPinTile }.map { PaintedCell(it.row, it.col) }
+                                        if (manualPinCells.isNotEmpty()) {
+                                            strokes = listOf(manualPinCells)
+                                            if (artistPinString.isEmpty()) {
+                                                val existingDigits = tiles.filter { it.isPinTile }.map { it.digit }.filter { it != "?" }.joinToString("")
+                                                if (existingDigits.isNotEmpty()) {
+                                                    artistPinString = existingDigits
+                                                }
+                                            }
+                                        }
+                                    }
+                                    designMode = MatrixDesignMode.ARTIST
+                                }
+                            },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (designMode == MatrixDesignMode.ARTIST) MaterialTheme.colorScheme.primary else Color.Transparent,
                                 contentColor = if (designMode == MatrixDesignMode.ARTIST) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -681,17 +726,38 @@ fun MatrixEditorScreen(
                                     )
                                 },
                                 trailingIcon = {
-                                    if (!isTotp && artistPinString.isNotEmpty()) {
-                                        IconButton(onClick = {
-                                            artistPinString = ""
-                                            tiles = ArtistPathManager.mapDigitsToPath(
-                                                paintedPath = paintedPath,
-                                                digitString = "",
-                                                secretColor = secretColor,
-                                                existingTiles = tiles
-                                            )
-                                        }) {
-                                            Icon(Icons.Default.Clear, contentDescription = null)
+                                    if (!isTotp) {
+                                        if (artistPinString.isNotEmpty()) {
+                                            IconButton(onClick = {
+                                                artistPinString = ""
+                                                tiles = ArtistPathManager.mapDigitsToPath(
+                                                    paintedPath = paintedPath,
+                                                    digitString = "",
+                                                    secretColor = secretColor,
+                                                    existingTiles = tiles
+                                                )
+                                            }) {
+                                                Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.action_cancel))
+                                            }
+                                        } else {
+                                            IconButton(onClick = {
+                                                val currentCells = strokes.flatten() + activeStroke
+                                                val count = if (currentCells.isNotEmpty()) currentCells.size else 4
+                                                val generated = (1..count).map { (0..9).random() }.joinToString("")
+                                                artistPinString = generated
+                                                tiles = ArtistPathManager.mapDigitsToPath(
+                                                    paintedPath = currentCells,
+                                                    digitString = generated,
+                                                    secretColor = secretColor,
+                                                    existingTiles = tiles
+                                                )
+                                            }) {
+                                                Icon(
+                                                    Icons.Default.Casino,
+                                                    contentDescription = stringResource(R.string.action_randomize_decoys),
+                                                    tint = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
                                         }
                                     }
                                 },
@@ -779,16 +845,23 @@ fun MatrixEditorScreen(
                             // Randomize Decoys
                             OutlinedButton(
                                 onClick = {
+                                    val currentPath = strokes.flatten() + activeStroke
+                                    var effectivePin = artistPinString
+                                    if (currentPath.isNotEmpty() && effectivePin.length < currentPath.size) {
+                                        val needed = currentPath.size - effectivePin.length
+                                        effectivePin += (1..needed).map { (0..9).random() }.joinToString("")
+                                        artistPinString = effectivePin
+                                    }
                                     val syncedTiles = ArtistPathManager.mapDigitsToPath(
-                                        paintedPath = strokes.flatten(),
-                                        digitString = artistPinString,
+                                        paintedPath = currentPath,
+                                        digitString = effectivePin,
                                         secretColor = secretColor,
                                         existingTiles = tiles
                                     )
                                     tiles = DecoyRandomizer.randomizeDecoys(
                                         tiles = syncedTiles,
                                         secretColor = secretColor,
-                                        decoyLength = if (isTotp || artistPinString.length >= 6) 6 else null
+                                        decoyLength = if (isTotp || effectivePin.length >= 6) 6 else null
                                     )
                                 },
                                 shape = RoundedCornerShape(10.dp),
@@ -814,8 +887,15 @@ fun MatrixEditorScreen(
 
                             OutlinedButton(
                                 onClick = {
+                                    val filledTiles = tiles.map { tile ->
+                                        if (tile.isPinTile && (tile.digit == "?" || tile.digit.isBlank())) {
+                                            tile.copy(digit = (0..9).random().toString(), colorId = secretColor)
+                                        } else {
+                                            tile
+                                        }
+                                    }
                                     tiles = DecoyRandomizer.randomizeDecoys(
-                                        tiles = tiles,
+                                        tiles = filledTiles,
                                         secretColor = secretColor,
                                         decoyLength = if (isTotp) 6 else null
                                     )

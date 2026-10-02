@@ -296,4 +296,97 @@ class DecoyRandomizerTest {
         }
         assertTrue("Must fall back to at least a length-4 uniform decoy line on 5x5 grid", hasUniformDecoyLine4)
     }
+
+    @Test
+    fun testNoDecoyEverHasSecretColor() {
+        val testColors = listOf("blue", "emerald", "amber", "rose", "purple", "cyan")
+
+        for (secretColor in testColors) {
+            val cols = 6
+            val rows = 7
+            val initialTiles = DecoyRandomizer.createBlankMatrix(cols = cols, rows = rows, defaultColor = secretColor)
+            val pinPositions = setOf(Pair(1, 1), Pair(2, 2), Pair(3, 3), Pair(4, 4))
+            val matrixWithPin = initialTiles.map { tile ->
+                if (Pair(tile.row, tile.col) in pinPositions) {
+                    tile.copy(digit = "5", colorId = secretColor, isPinTile = true)
+                } else {
+                    tile
+                }
+            }
+
+            repeat(20) { iteration ->
+                val randomized = DecoyRandomizer.randomizeDecoys(matrixWithPin, secretColor)
+                val pinTiles = randomized.filter { it.isPinTile }
+                val decoyTiles = randomized.filter { !it.isPinTile }
+
+                assertEquals(4, pinTiles.size)
+                assertTrue("All PIN tiles must have secret color $secretColor", pinTiles.all { it.colorId == secretColor })
+
+                // STRICT: No decoy in the entire matrix may EVER use secretColor
+                for (decoy in decoyTiles) {
+                    assertFalse(
+                        "Decoy at (${decoy.row}, ${decoy.col}) must NOT have secret color '$secretColor' (iteration $iteration)",
+                        decoy.colorId == secretColor
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testArtistModePreservesManuallyDefinedPinPositions() {
+        val secretColor = "cyan"
+        val cols = 6
+        val rows = 7
+        val blank = DecoyRandomizer.createBlankMatrix(cols = cols, rows = rows, defaultColor = secretColor)
+
+        // User painted a path of 4 cells: (1,1), (1,2), (2,3), (3,3)
+        val paintedPath = listOf(
+            PaintedCell(1, 1),
+            PaintedCell(1, 2),
+            PaintedCell(2, 3),
+            PaintedCell(3, 3)
+        )
+
+        // User typed 2 digits: "48"
+        val matrixWithPartialDigits = ArtistPathManager.mapDigitsToPath(
+            paintedPath = paintedPath,
+            digitString = "48",
+            secretColor = secretColor,
+            existingTiles = blank
+        )
+
+        // When generating the full static PIN, fill remaining unset digits ("48" + "91")
+        val fullPin = "4891"
+        val matrixWithFullPin = ArtistPathManager.mapDigitsToPath(
+            paintedPath = paintedPath,
+            digitString = fullPin,
+            secretColor = secretColor,
+            existingTiles = matrixWithPartialDigits
+        )
+
+        val randomized = DecoyRandomizer.randomizeDecoys(matrixWithFullPin, secretColor)
+
+        // Verify that the 4 manually defined positions are strictly preserved:
+        val pin1 = randomized.first { it.row == 1 && it.col == 1 }
+        val pin2 = randomized.first { it.row == 1 && it.col == 2 }
+        val pin3 = randomized.first { it.row == 2 && it.col == 3 }
+        val pin4 = randomized.first { it.row == 3 && it.col == 3 }
+
+        assertEquals("4", pin1.digit)
+        assertEquals("8", pin2.digit)
+        assertEquals("9", pin3.digit)
+        assertEquals("1", pin4.digit)
+
+        assertTrue(pin1.isPinTile && pin2.isPinTile && pin3.isPinTile && pin4.isPinTile)
+        assertEquals(secretColor, pin1.colorId)
+        assertEquals(secretColor, pin2.colorId)
+        assertEquals(secretColor, pin3.colorId)
+        assertEquals(secretColor, pin4.colorId)
+
+        // Non-path tiles are all decoys without secretColor
+        val decoys = randomized.filter { !it.isPinTile }
+        assertEquals(cols * rows - 4, decoys.size)
+        assertTrue(decoys.all { it.colorId != secretColor })
+    }
 }
