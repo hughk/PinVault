@@ -1,12 +1,16 @@
 # Pin Vault
 
-[![Version](https://img.shields.io/badge/Version-0.994%20(Beta)-blue.svg)](https://github.com/hughk/PinVault)
+[![Version](https://img.shields.io/badge/Version-0.997%20(Beta)-blue.svg)](https://github.com/hughk/PinVault)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://github.com/hughk/PinVault/blob/main/LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026%2B)-orange.svg)](https://android.com)
 [![Language](https://img.shields.io/badge/Kotlin-2.0%2B-purple.svg)](https://kotlinlang.org)
 [![UI](https://img.shields.io/badge/Jetpack%20Compose-Material%203-brightgreen.svg)](https://developer.android.com/jetpack/compose)
 [![Privacy](https://img.shields.io/badge/Privacy-100%25%20Offline%20%7C%20Zero--Permission-success.svg)](README.md)
 [![Security](https://img.shields.io/badge/Display%20Security-FLAG__SECURE-red.svg)](README.md)
+
+<p align="center">
+  <img src="docs/images/pin_vault_cover.png" alt="Pin Vault Cover - Visual Steganography Matrix" width="320"/>
+</p>
 
 > **Pin Vault** is an open-source, privacy-first Android application that protects debit card, credit card, and banking PINs using **visual steganography**. Instead of displaying your sensitive codes in cleartext, Pin Vault hides them inside randomized grids of colored number tiles that only you know how to decipher.
 
@@ -26,6 +30,16 @@ Pin Vault replaces plain numbers with a **steganographic matrix**. When you look
 3. **Your Traversal Path** (e.g. Diagonally down, Knight's move, L-shape)
 
 Even if someone stares directly at your phone screen while you read your PIN, they cannot determine which numbers are real and which are decoys.
+
+<p align="center">
+  <img src="docs/images/pin_vault_cover.png" alt="Static PIN Steganographic Camouflage View" width="280"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="docs/images/artist_fingerpaint_editor.png" alt="Artist Fingerpaint Mode with Dynamic TOTP PIN" width="280"/>
+</p>
+<p align="center">
+  <em><strong>Left:</strong> Steganographic Camouflage View in normal usage (shoulder-surf shielded).<br/>
+  <strong>Right:</strong> Artist Fingerpaint Mode with directional stroke trail and rolling TOTP 2FA code.</em>
+</p>
 
 ```
 Example 6x6 Matrix View:
@@ -51,7 +65,9 @@ Observers see: A vibrant matrix of digits with decoy lines in multiple direction
 ## ✨ Key Features
 
 - 🛡️ **Visual Steganography Engine**: Configure custom matrix dimensions (from 4×4 up to 8×8) tailored for cards, doors, safes, and phone banking codes.
-- 📁 **Folders & Category Filtering**: Organize your PIN matrices by category (Credit, Debit, Banking, Safes, Other) or group them into custom folders (e.g. *Personal*, *Work*, *Travel*). Quickly filter your vault with instant horizontal chips.
+- 👆 **Artist Fingerpaint Mode**: Simply drag your finger across the matrix to paint custom geometric PIN paths (lines, L-shapes, knight's moves). Digits are mapped sequentially along your stroke with clear directional chevrons.
+- ⏱️ **Dynamic TOTP Authenticator**: Scan 2FA QR codes or enter secret keys. Your 6-digit rolling codes are automatically camouflaged along your secret path with live countdown timers.
+- 📁 **Folders & Category Filtering**: Organize your PIN matrices by category (Credit, Debit, Banking, Safes, Authenticator, Other) or group them into custom folders (e.g. *Personal*, *Work*, *Travel*). Quickly filter your vault with instant horizontal chips.
 - 🗑️ **Delete Unwanted Matrices**: Safely delete expired or unwanted PIN cards from the matrix detail screen or vault list with explicit confirmation prompts.
 - 🎨 **High-Contrast Dark Mode Icons**: Rich, vibrant glowing category badges engineered for maximum contrast and readability on OLED dark themes.
 - 📐 **Linear Decoy PINs**: The algorithm automatically synthesizes straight lines (horizontal, vertical, diagonal) of identical colors across the matrix to create plausible false trails that mislead onlookers.
