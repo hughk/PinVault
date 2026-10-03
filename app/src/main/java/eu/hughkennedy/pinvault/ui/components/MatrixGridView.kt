@@ -19,6 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -121,7 +123,12 @@ fun MatrixGridView(
                     )
                     .then(
                         if (isArtistMode && onCellTraversed != null) {
-                            Modifier.pointerInput(cols, rows, tileSizePx, spacingPx, paddingPx, paintedPath) {
+                            val currentPaintedPath by rememberUpdatedState(paintedPath)
+                            val currentOnCellTraversed by rememberUpdatedState(onCellTraversed)
+                            val currentOnStrokeFinished by rememberUpdatedState(onStrokeFinished)
+                            val currentOnCellRemoved by rememberUpdatedState(onCellRemoved)
+
+                            Modifier.pointerInput(cols, rows, tileSizePx, spacingPx, paddingPx) {
                                 awaitEachGesture {
                                     val down = awaitFirstDown(requireUnconsumed = false)
                                     down.consume()
@@ -133,9 +140,9 @@ fun MatrixGridView(
                                     var hasDraggedToDifferentCell = false
 
                                     if (startCell != null) {
-                                        val isAlreadyInPath = paintedPath.contains(startCell)
+                                        val isAlreadyInPath = currentPaintedPath.contains(startCell)
                                         if (!isAlreadyInPath) {
-                                            onCellTraversed(startCell)
+                                            currentOnCellTraversed(startCell)
                                         }
 
                                         while (true) {
@@ -152,15 +159,15 @@ fun MatrixGridView(
                                                 if (currentCell != startCell) {
                                                     hasDraggedToDifferentCell = true
                                                 }
-                                                onCellTraversed(currentCell)
+                                                currentOnCellTraversed(currentCell)
                                             }
                                         }
 
                                         if (!hasDraggedToDifferentCell && isAlreadyInPath) {
                                             // Tapped on an existing painted cell to remove it and renumber subsequent cells
-                                            onCellRemoved?.invoke(startCell)
+                                            currentOnCellRemoved?.invoke(startCell)
                                         } else {
-                                            onStrokeFinished?.invoke()
+                                            currentOnStrokeFinished?.invoke()
                                         }
                                     } else {
                                         while (true) {
@@ -169,7 +176,7 @@ fun MatrixGridView(
                                             if (!change.pressed) break
                                             change.consume()
                                         }
-                                        onStrokeFinished?.invoke()
+                                        currentOnStrokeFinished?.invoke()
                                     }
                                 }
                             }

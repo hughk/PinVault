@@ -230,7 +230,17 @@ fun MatrixEditorScreen(
     val msgTotpSecretRequired = stringResource(R.string.editor_totp_secret_required)
     val msgPinTooLong = stringResource(R.string.editor_pin_too_long)
 
-    fun committedPath(): List<PaintedCell> = strokes.flatten()
+    fun commitActiveStroke() {
+        if (activeStroke.isNotEmpty()) {
+            strokes = strokes + listOf(activeStroke)
+            activeStroke = emptyList()
+        }
+    }
+
+    fun committedPath(): List<PaintedCell> {
+        val full = if (activeStroke.isNotEmpty()) strokes.flatten() + activeStroke else strokes.flatten()
+        return if (full.isNotEmpty()) full else paintedPath
+    }
 
     /** Number of PIN positions that do not have a digit yet. */
     fun missingPinDigits(): Int = when {
@@ -247,11 +257,14 @@ fun MatrixEditorScreen(
 
     /** Fills unset PIN digits with secure random digits. PIN positions are never moved. */
     fun fillMissingPinDigits() {
+        commitActiveStroke()
         if (designMode == MatrixDesignMode.ARTIST) {
             val path = committedPath()
-            val filled = ArtistPathManager.fillMissingDigits(artistPinString, path.size)
-            artistPinString = filled
-            tiles = ArtistPathManager.mapDigitsToPath(path, filled, secretColor, tiles)
+            if (path.isNotEmpty()) {
+                val filled = ArtistPathManager.fillMissingDigits(artistPinString, path.size)
+                artistPinString = filled
+                tiles = ArtistPathManager.mapDigitsToPath(path, filled, secretColor, tiles)
+            }
         } else {
             val rnd = java.security.SecureRandom()
             tiles = tiles.map {
@@ -264,14 +277,22 @@ fun MatrixEditorScreen(
         }
     }
 
-    fun tilesSyncedWithPath(): List<TileData> =
-        if (designMode == MatrixDesignMode.ARTIST) {
-            ArtistPathManager.mapDigitsToPath(committedPath(), artistPinString, secretColor, tiles)
+    fun tilesSyncedWithPath(): List<TileData> {
+        commitActiveStroke()
+        val path = committedPath()
+        return if (designMode == MatrixDesignMode.ARTIST) {
+            if (path.isNotEmpty()) {
+                ArtistPathManager.mapDigitsToPath(path, artistPinString, secretColor, tiles)
+            } else {
+                tiles
+            }
         } else {
             tiles
         }
+    }
 
     fun randomizeDecoysNow() {
+        commitActiveStroke()
         tiles = DecoyRandomizer.randomizeDecoys(
             tiles = tilesSyncedWithPath(),
             secretColor = secretColor,
@@ -280,6 +301,7 @@ fun MatrixEditorScreen(
     }
 
     fun saveNow() {
+        commitActiveStroke()
         val finalizedTiles = DecoyRandomizer.randomizeDecoys(
             tiles = tilesSyncedWithPath(),
             secretColor = secretColor,

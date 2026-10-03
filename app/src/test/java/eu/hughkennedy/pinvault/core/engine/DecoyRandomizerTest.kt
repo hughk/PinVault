@@ -391,4 +391,74 @@ class DecoyRandomizerTest {
         assertEquals(cols * rows - 4, decoys.size)
         assertTrue(decoys.none { DecoyRandomizer.isAdjacentToPin(it.row, it.col, randomized.filter { t -> t.isPinTile }, secretColor) && it.colorId == secretColor })
     }
+
+    @Test
+    fun testArtistModeEnterPin1234DrawDiagonalThenRandomizeDecoysOnlyRandomizesUnsetTiles() {
+        val secretColor = "blue"
+        val cols = 6
+        val rows = 7
+        val blankMatrix = DecoyRandomizer.createBlankMatrix(cols = cols, rows = rows, defaultColor = secretColor)
+
+        // 1. Enter digits "1234"
+        val pin = "1234"
+
+        // 2. Draw diagonal line: (0,0), (1,1), (2,2), (3,3)
+        val diagonalPath = listOf(
+            PaintedCell(0, 0),
+            PaintedCell(1, 1),
+            PaintedCell(2, 2),
+            PaintedCell(3, 3)
+        )
+
+        // Matrix after drawing diagonal path with "1234"
+        val matrixWithPin = ArtistPathManager.mapDigitsToPath(
+            paintedPath = diagonalPath,
+            digitString = pin,
+            secretColor = secretColor,
+            existingTiles = blankMatrix
+        )
+
+        // Verify the 4 tiles have the digits 1234 placed correctly, and 38 are unset '?'
+        assertEquals("1", matrixWithPin.first { it.row == 0 && it.col == 0 }.digit)
+        assertEquals("2", matrixWithPin.first { it.row == 1 && it.col == 1 }.digit)
+        assertEquals("3", matrixWithPin.first { it.row == 2 && it.col == 2 }.digit)
+        assertEquals("4", matrixWithPin.first { it.row == 3 && it.col == 3 }.digit)
+        assertEquals(38, matrixWithPin.count { it.digit == "?" && !it.isPinTile })
+
+        // 3. Click "Randomize '?' Decoys"
+        val randomized = DecoyRandomizer.randomizeDecoys(
+            tiles = matrixWithPin,
+            secretColor = secretColor
+        )
+
+        // Expected result:
+        // - ONLY those uninitialised showing the question mark were randomised!
+        // - The 4 PIN tiles MUST NOT be randomised!
+        val pinTile0 = randomized.first { it.row == 0 && it.col == 0 }
+        val pinTile1 = randomized.first { it.row == 1 && it.col == 1 }
+        val pinTile2 = randomized.first { it.row == 2 && it.col == 2 }
+        val pinTile3 = randomized.first { it.row == 3 && it.col == 3 }
+
+        assertEquals("1", pinTile0.digit)
+        assertEquals("2", pinTile1.digit)
+        assertEquals("3", pinTile2.digit)
+        assertEquals("4", pinTile3.digit)
+
+        assertTrue(pinTile0.isPinTile)
+        assertTrue(pinTile1.isPinTile)
+        assertTrue(pinTile2.isPinTile)
+        assertTrue(pinTile3.isPinTile)
+
+        assertEquals(secretColor, pinTile0.colorId)
+        assertEquals(secretColor, pinTile1.colorId)
+        assertEquals(secretColor, pinTile2.colorId)
+        assertEquals(secretColor, pinTile3.colorId)
+
+        // All 38 uninitialised tiles must now be given digits 0..9 and no longer be '?'
+        val decoys = randomized.filter { !it.isPinTile }
+        assertEquals(38, decoys.size)
+        assertTrue(decoys.all { it.digit in "0".."9" })
+        assertTrue(decoys.none { it.digit == "?" })
+    }
 }
+
