@@ -105,7 +105,7 @@ fun MatrixDetailScreen(
     val palette = PaletteColor.find(activeSecretColor)
 
     // Dynamic TOTP ticker: updates rolling PIN code and matrix cells along secret path
-    LaunchedEffect(card.isTotp, card.totpSecret, card.totpPeriod, card.totpDigits, card.pinPath) {
+    LaunchedEffect(card.isTotp, card.totpSecret, card.totpPeriod, card.totpDigits, card.totpAlgorithm, card.pinPath) {
         if (card.isTotp && !card.totpSecret.isNullOrBlank()) {
             while (true) {
                 val now = System.currentTimeMillis()
@@ -114,7 +114,8 @@ fun MatrixDetailScreen(
                     secret = card.totpSecret,
                     timeMillis = now,
                     periodSeconds = card.totpPeriod,
-                    digits = card.totpDigits
+                    digits = card.totpDigits,
+                    algorithm = card.totpAlgorithm
                 )
                 if (currentTotpCode != code) {
                     currentTotpCode = code

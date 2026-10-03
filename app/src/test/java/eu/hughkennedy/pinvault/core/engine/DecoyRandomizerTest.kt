@@ -298,13 +298,12 @@ class DecoyRandomizerTest {
     }
 
     @Test
-    fun testNoDecoyEverHasSecretColor() {
+    fun testSecretColourAppearsInDecoysButNeverAdjacentToPin() {
         val testColors = listOf("blue", "emerald", "amber", "rose", "purple", "cyan")
+        var secretDecoyCount = 0
 
         for (secretColor in testColors) {
-            val cols = 6
-            val rows = 7
-            val initialTiles = DecoyRandomizer.createBlankMatrix(cols = cols, rows = rows, defaultColor = secretColor)
+            val initialTiles = DecoyRandomizer.createBlankMatrix(cols = 6, rows = 7, defaultColor = secretColor)
             val pinPositions = setOf(Pair(1, 1), Pair(2, 2), Pair(3, 3), Pair(4, 4))
             val matrixWithPin = initialTiles.map { tile ->
                 if (Pair(tile.row, tile.col) in pinPositions) {
@@ -314,24 +313,27 @@ class DecoyRandomizerTest {
                 }
             }
 
-            repeat(20) { iteration ->
+            repeat(30) { iteration ->
                 val randomized = DecoyRandomizer.randomizeDecoys(matrixWithPin, secretColor)
                 val pinTiles = randomized.filter { it.isPinTile }
                 val decoyTiles = randomized.filter { !it.isPinTile }
 
                 assertEquals(4, pinTiles.size)
-                assertTrue("All PIN tiles must have secret color $secretColor", pinTiles.all { it.colorId == secretColor })
+                assertTrue(pinTiles.all { it.colorId == secretColor })
 
-                // STRICT: No decoy in the entire matrix may EVER use secretColor
-                for (decoy in decoyTiles) {
+                for (decoy in decoyTiles.filter { it.colorId == secretColor }) {
+                    secretDecoyCount++
                     assertFalse(
-                        "Decoy at (${decoy.row}, ${decoy.col}) must NOT have secret color '$secretColor' (iteration $iteration)",
-                        decoy.colorId == secretColor
+                        "Secret-colour decoy at (${decoy.row}, ${decoy.col}) must not be adjacent to the PIN (iteration $iteration)",
+                        DecoyRandomizer.isAdjacentToPin(decoy.row, decoy.col, pinTiles, secretColor)
                     )
                 }
             }
         }
+
+        assertTrue("Secret colour must appear among decoys so it is not a statistical outlier", secretDecoyCount > 0)
     }
+
 
     @Test
     fun testArtistModePreservesManuallyDefinedPinPositions() {
@@ -387,6 +389,6 @@ class DecoyRandomizerTest {
         // Non-path tiles are all decoys without secretColor
         val decoys = randomized.filter { !it.isPinTile }
         assertEquals(cols * rows - 4, decoys.size)
-        assertTrue(decoys.all { it.colorId != secretColor })
+        assertTrue(decoys.none { DecoyRandomizer.isAdjacentToPin(it.row, it.col, randomized.filter { t -> t.isPinTile }, secretColor) && it.colorId == secretColor })
     }
 }

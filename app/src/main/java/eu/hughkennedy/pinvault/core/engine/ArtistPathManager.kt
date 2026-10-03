@@ -161,6 +161,54 @@ object ArtistPathManager {
     }
 
     /**
+     * Rebuilds the ordered PIN path so it always matches the tiles currently marked as PIN tiles.
+     * Cells from [previousPath] that are still PIN tiles keep their order (so the digit sequence
+     * stays explicit); PIN tiles not yet in the path are appended in the order they appear in
+     * [tiles]; cells that are no longer PIN tiles are dropped. This prevents stale strokes from
+     * clearing or reordering PIN tiles after switching between Manual and Artist mode.
+     */
+    fun syncPathWithPinTiles(
+        previousPath: List<PaintedCell>,
+        tiles: List<TileData>
+    ): List<PaintedCell> {
+        val pinCells = tiles.filter { it.isPinTile }.map { PaintedCell(it.row, it.col) }
+        val pinSet = pinCells.toSet()
+        val kept = previousPath.filter { it in pinSet }.distinct()
+        val keptSet = kept.toSet()
+        return kept + pinCells.filter { it !in keptSet }
+    }
+
+    /**
+     * Derives the PIN digit string from the tiles along [path], stopping at the first unset ('?')
+     * digit so later digits are never shifted onto the wrong cell.
+     */
+    fun pinStringFromPath(path: List<PaintedCell>, tiles: List<TileData>): String {
+        val byCell = tiles.associateBy { PaintedCell(it.row, it.col) }
+        val sb = StringBuilder()
+        for (cell in path) {
+            val digit = byCell[cell]?.digit ?: break
+            if (digit.length != 1 || !digit[0].isDigit()) break
+            sb.append(digit)
+        }
+        return sb.toString()
+    }
+
+    /**
+     * Pads [pin] with cryptographically random digits up to [pathSize]. Returns [pin] unchanged
+     * if it is already long enough.
+     */
+    fun fillMissingDigits(
+        pin: String,
+        pathSize: Int,
+        random: java.util.Random = java.security.SecureRandom()
+    ): String {
+        if (pin.length >= pathSize) return pin
+        val sb = StringBuilder(pin)
+        repeat(pathSize - pin.length) { sb.append(random.nextInt(10)) }
+        return sb.toString()
+    }
+
+    /**
      * Trims a list of strokes to retain at most [targetCellCount] cells in total,
      * preserving stroke sequence and order.
      */

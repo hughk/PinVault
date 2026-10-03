@@ -228,4 +228,12 @@
     <string name="totp_copy_code">Copy 2FA Code</string>
     <string name="totp_code_copied">2FA code copied to clipboard</string>
     <string name="totp_remove_totp">Remove TOTP Mode</string>
+    <string name="editor_totp_secret_required">Please scan or enter a TOTP secret key before saving.</string>
+    <string name="editor_pin_too_long">Your PIN has %1$d digits, but only %2$d tiles are defined. Shorten the PIN or define more tiles.</string>
+    <string name="editor_totp_discard_title">Discard TOTP Secret?</string>
+    <string name="editor_totp_discard_message">Changing category or removing TOTP mode will clear the configured TOTP secret. Do you want to continue?</string>
+    <string name="editor_totp_discard_confirm">Discard &amp; Proceed</string>
+    <string name="editor_fill_digits_title">Incomplete PIN</string>
+    <string name="editor_fill_digits_message">%1$d of %2$d digits are placed. Fill the remaining %3$d positions with random numbers?</string>
+    <string name="editor_fill_digits_confirm">Fill &amp; Proceed</string>
 </resources>

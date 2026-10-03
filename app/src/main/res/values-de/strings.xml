@@ -204,4 +204,35 @@
     <string name="editor_artist_suggest_hint">Regel vorschlagen</string>
     <string name="editor_artist_hint_copied_toast">Entschlüsselungshinweis aus Pfad übernommen!</string>
     <string name="action_close">Schließen</string>
+
+    <!-- Dynamic TOTP Authenticator -->
+    <string name="totp_setup_title">Dynamischer TOTP-PIN</string>
+    <string name="totp_setup_desc">Initialisieren Sie per QR-Code. Ihr 6-stelliger Code wird entlang des geheimen Pfades getarnt.</string>
+    <string name="action_scan_qr">QR-Code scannen</string>
+    <string name="action_enter_key_manually">Geheimen Schlüssel eingeben</string>
+    <string name="action_choose_photo">Foto auswählen</string>
+    <string name="action_take_photo">QR fotografieren</string>
+    <string name="totp_qr_scanner_title">2FA-QR-Code fotografieren</string>
+    <string name="totp_qr_scanner_subtitle">Kamera auf den QR-Code richten</string>
+    <string name="totp_qr_permission_required">Kameraberechtigung wird benötigt, um QR-Codes zu scannen.</string>
+    <string name="totp_qr_grant_permission">Kameraberechtigung erteilen</string>
+    <string name="totp_qr_error_no_code">Kein gültiger QR-Code gefunden.</string>
+    <string name="totp_manual_dialog_title">TOTP-Geheimschlüssel eingeben</string>
+    <string name="totp_manual_secret_label">Base32-Geheimschlüssel</string>
+    <string name="totp_manual_issuer_label">Konto- / Dienstname</string>
+    <string name="totp_manual_save">Schlüssel übernehmen</string>
+    <string name="totp_active_badge">Dynamischer TOTP (%1$ds)</string>
+    <string name="totp_countdown_label">%1$ds verbleibend</string>
+    <string name="totp_secret_imported">✓ QR-Code importiert: %1$s. Definieren Sie nun Ihren geheimen Pfad auf der Matrix.</string>
+    <string name="totp_copy_code">2FA-Code kopieren</string>
+    <string name="totp_code_copied">2FA-Code in die Zwischenablage kopiert</string>
+    <string name="totp_remove_totp">TOTP-Modus entfernen</string>
+    <string name="editor_totp_secret_required">Bitte scannen oder geben Sie einen TOTP-Geheimschlüssel ein, bevor Sie speichern.</string>
+    <string name="editor_pin_too_long">Ihre PIN hat %1$d Ziffern, aber es sind nur %2$d Kacheln definiert. Kürzen Sie die PIN oder definieren Sie mehr Kacheln.</string>
+    <string name="editor_totp_discard_title">TOTP-Schlüssel verwerfen?</string>
+    <string name="editor_totp_discard_message">Das Ändern der Kategorie oder Entfernen des TOTP-Modus löscht den gespeicherten TOTP-Schlüssel. Fortfahren?</string>
+    <string name="editor_totp_discard_confirm">Verwerfen &amp; Fortfahren</string>
+    <string name="editor_fill_digits_title">Unvollständige PIN</string>
+    <string name="editor_fill_digits_message">%1$d von %2$d Ziffern sind platziert. Verbleibende %3$d Positionen mit Zufallszahlen füllen?</string>
+    <string name="editor_fill_digits_confirm">Auffüllen &amp; Fortfahren</string>
 </resources>

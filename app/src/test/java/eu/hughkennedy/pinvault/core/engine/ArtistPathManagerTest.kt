@@ -600,5 +600,63 @@ class ArtistPathManagerTest {
         assertEquals("2", pathTiles.first { it.row == 0 && it.col == 2 }.digit)
         assertEquals("3", pathTiles.first { it.row == 0 && it.col == 3 }.digit)
     }
+
+    @Test
+    fun `syncPathWithPinTiles keeps existing path order and appends newly added pin tiles`() {
+        val blank = createEmpty6x7Matrix()
+        val tiles = blank.map {
+            when {
+                it.row == 0 && it.col == 0 -> it.copy(isPinTile = true, digit = "1")
+                it.row == 1 && it.col == 1 -> it.copy(isPinTile = true, digit = "2")
+                it.row == 2 && it.col == 2 -> it.copy(isPinTile = true, digit = "3")
+                else -> it
+            }
+        }
+        val previousPath = listOf(PaintedCell(1, 1), PaintedCell(0, 0))
+        val synced = ArtistPathManager.syncPathWithPinTiles(previousPath, tiles)
+
+        // (1,1) and (0,0) were in previousPath so they should stay in that exact order
+        // (2,2) was added in manual mode so it should be appended at the end
+        assertEquals(3, synced.size)
+        assertEquals(PaintedCell(1, 1), synced[0])
+        assertEquals(PaintedCell(0, 0), synced[1])
+        assertEquals(PaintedCell(2, 2), synced[2])
+    }
+
+    @Test
+    fun `pinStringFromPath extracts digits and stops at unset question marks`() {
+        val blank = createEmpty6x7Matrix()
+        val tiles = blank.map {
+            when {
+                it.row == 0 && it.col == 0 -> it.copy(isPinTile = true, digit = "9")
+                it.row == 0 && it.col == 1 -> it.copy(isPinTile = true, digit = "5")
+                it.row == 0 && it.col == 2 -> it.copy(isPinTile = true, digit = "?")
+                it.row == 0 && it.col == 3 -> it.copy(isPinTile = true, digit = "4")
+                else -> it
+            }
+        }
+        val path = listOf(
+            PaintedCell(0, 0),
+            PaintedCell(0, 1),
+            PaintedCell(0, 2),
+            PaintedCell(0, 3)
+        )
+        val pin = ArtistPathManager.pinStringFromPath(path, tiles)
+        // Stops at the unset '?' so later digits don't shift into wrong cells
+        assertEquals("95", pin)
+    }
+
+    @Test
+    fun `fillMissingDigits appends random digits until target path size is reached`() {
+        val pin = "12"
+        val filled = ArtistPathManager.fillMissingDigits(pin, 6)
+        assertEquals(6, filled.length)
+        assertTrue(filled.startsWith("12"))
+        assertTrue(filled.all { it.isDigit() })
+
+        // When pin is already long enough, returns unchanged
+        assertEquals("1234", ArtistPathManager.fillMissingDigits("1234", 4))
+        assertEquals("12345", ArtistPathManager.fillMissingDigits("12345", 4))
+    }
 }
 

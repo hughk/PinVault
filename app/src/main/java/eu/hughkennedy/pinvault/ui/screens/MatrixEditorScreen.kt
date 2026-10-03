@@ -95,6 +95,12 @@ enum class MatrixDesignMode {
     MANUAL
 }
 
+/** Action to run once the user has confirmed filling unset PIN digits with random ones. */
+enum class PendingFillAction {
+    SAVE,
+    RANDOMIZE
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MatrixEditorScreen(
@@ -123,8 +129,14 @@ fun MatrixEditorScreen(
     var totpIssuer by remember { mutableStateOf(initialCard?.totpIssuer ?: "") }
     var totpPeriod by remember { mutableIntStateOf(initialCard?.totpPeriod ?: 30) }
     var totpDigits by remember { mutableIntStateOf(initialCard?.totpDigits ?: 6) }
+    var totpAlgorithm by remember { mutableStateOf(initialCard?.totpAlgorithm ?: "SHA1") }
     var showQrScannerDialog by remember { mutableStateOf(false) }
     var totpRemainingSeconds by remember { mutableIntStateOf(30) }
+
+    // Pending confirmations (bugs 5 and 7)
+    var pendingCategory by remember { mutableStateOf<CardCategory?>(null) }
+    var showRemoveTotpConfirm by remember { mutableStateOf(false) }
+    var pendingFillAction by remember { mutableStateOf<PendingFillAction?>(null) }
 
     // Initialize existing PIN tiles if editing an existing card
     val initialPinTiles = if (initialCard != null && initialCard.pinPath.isNotEmpty()) {
@@ -151,7 +163,8 @@ fun MatrixEditorScreen(
                 TotpManager.generateCode(
                     secret = initialCard.totpSecret,
                     periodSeconds = initialCard.totpPeriod,
-                    digits = initialCard.totpDigits
+                    digits = initialCard.totpDigits,
+                    algorithm = initialCard.totpAlgorithm
                 )
             } else if (initialPinTiles.isNotEmpty()) {
                 initialPinTiles.joinToString("") { it.digit }
@@ -178,7 +191,7 @@ fun MatrixEditorScreen(
     }
 
     // Dynamic TOTP ticker: continuously updates rolling PIN and matrix when TOTP is active
-    LaunchedEffect(isTotp, totpSecret, totpPeriod, totpDigits) {
+    LaunchedEffect(isTotp, totpSecret, totpPeriod, totpDigits, totpAlgorithm) {
         if (isTotp && totpSecret.isNotBlank()) {
             while (true) {
                 val now = System.currentTimeMillis()
@@ -187,7 +200,8 @@ fun MatrixEditorScreen(
                     secret = totpSecret,
                     timeMillis = now,
                     periodSeconds = totpPeriod,
-                    digits = totpDigits
+                    digits = totpDigits,
+                    algorithm = totpAlgorithm
                 )
                 if (artistPinString != code) {
                     artistPinString = code
@@ -209,6 +223,203 @@ fun MatrixEditorScreen(
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
     var gridSizeDropdownExpanded by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+
+    // TOTP is only "active" when a secret actually exists.
+    val totpActive = isTotp && totpSecret.isNotBlank()
+
+    val msgTotpSecretRequired = stringResource(R.string.editor_totp_secret_required)
+    val msgPinTooLong = stringResource(R.string.editor_pin_too_long)
+
+    fun committedPath(): List<PaintedCell> = strokes.flatten()
+
+    /** Number of PIN positions that do not have a digit yet. */
+    fun missingPinDigits(): Int = when {
+        totpActive -> 0
+        designMode == MatrixDesignMode.ARTIST ->
+            (committedPath().size - artistPinString.length).coerceAtLeast(0)
+        else -> tiles.count { it.isPinTile && it.digit == "?" }
+    }
+
+    fun pinTooLong(): Boolean = !totpActive &&
+        designMode == MatrixDesignMode.ARTIST &&
+        committedPath().isNotEmpty() &&
+        artistPinString.length > committedPath().size
+
+    /** Fills unset PIN digits with secure random digits. PIN positions are never moved. */
+    fun fillMissingPinDigits() {
+        if (designMode == MatrixDesignMode.ARTIST) {
+            val path = committedPath()
+            val filled = ArtistPathManager.fillMissingDigits(artistPinString, path.size)
+            artistPinString = filled
+            tiles = ArtistPathManager.mapDigitsToPath(path, filled, secretColor, tiles)
+        } else {
+            val rnd = java.security.SecureRandom()
+            tiles = tiles.map {
+                if (it.isPinTile && it.digit == "?") {
+                    it.copy(digit = rnd.nextInt(10).toString(), colorId = secretColor)
+                } else {
+                    it
+                }
+            }
+        }
+    }
+
+    fun tilesSyncedWithPath(): List<TileData> =
+        if (designMode == MatrixDesignMode.ARTIST) {
+            ArtistPathManager.mapDigitsToPath(committedPath(), artistPinString, secretColor, tiles)
+        } else {
+            tiles
+        }
+
+    fun randomizeDecoysNow() {
+        tiles = DecoyRandomizer.randomizeDecoys(
+            tiles = tilesSyncedWithPath(),
+            secretColor = secretColor,
+            decoyLength = if (totpActive) 6 else null
+        )
+    }
+
+    fun saveNow() {
+        val finalizedTiles = DecoyRandomizer.randomizeDecoys(
+            tiles = tilesSyncedWithPath(),
+            secretColor = secretColor,
+            decoyLength = if (totpActive) 6 else null
+        )
+        tiles = finalizedTiles
+        val path = if (designMode == MatrixDesignMode.ARTIST) {
+            committedPath()
+        } else {
+            // Manual mode: keep the explicit order the user entered the digits in
+            ArtistPathManager.syncPathWithPinTiles(committedPath(), finalizedTiles)
+                .filter { cell -> finalizedTiles.any { it.row == cell.row && it.col == cell.col && !it.isBlank } }
+        }
+        val updatedCard = (initialCard ?: CardEntity(name = name)).copy(
+            name = name.trim(),
+            category = category,
+            folder = folder.trim(),
+            cols = cols,
+            rows = rows,
+            secretColor = secretColor,
+            ruleHint = ruleHint.trim(),
+            tiles = finalizedTiles,
+            lastModified = System.currentTimeMillis(),
+            isTotp = isTotp,
+            totpSecret = if (isTotp) totpSecret.trim() else null,
+            totpDigits = totpDigits,
+            totpPeriod = totpPeriod,
+            totpAlgorithm = totpAlgorithm,
+            totpIssuer = if (isTotp) totpIssuer.trim() else null,
+            pinPath = path
+        )
+        onSaveCard(updatedCard)
+    }
+
+    fun runAction(action: PendingFillAction) {
+        when (action) {
+            PendingFillAction.SAVE -> saveNow()
+            PendingFillAction.RANDOMIZE -> randomizeDecoysNow()
+        }
+    }
+
+    /** Validates, asks for consent before generating random PIN digits, then runs [action]. */
+    fun requestAction(action: PendingFillAction) {
+        if (action == PendingFillAction.SAVE) {
+            if (name.isBlank()) return
+            if (isTotp && totpSecret.isBlank()) {
+                Toast.makeText(context, msgTotpSecretRequired, Toast.LENGTH_LONG).show()
+                return
+            }
+        }
+        if (pinTooLong()) {
+            Toast.makeText(context, msgPinTooLong, Toast.LENGTH_LONG).show()
+            return
+        }
+        if (missingPinDigits() > 0) {
+            pendingFillAction = action
+        } else {
+            runAction(action)
+        }
+    }
+
+    fun applyCategory(cat: CardCategory) {
+        category = cat
+        if (cat != CardCategory.AUTHENTICATOR) {
+            isTotp = false
+            totpSecret = ""
+            totpIssuer = ""
+        }
+    }
+
+    fun removeTotp() {
+        isTotp = false
+        totpSecret = ""
+        totpIssuer = ""
+        if (category == CardCategory.AUTHENTICATOR) {
+            category = initialCard?.category?.takeIf { it != CardCategory.AUTHENTICATOR } ?: CardCategory.CREDIT
+        }
+    }
+
+    // Bug 5: never silently destroy a saved TOTP secret
+    pendingCategory?.let { target ->
+        AlertDialog(
+            onDismissRequest = { pendingCategory = null },
+            title = { Text(stringResource(R.string.editor_totp_discard_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.editor_totp_discard_message)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        applyCategory(target)
+                        pendingCategory = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text(stringResource(R.string.editor_totp_discard_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingCategory = null }) { Text(stringResource(R.string.action_cancel)) }
+            }
+        )
+    }
+
+    if (showRemoveTotpConfirm) {
+        AlertDialog(
+            onDismissRequest = { showRemoveTotpConfirm = false },
+            title = { Text(stringResource(R.string.editor_totp_discard_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.editor_totp_discard_message)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        removeTotp()
+                        showRemoveTotpConfirm = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text(stringResource(R.string.editor_totp_discard_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRemoveTotpConfirm = false }) { Text(stringResource(R.string.action_cancel)) }
+            }
+        )
+    }
+
+    // Bug 7: random digits are only generated with the user's consent
+    pendingFillAction?.let { action ->
+        val total = if (designMode == MatrixDesignMode.ARTIST) committedPath().size else tiles.count { it.isPinTile }
+        val missing = missingPinDigits()
+        AlertDialog(
+            onDismissRequest = { pendingFillAction = null },
+            title = { Text(stringResource(R.string.editor_fill_digits_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.editor_fill_digits_message, total - missing, total, missing)) },
+            confirmButton = {
+                Button(onClick = {
+                    pendingFillAction = null
+                    fillMissingPinDigits()
+                    runAction(action)
+                }) { Text(stringResource(R.string.editor_fill_digits_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingFillAction = null }) { Text(stringResource(R.string.action_cancel)) }
+            }
+        )
+    }
 
     if (showDeleteConfirmDialog && initialCard != null && onDeleteCard != null) {
         val fallbackName = stringResource(R.string.this_matrix_fallback)
@@ -260,64 +471,7 @@ fun MatrixEditorScreen(
                 },
                 actions = {
                     IconButton(
-                        onClick = {
-                            if (name.isBlank()) return@IconButton
-                            var effectiveTiles = tiles
-                            if (designMode == MatrixDesignMode.ARTIST) {
-                                val currentPath = strokes.flatten() + activeStroke
-                                var effectivePin = artistPinString
-                                if (currentPath.isNotEmpty() && effectivePin.length < currentPath.size) {
-                                    val needed = currentPath.size - effectivePin.length
-                                    effectivePin += (1..needed).map { (0..9).random() }.joinToString("")
-                                    artistPinString = effectivePin
-                                }
-                                effectiveTiles = ArtistPathManager.mapDigitsToPath(
-                                    paintedPath = currentPath,
-                                    digitString = effectivePin,
-                                    secretColor = secretColor,
-                                    existingTiles = tiles
-                                )
-                            } else {
-                                // Fill any unset digits ('?') on manually defined PIN tiles without altering position or secretColor
-                                effectiveTiles = tiles.map { tile ->
-                                    if (tile.isPinTile && (tile.digit == "?" || tile.digit.isBlank())) {
-                                        tile.copy(digit = (0..9).random().toString(), colorId = secretColor)
-                                    } else {
-                                        tile
-                                    }
-                                }
-                            }
-                            // Auto-randomize any remaining unset decoys while strictly preserving PIN tiles
-                            val finalizedTiles = DecoyRandomizer.randomizeDecoys(
-                                tiles = effectiveTiles,
-                                secretColor = secretColor,
-                                decoyLength = if (isTotp || artistPinString.length >= 6) 6 else null
-                            )
-                            val path = if (designMode == MatrixDesignMode.ARTIST) {
-                                strokes.flatten() + activeStroke
-                            } else {
-                                finalizedTiles.filter { it.isPinTile && !it.isBlank }.map { PaintedCell(it.row, it.col) }
-                            }
-                            val updatedCard = (initialCard ?: CardEntity(name = name)).copy(
-                                name = name.trim(),
-                                category = category,
-                                folder = folder.trim(),
-                                cols = cols,
-                                rows = rows,
-                                secretColor = secretColor,
-                                ruleHint = ruleHint.trim(),
-                                tiles = finalizedTiles,
-                                lastModified = System.currentTimeMillis(),
-                                isTotp = isTotp,
-                                totpSecret = if (isTotp) totpSecret.trim() else null,
-                                totpDigits = totpDigits,
-                                totpPeriod = totpPeriod,
-                                totpAlgorithm = "SHA1",
-                                totpIssuer = if (isTotp) totpIssuer.trim() else null,
-                                pinPath = path
-                            )
-                            onSaveCard(updatedCard)
-                        }
+                        onClick = { requestAction(PendingFillAction.SAVE) }
                     ) {
                         Icon(Icons.Default.Save, contentDescription = stringResource(R.string.action_save), tint = MaterialTheme.colorScheme.primary)
                     }
@@ -382,15 +536,14 @@ fun MatrixEditorScreen(
                                     DropdownMenuItem(
                                         text = { Text(stringResource(cat.titleRes)) },
                                         onClick = {
-                                            category = cat
-                                            if (cat == CardCategory.AUTHENTICATOR) {
-                                                isTotp = true
-                                            } else {
-                                                isTotp = false
-                                                totpSecret = ""
-                                                totpIssuer = ""
-                                            }
                                             categoryDropdownExpanded = false
+                                            if (cat != category) {
+                                                if (cat != CardCategory.AUTHENTICATOR && isTotp && totpSecret.isNotBlank()) {
+                                                    pendingCategory = cat
+                                                } else {
+                                                    applyCategory(cat)
+                                                }
+                                            }
                                         }
                                     )
                                 }
@@ -511,11 +664,10 @@ fun MatrixEditorScreen(
                                     if (isTotp) {
                                         TextButton(
                                             onClick = {
-                                                isTotp = false
-                                                totpSecret = ""
-                                                totpIssuer = ""
-                                                if (category == CardCategory.AUTHENTICATOR) {
-                                                    category = CardCategory.CREDIT
+                                                if (totpSecret.isNotBlank()) {
+                                                    showRemoveTotpConfirm = true
+                                                } else {
+                                                    removeTotp()
                                                 }
                                             }
                                         ) {
@@ -642,17 +794,16 @@ fun MatrixEditorScreen(
                         Button(
                             onClick = {
                                 if (designMode != MatrixDesignMode.ARTIST) {
-                                    if (strokes.isEmpty() || strokes.flatten().isEmpty()) {
-                                        val manualPinCells = tiles.filter { it.isPinTile }.map { PaintedCell(it.row, it.col) }
-                                        if (manualPinCells.isNotEmpty()) {
-                                            strokes = listOf(manualPinCells)
-                                            if (artistPinString.isEmpty()) {
-                                                val existingDigits = tiles.filter { it.isPinTile }.map { it.digit }.filter { it != "?" }.joinToString("")
-                                                if (existingDigits.isNotEmpty()) {
-                                                    artistPinString = existingDigits
-                                                }
-                                            }
-                                        }
+                                    val currentPath = strokes.flatten() + activeStroke
+                                    val synced = ArtistPathManager.syncPathWithPinTiles(
+                                        previousPath = currentPath,
+                                        tiles = tiles
+                                    )
+                                    strokes = if (synced.isNotEmpty()) listOf(synced) else emptyList()
+                                    activeStroke = emptyList()
+                                    val syncedDigits = ArtistPathManager.pinStringFromPath(synced, tiles)
+                                    if (syncedDigits.isNotEmpty()) {
+                                        artistPinString = syncedDigits
                                     }
                                     designMode = MatrixDesignMode.ARTIST
                                 }
@@ -671,7 +822,12 @@ fun MatrixEditorScreen(
                         }
 
                         Button(
-                            onClick = { designMode = MatrixDesignMode.MANUAL },
+                            onClick = {
+                                if (designMode != MatrixDesignMode.MANUAL) {
+                                    tiles = tilesSyncedWithPath()
+                                    designMode = MatrixDesignMode.MANUAL
+                                }
+                            },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (designMode == MatrixDesignMode.MANUAL) MaterialTheme.colorScheme.primary else Color.Transparent,
                                 contentColor = if (designMode == MatrixDesignMode.MANUAL) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -743,7 +899,8 @@ fun MatrixEditorScreen(
                                             IconButton(onClick = {
                                                 val currentCells = strokes.flatten() + activeStroke
                                                 val count = if (currentCells.isNotEmpty()) currentCells.size else 4
-                                                val generated = (1..count).map { (0..9).random() }.joinToString("")
+                                                val rnd = java.security.SecureRandom()
+                                                val generated = (1..count).map { rnd.nextInt(10) }.joinToString("")
                                                 artistPinString = generated
                                                 tiles = ArtistPathManager.mapDigitsToPath(
                                                     paintedPath = currentCells,
@@ -844,26 +1001,7 @@ fun MatrixEditorScreen(
 
                             // Randomize Decoys
                             OutlinedButton(
-                                onClick = {
-                                    val currentPath = strokes.flatten() + activeStroke
-                                    var effectivePin = artistPinString
-                                    if (currentPath.isNotEmpty() && effectivePin.length < currentPath.size) {
-                                        val needed = currentPath.size - effectivePin.length
-                                        effectivePin += (1..needed).map { (0..9).random() }.joinToString("")
-                                        artistPinString = effectivePin
-                                    }
-                                    val syncedTiles = ArtistPathManager.mapDigitsToPath(
-                                        paintedPath = currentPath,
-                                        digitString = effectivePin,
-                                        secretColor = secretColor,
-                                        existingTiles = tiles
-                                    )
-                                    tiles = DecoyRandomizer.randomizeDecoys(
-                                        tiles = syncedTiles,
-                                        secretColor = secretColor,
-                                        decoyLength = if (isTotp || effectivePin.length >= 6) 6 else null
-                                    )
-                                },
+                                onClick = { requestAction(PendingFillAction.RANDOMIZE) },
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.height(34.dp)
                             ) {
@@ -886,20 +1024,7 @@ fun MatrixEditorScreen(
                             )
 
                             OutlinedButton(
-                                onClick = {
-                                    val filledTiles = tiles.map { tile ->
-                                        if (tile.isPinTile && (tile.digit == "?" || tile.digit.isBlank())) {
-                                            tile.copy(digit = (0..9).random().toString(), colorId = secretColor)
-                                        } else {
-                                            tile
-                                        }
-                                    }
-                                    tiles = DecoyRandomizer.randomizeDecoys(
-                                        tiles = filledTiles,
-                                        secretColor = secretColor,
-                                        decoyLength = if (isTotp) 6 else null
-                                    )
-                                },
+                                onClick = { requestAction(PendingFillAction.RANDOMIZE) },
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.height(34.dp)
                             ) {
@@ -1108,6 +1233,7 @@ fun MatrixEditorScreen(
                 totpIssuer = data.issuer.ifBlank { data.label }
                 totpPeriod = data.period
                 totpDigits = data.digits
+                totpAlgorithm = data.algorithm
                 category = CardCategory.AUTHENTICATOR
                 if (name.isBlank() && totpIssuer.isNotBlank()) {
                     name = totpIssuer
@@ -1116,7 +1242,8 @@ fun MatrixEditorScreen(
                     secret = data.secret,
                     timeMillis = System.currentTimeMillis(),
                     periodSeconds = data.period,
-                    digits = data.digits
+                    digits = data.digits,
+                    algorithm = data.algorithm
                 )
                 artistPinString = code
                 if (paintedPath.isNotEmpty()) {
