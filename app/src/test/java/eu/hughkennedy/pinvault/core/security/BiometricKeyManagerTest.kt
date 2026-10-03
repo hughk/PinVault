@@ -131,4 +131,20 @@ class BiometricKeyManagerTest {
         // A new distinct keypair must be generated
         assertFalse(pubKey1Encoded.contentEquals(pubKey2Encoded))
     }
+
+    @Test
+    fun testCipherUsesOaepPadding() {
+        assertEquals("RSA/ECB/OAEPWithSHA-256AndMGF1Padding", BiometricKeyManager.RSA_CIPHER_MODE)
+
+        val plaintext = "TestOAEPPadding".toByteArray(Charsets.UTF_8)
+        val encrypted = BiometricKeyManager.encryptData(plaintext)
+
+        // Verifying that a legacy PKCS1 cipher cannot decrypt OAEP ciphertext
+        val legacyPkcs1Cipher = javax.crypto.Cipher.getInstance("RSA/ECB/PKCS1Padding")
+        val keyPair = BiometricKeyManager.getOrCreateKeyPair()
+        legacyPkcs1Cipher.init(javax.crypto.Cipher.DECRYPT_MODE, keyPair.private)
+        assertThrows(Exception::class.java) {
+            legacyPkcs1Cipher.doFinal(encrypted)
+        }
+    }
 }

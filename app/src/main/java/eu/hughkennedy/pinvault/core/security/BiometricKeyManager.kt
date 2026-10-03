@@ -28,12 +28,13 @@ object BiometricKeyManager {
 
     const val KEYSTORE_PROVIDER = "AndroidKeyStore"
     const val KEY_ALIAS = "pin_vault_biometric_key"
-    const val RSA_CIPHER_MODE = "RSA/ECB/PKCS1Padding"
+    const val RSA_CIPHER_MODE = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding"
     private const val KEY_SIZE = 2048
 
     private const val PREFS_NAME = "pin_keeper_prefs"
     private const val PREF_MASTER_TOKEN_ENC = "biometric_master_token_enc"
     private const val PREF_MASTER_TOKEN_HASH = "biometric_master_token_hash"
+    private const val PREF_CIPHER_MODE = "biometric_cipher_mode"
 
     data class DecryptedCardSecret(
         val secretColor: String,
@@ -87,7 +88,7 @@ object BiometricKeyManager {
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
         )
             .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
-            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
             .setBlockModes(KeyProperties.BLOCK_MODE_ECB)
             .setKeySize(KEY_SIZE)
             .setUserAuthenticationRequired(true)
@@ -118,8 +119,12 @@ object BiometricKeyManager {
         try {
             cipher.init(Cipher.DECRYPT_MODE, keyPair.private)
         } catch (e: Exception) {
-            if (isAndroidKeyStoreAvailable() && (e is KeyPermanentlyInvalidatedException || e is java.security.UnrecoverableKeyException)) {
-                // Key invalidated due to new biometric enrollment: delete and regenerate
+            if (isAndroidKeyStoreAvailable() && (
+                    e is KeyPermanentlyInvalidatedException ||
+                    e is java.security.UnrecoverableKeyException ||
+                    e is java.security.InvalidKeyException
+                )) {
+                // Key invalidated due to new biometric enrollment or padding/algorithm upgrade: delete and regenerate
                 deleteKey()
                 val newKeyPair = getOrCreateKeyPair()
                 cipher.init(Cipher.DECRYPT_MODE, newKeyPair.private)
@@ -151,7 +156,7 @@ object BiometricKeyManager {
         return cipher.doFinal(ciphertext)
     }
 
-    fun deleteKey() {
+    fun deleteKey(context: Context? = null) {
         if (isAndroidKeyStoreAvailable()) {
             val keyStore = KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) }
             if (keyStore.containsAlias(KEY_ALIAS)) {
@@ -159,6 +164,11 @@ object BiometricKeyManager {
             }
         }
         fallbackKeyPair = null
+        context?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)?.edit()
+            ?.remove(PREF_MASTER_TOKEN_ENC)
+            ?.remove(PREF_MASTER_TOKEN_HASH)
+            ?.remove(PREF_CIPHER_MODE)
+            ?.apply()
     }
 
     // --- Master Vault Token Management ---
@@ -178,9 +188,15 @@ object BiometricKeyManager {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val existingEnc = prefs.getString(PREF_MASTER_TOKEN_ENC, null)
         val existingHash = prefs.getString(PREF_MASTER_TOKEN_HASH, null)
+        val existingCipherMode = prefs.getString(PREF_CIPHER_MODE, null)
 
-        if (existingEnc != null && existingHash != null) {
+        if (existingEnc != null && existingHash != null && existingCipherMode == RSA_CIPHER_MODE) {
             return CryptoManager.fromBase64(existingEnc)
+        }
+
+        // If cipher mode changed (e.g. upgraded from PKCS1 to OAEP), reset key and master token
+        if (existingCipherMode != null && existingCipherMode != RSA_CIPHER_MODE) {
+            deleteKey(context)
         }
 
         val (encrypted, hash) = createMasterTokenPayload()
@@ -189,6 +205,7 @@ object BiometricKeyManager {
         prefs.edit()
             .putString(PREF_MASTER_TOKEN_ENC, encryptedBase64)
             .putString(PREF_MASTER_TOKEN_HASH, hash)
+            .putString(PREF_CIPHER_MODE, RSA_CIPHER_MODE)
             .apply()
 
         return encrypted
