@@ -7,6 +7,7 @@
 [![UI](https://img.shields.io/badge/Jetpack%20Compose-Material%203-brightgreen.svg)](https://developer.android.com/jetpack/compose)
 [![Privacy](https://img.shields.io/badge/Privacy-100%25%20Offline%20%7C%20Zero--Permission-success.svg)](README.md)
 [![Security](https://img.shields.io/badge/Display%20Security-FLAG__SECURE-red.svg)](README.md)
+[![Wiki](https://img.shields.io/badge/Documentation-Wiki-blueviolet.svg)](wiki/Home.md)
 
 <p align="center">
   <img src="docs/images/pin_vault_cover.png" alt="Pin Vault Cover - Visual Steganography Matrix" width="320"/>
@@ -59,6 +60,17 @@ Example 6x6 Matrix View:
 Deciphered PIN: 4 - 7 - 1 - 9
 Observers see: A vibrant matrix of digits with decoy lines in multiple directions.
 ```
+
+---
+
+## 📖 Documentation & Wiki
+
+Detailed guides and architecture specifications are available in the repository [Wiki](wiki/Home.md):
+- [Visual Steganography Engine](wiki/Visual-Steganography-Engine.md) — Matrix dimensions, linear decoy generation, and color trails.
+- [Artist Fingerpaint Mode](wiki/Artist-Fingerpaint-Mode.md) — Drawing custom geometric paths with touch gestures and directional chevrons.
+- [Dynamic TOTP Authenticator](wiki/TOTP-Authenticator.md) — Camouflaged rolling 6-digit 2FA codes and QR code scanner.
+- [Hardware Biometric Security & OAEP](wiki/Hardware-Biometric-Security-&-OAEP.md) — Hardware KeyStore TEE, biometric binding, and RSA-OAEP SHA-256 encryption.
+- [Data Storage & Encrypted Backups](wiki/Data-Storage-&-Backups.md) — Offline-first architecture and AES-GCM passphrase-encrypted JSON backups.
 
 ---
 
