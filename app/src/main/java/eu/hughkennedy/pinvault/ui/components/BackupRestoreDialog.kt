@@ -48,6 +48,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,6 +64,7 @@ import eu.hughkennedy.pinvault.R
 import eu.hughkennedy.pinvault.core.backup.BackupFileManager
 import eu.hughkennedy.pinvault.core.backup.BackupMigrationManager
 import eu.hughkennedy.pinvault.core.model.CardEntity
+import eu.hughkennedy.pinvault.core.security.ClipboardSecurityHelper
 
 @Composable
 fun BackupRestoreDialog(
@@ -71,6 +73,7 @@ fun BackupRestoreDialog(
     onImportSuccess: (List<CardEntity>, Boolean) -> Unit
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var selectedTab by remember { mutableIntStateOf(0) } // 0: Export, 1: Import
 
     var exportPassphrase by remember { mutableStateOf("") }
@@ -204,6 +207,10 @@ fun BackupRestoreDialog(
                                 errorMessage = context.getString(R.string.backup_error_empty_passphrase)
                                 return@Button
                             }
+                            if (exportPassphrase.length < 8) {
+                                errorMessage = context.getString(R.string.backup_error_passphrase_too_short)
+                                return@Button
+                            }
                             try {
                                 val backupJson = BackupMigrationManager.exportVault(cards, exportPassphrase)
                                 val (_, savedName) = BackupFileManager.saveToDownloads(context, exportFilename, backupJson)
@@ -238,6 +245,10 @@ fun BackupRestoreDialog(
                                     errorMessage = context.getString(R.string.backup_error_empty_passphrase)
                                     return@OutlinedButton
                                 }
+                                if (exportPassphrase.length < 8) {
+                                    errorMessage = context.getString(R.string.backup_error_passphrase_too_short)
+                                    return@OutlinedButton
+                                }
                                 try {
                                     val backupJson = BackupMigrationManager.exportVault(cards, exportPassphrase)
                                     pendingExportJson = backupJson
@@ -264,6 +275,10 @@ fun BackupRestoreDialog(
                                     errorMessage = context.getString(R.string.backup_error_empty_passphrase)
                                     return@OutlinedButton
                                 }
+                                if (exportPassphrase.length < 8) {
+                                    errorMessage = context.getString(R.string.backup_error_passphrase_too_short)
+                                    return@OutlinedButton
+                                }
                                 try {
                                     val backupJson = BackupMigrationManager.exportVault(cards, exportPassphrase)
                                     val sendIntent = Intent().apply {
@@ -288,10 +303,19 @@ fun BackupRestoreDialog(
                                     errorMessage = context.getString(R.string.backup_error_empty_passphrase_short)
                                     return@OutlinedButton
                                 }
+                                if (exportPassphrase.length < 8) {
+                                    errorMessage = context.getString(R.string.backup_error_passphrase_too_short)
+                                    return@OutlinedButton
+                                }
                                 try {
                                     val backupJson = BackupMigrationManager.exportVault(cards, exportPassphrase)
-                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    clipboard.setPrimaryClip(ClipData.newPlainText("Pin Vault Backup", backupJson))
+                                    ClipboardSecurityHelper.copySensitiveText(
+                                        context = context,
+                                        label = "Pin Vault Backup",
+                                        text = backupJson,
+                                        autoClearSeconds = 60L,
+                                        scope = coroutineScope
+                                    )
                                     Toast.makeText(context, context.getString(R.string.backup_copied_toast), Toast.LENGTH_SHORT).show()
                                     onDismiss()
                                 } catch (e: Exception) {

@@ -89,6 +89,7 @@
     <string name="lock_shield_status">Durch Hardware-Keystore geschützt</string>
     <string name="lock_subtitle_normal">Mit Biometrie bestätigen oder Master-PIN eingeben</string>
     <string name="lock_subtitle_error">Falsche PIN, bitte erneut versuchen (Standard: 1234)</string>
+    <string name="lock_subtitle_locked_out">Zu viele Fehlversuche. Bitte in %1$ds erneut versuchen.</string>
     <string name="lock_action_biometric">Biometrisch entsperren</string>
     <string name="lock_action_delete">Löschen</string>
     <string name="biometric_prompt_unlock">Pin Vault entsperren</string>
@@ -129,6 +130,7 @@
     <string name="backup_restore_success_toast">%1$d Karten erfolgreich wiederhergestellt!</string>
     <string name="backup_error_empty_passphrase">Bitte geben Sie ein Passwort zum Verschlüsseln Ihrer Karten ein.</string>
     <string name="backup_error_empty_passphrase_short">Bitte geben Sie ein Passwort ein.</string>
+    <string name="backup_error_passphrase_too_short">Das Passwort muss mindestens 8 Zeichen lang sein.</string>
     <string name="backup_error_no_file_selected">Bitte wählen Sie eine Backup-Datei aus Downloads aus.</string>
     <string name="backup_error_empty_payload">Bitte fügen Sie den Backup-Inhalt ein oder wählen Sie eine Datei aus.</string>
     <string name="backup_error_empty_import_passphrase">Bitte geben Sie das beim Export verwendete Passwort ein.</string>

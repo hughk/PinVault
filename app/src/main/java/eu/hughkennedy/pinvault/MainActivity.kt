@@ -38,6 +38,8 @@ sealed class AppScreen {
 class MainActivity : FragmentActivity() {
 
     private lateinit var repository: VaultRepository
+    private var backgroundTimestamp: Long = 0L
+    private val isLockedState = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +55,8 @@ class MainActivity : FragmentActivity() {
         }
 
         repository = VaultRepository(applicationContext)
+        // Lock vault on launch if a Master PIN has been set
+        isLockedState.value = repository.isMasterPinSet()
 
         enableEdgeToEdge()
         setContent {
@@ -63,6 +67,7 @@ class MainActivity : FragmentActivity() {
                 ) {
                     PinVaultAppRoot(
                         repository = repository,
+                        isLockedState = isLockedState,
                         onBiometricUnlock = { onSuccess ->
                             BiometricAuthHelper.promptBiometricUnlock(
                                 activity = this@MainActivity,
@@ -83,17 +88,33 @@ class MainActivity : FragmentActivity() {
             }
         }
     }
+
+    override fun onStop() {
+        super.onStop()
+        backgroundTimestamp = System.currentTimeMillis()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (backgroundTimestamp > 0L && repository.isMasterPinSet()) {
+            val elapsed = System.currentTimeMillis() - backgroundTimestamp
+            if (elapsed >= 30_000L) {
+                isLockedState.value = true
+            }
+        }
+    }
 }
 
 @Composable
 fun PinVaultAppRoot(
     repository: VaultRepository,
+    isLockedState: androidx.compose.runtime.MutableState<Boolean>,
     onBiometricUnlock: (() -> Unit) -> Unit,
     onBiometricReveal: (String, (BiometricKeyManager.DecryptedCardSecret) -> Unit) -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val cards by repository.cards.collectAsState()
-    var isLocked by remember { mutableStateOf(false) } // starts unlocked for instant convenience or can lock
+    var isLocked by isLockedState
     var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.Vault) }
     var showBackupDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
@@ -106,7 +127,8 @@ fun PinVaultAppRoot(
                     isLocked = false
                 }
             },
-            onVerifyPin = { pin -> repository.verifyMasterPin(pin) }
+            onVerifyPin = { pin -> repository.verifyMasterPin(pin) },
+            getRemainingLockoutSeconds = { repository.getRemainingPinLockoutSeconds() }
         )
     } else {
         when (val screen = currentScreen) {

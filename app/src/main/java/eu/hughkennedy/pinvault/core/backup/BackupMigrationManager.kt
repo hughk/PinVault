@@ -45,11 +45,16 @@ object BackupMigrationManager {
      * Serializes cards into an encrypted .pinvault JSON envelope.
      */
     fun exportVault(cards: List<CardEntity>, passphrase: String): String {
-        require(passphrase.isNotBlank()) { "Passphrase must not be blank" }
+        require(passphrase.length >= 8) { "Passphrase must be at least 8 characters long" }
 
         val salt = CryptoManager.generateRandomBytes(16)
         val iv = CryptoManager.generateRandomBytes(12)
-        val key = CryptoManager.deriveKey(passphrase.toCharArray(), salt)
+        val chars = passphrase.toCharArray()
+        val key = try {
+            CryptoManager.deriveKey(chars, salt)
+        } finally {
+            CryptoManager.wipe(chars)
+        }
 
         val plaintextBytes = json.encodeToString(cards).toByteArray(Charsets.UTF_8)
         val ciphertext = CryptoManager.encryptAesGcm(plaintextBytes, key, iv)
@@ -93,7 +98,12 @@ object BackupMigrationManager {
             val iv = CryptoManager.fromBase64(container.ivBase64)
             val ciphertext = CryptoManager.fromBase64(container.ciphertextBase64)
 
-            val key = CryptoManager.deriveKey(passphrase.toCharArray(), salt)
+            val chars = passphrase.toCharArray()
+            val key = try {
+                CryptoManager.deriveKey(chars, salt)
+            } finally {
+                CryptoManager.wipe(chars)
+            }
             val decryptedBytes = CryptoManager.decryptAesGcm(ciphertext, key, iv)
             val decryptedJson = String(decryptedBytes, Charsets.UTF_8)
             return parseCardsJson(decryptedJson)

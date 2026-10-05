@@ -72,9 +72,11 @@ import eu.hughkennedy.pinvault.core.engine.DecoyRandomizer
 import eu.hughkennedy.pinvault.core.model.CardEntity
 import eu.hughkennedy.pinvault.core.model.PaletteColor
 import eu.hughkennedy.pinvault.core.security.BiometricKeyManager
+import eu.hughkennedy.pinvault.core.security.ClipboardSecurityHelper
 import eu.hughkennedy.pinvault.core.totp.TotpManager
 import eu.hughkennedy.pinvault.ui.components.CategoryIconBadge
 import eu.hughkennedy.pinvault.ui.components.MatrixGridView
+import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -88,7 +90,7 @@ fun MatrixDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
+    val coroutineScope = rememberCoroutineScope()
     var currentTiles by remember(card) { mutableStateOf(card.tiles) }
     val encryptedCardSecret = remember(card.id, card.secretColor, card.ruleHint, card.totpSecret) {
         BiometricKeyManager.encryptCardSecret(card.secretColor, card.ruleHint, card.totpSecret)
@@ -320,7 +322,13 @@ fun MatrixDetailScreen(
                         totpRemainingSeconds = totpRemainingSeconds,
                         currentTotpCode = currentTotpCode,
                         onCopyTotpCode = {
-                            clipboardManager.setText(AnnotatedString(currentTotpCode))
+                            ClipboardSecurityHelper.copySensitiveText(
+                                context = context,
+                                label = "Pin Vault 2FA Code",
+                                text = currentTotpCode,
+                                autoClearSeconds = 30L,
+                                scope = coroutineScope
+                            )
                             Toast.makeText(context, context.getString(R.string.totp_code_copied), Toast.LENGTH_SHORT).show()
                         },
                         onToggleReveal = {
@@ -388,7 +396,13 @@ fun MatrixDetailScreen(
                         totpRemainingSeconds = totpRemainingSeconds,
                         currentTotpCode = currentTotpCode,
                         onCopyTotpCode = {
-                            clipboardManager.setText(AnnotatedString(currentTotpCode))
+                            ClipboardSecurityHelper.copySensitiveText(
+                                context = context,
+                                label = "Pin Vault 2FA Code",
+                                text = currentTotpCode,
+                                autoClearSeconds = 30L,
+                                scope = coroutineScope
+                            )
                             Toast.makeText(context, context.getString(R.string.totp_code_copied), Toast.LENGTH_SHORT).show()
                         },
                         onToggleReveal = {

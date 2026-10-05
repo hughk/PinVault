@@ -9,6 +9,8 @@ import eu.hughkennedy.pinvault.core.model.CardCategory
 import eu.hughkennedy.pinvault.core.model.CardEntity
 import eu.hughkennedy.pinvault.core.model.TileData
 import eu.hughkennedy.pinvault.core.security.CryptoManager
+import eu.hughkennedy.pinvault.core.security.MasterPinManager
+import eu.hughkennedy.pinvault.core.security.VaultStorageEncryption
 import eu.hughkennedy.pinvault.core.totp.TotpManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +22,7 @@ import java.security.MessageDigest
 class VaultRepository(private val context: Context) {
 
     private val vaultFile: File get() = File(context.filesDir, "vault_cards.json")
-    private val prefs = context.getSharedPreferences("pin_keeper_prefs", Context.MODE_PRIVATE)
+    private val masterPinManager = MasterPinManager(context)
 
     private val _cards = MutableStateFlow<List<CardEntity>>(emptyList())
     val cards: StateFlow<List<CardEntity>> = _cards.asStateFlow()
@@ -46,12 +48,13 @@ class VaultRepository(private val context: Context) {
         }
 
         try {
-            val content = targetFile.readText(Charsets.UTF_8)
-            val loaded = BackupMigrationManager.parseCardsJson(content)
+            val rawContent = targetFile.readText(Charsets.UTF_8)
+            val plainContent = VaultStorageEncryption.decrypt(rawContent)
+            val loaded = BackupMigrationManager.parseCardsJson(plainContent)
             if (loaded.isNotEmpty()) {
                 _cards.value = loaded
-                // If loaded from a legacy file or if primary vaultFile needs syncing
-                if (targetFile != vaultFile || !vaultFile.exists()) {
+                // If loaded from a legacy file or if primary vaultFile was plaintext unencrypted, re-save encrypted
+                if (targetFile != vaultFile || !vaultFile.exists() || !VaultStorageEncryption.isEncrypted(rawContent)) {
                     saveCards(loaded)
                 }
             } else {
@@ -82,7 +85,8 @@ class VaultRepository(private val context: Context) {
     private fun saveCards(cardList: List<CardEntity>) {
         try {
             val serialized = BackupMigrationManager.json.encodeToString(cardList)
-            vaultFile.writeText(serialized, Charsets.UTF_8)
+            val encrypted = VaultStorageEncryption.encrypt(serialized)
+            vaultFile.writeText(encrypted, Charsets.UTF_8)
             _cards.value = cardList
         } catch (e: Exception) {
             e.printStackTrace()
@@ -125,31 +129,15 @@ class VaultRepository(private val context: Context) {
     }
 
     // Master PIN Management
-    fun isMasterPinSet(): Boolean {
-        return prefs.contains("master_pin_hash")
-    }
+    fun isMasterPinSet(): Boolean = masterPinManager.isMasterPinSet()
 
-    fun setMasterPin(pin: String) {
-        val salt = "pin_keeper_local_salt"
-        val hash = sha256("$pin:$salt")
-        prefs.edit().putString("master_pin_hash", hash).apply()
-    }
+    fun setMasterPin(pin: String) = masterPinManager.setMasterPin(pin)
 
-    fun verifyMasterPin(pin: String): Boolean {
-        if (!isMasterPinSet()) {
-            // Default master PIN on first launch: 1234
-            return pin == "1234"
-        }
-        val salt = "pin_keeper_local_salt"
-        val expected = prefs.getString("master_pin_hash", "") ?: ""
-        return sha256("$pin:$salt") == expected
-    }
+    fun verifyMasterPin(pin: String): Boolean = masterPinManager.verifyMasterPin(pin)
 
-    private fun sha256(input: String): String {
-        val md = MessageDigest.getInstance("SHA-256")
-        val bytes = md.digest(input.toByteArray(Charsets.UTF_8))
-        return bytes.joinToString("") { "%02x".format(it) }
-    }
+    fun getRemainingPinLockoutSeconds(): Long = masterPinManager.getRemainingLockoutSeconds()
+
+    fun isPinLockedOut(): Boolean = masterPinManager.isLockedOut()
 
     private fun createSampleCards(): List<CardEntity> {
         // Sample 1: Barclays Visa Debit (6x7, Blue, diagonal 4-7-1-9)

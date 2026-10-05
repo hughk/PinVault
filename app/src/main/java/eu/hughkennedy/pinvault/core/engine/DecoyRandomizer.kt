@@ -2,10 +2,14 @@ package eu.hughkennedy.pinvault.core.engine
 
 import eu.hughkennedy.pinvault.core.model.PaletteColor
 import eu.hughkennedy.pinvault.core.model.TileData
+import java.security.SecureRandom
 import kotlin.math.abs
 import kotlin.random.Random
+import kotlin.random.asKotlinRandom
 
 object DecoyRandomizer {
+
+    val CSPRNG: Random = SecureRandom().asKotlinRandom()
 
     enum class LineOrientation {
         HORIZONTAL,
@@ -93,7 +97,7 @@ object DecoyRandomizer {
         secretColor: String,
         palette: List<String> = PaletteColor.ALL.map { it.id },
         length: Int = 4,
-        random: Random = Random.Default
+        random: Random = CSPRNG
     ): Pair<LineCandidate, String>? {
         val allLines = generateAllLineCandidates(rows, cols, length)
         if (allLines.isEmpty()) return null
@@ -136,7 +140,7 @@ object DecoyRandomizer {
         secretColor: String,
         pinTiles: List<TileData>,
         palette: List<String> = PaletteColor.ALL.map { it.id },
-        random: Random = Random.Default
+        random: Random = CSPRNG
     ): String {
         val adjacent = isAdjacentToPin(r, c, pinTiles, secretColor)
         val otherColors = palette.filter { it != secretColor }
@@ -162,7 +166,7 @@ object DecoyRandomizer {
         tiles: List<TileData>,
         secretColor: String,
         decoyLength: Int? = null,
-        random: Random = Random.Default
+        random: Random = CSPRNG
     ): List<TileData> {
         val pinTiles = tiles.filter { it.isPinTile }
         val rows = (tiles.maxOfOrNull { it.row } ?: 0) + 1

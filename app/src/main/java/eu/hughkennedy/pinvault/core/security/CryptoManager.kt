@@ -26,12 +26,38 @@ object CryptoManager {
 
     /**
      * Derives an AES-256 SecretKey from a user passphrase and salt using PBKDF2.
+     * Clears the PBEKeySpec internal password cache upon completion.
      */
     fun deriveKey(passphrase: CharArray, salt: ByteArray): SecretKeySpec {
         val factory = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM)
         val spec = PBEKeySpec(passphrase, salt, ITERATION_COUNT, KEY_LENGTH)
-        val keyBytes = factory.generateSecret(spec).encoded
-        return SecretKeySpec(keyBytes, "AES")
+        return try {
+            val keyBytes = factory.generateSecret(spec).encoded
+            SecretKeySpec(keyBytes, "AES")
+        } finally {
+            spec.clearPassword()
+        }
+    }
+
+    /**
+     * Constant-time byte array equality comparison resistant to timing side-channels.
+     */
+    fun constantTimeEquals(a: ByteArray, b: ByteArray): Boolean {
+        return java.security.MessageDigest.isEqual(a, b)
+    }
+
+    /**
+     * Overwrites character arrays with zeros to minimize exposure in memory.
+     */
+    fun wipe(chars: CharArray) {
+        java.util.Arrays.fill(chars, '\u0000')
+    }
+
+    /**
+     * Overwrites byte arrays with zeros to minimize exposure in memory.
+     */
+    fun wipe(bytes: ByteArray) {
+        java.util.Arrays.fill(bytes, 0.toByte())
     }
 
     /**

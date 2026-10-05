@@ -49,20 +49,36 @@ fun LockScreen(
     onUnlockSuccess: () -> Unit,
     onBiometricRequested: () -> Unit,
     onVerifyPin: (String) -> Boolean,
+    getRemainingLockoutSeconds: () -> Long = { 0L },
     modifier: Modifier = Modifier
 ) {
     var enteredPin by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
+    var lockoutSeconds by remember { mutableStateOf(getRemainingLockoutSeconds()) }
+
+    LaunchedEffect(lockoutSeconds) {
+        if (lockoutSeconds > 0) {
+            while (lockoutSeconds > 0) {
+                kotlinx.coroutines.delay(1000L)
+                lockoutSeconds = getRemainingLockoutSeconds()
+            }
+        }
+    }
 
     LaunchedEffect(enteredPin) {
-        if (enteredPin.length == 4) {
+        if (enteredPin.length == 4 && lockoutSeconds <= 0) {
             if (onVerifyPin(enteredPin)) {
                 onUnlockSuccess()
             } else {
-                isError = true
-                kotlinx.coroutines.delay(600)
+                val remaining = getRemainingLockoutSeconds()
+                if (remaining > 0) {
+                    lockoutSeconds = remaining
+                } else {
+                    isError = true
+                    kotlinx.coroutines.delay(600)
+                    isError = false
+                }
                 enteredPin = ""
-                isError = false
             }
         }
     }
@@ -125,10 +141,20 @@ fun LockScreen(
                     fontWeight = FontWeight.Bold
                 )
 
+                val subtitleText = when {
+                    lockoutSeconds > 0 -> stringResource(R.string.lock_subtitle_locked_out, lockoutSeconds)
+                    isError -> stringResource(R.string.lock_subtitle_error)
+                    else -> stringResource(R.string.lock_subtitle_normal)
+                }
+                val subtitleColor = when {
+                    lockoutSeconds > 0 || isError -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                }
+
                 Text(
-                    text = if (isError) stringResource(R.string.lock_subtitle_error) else stringResource(R.string.lock_subtitle_normal),
+                    text = subtitleText,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = subtitleColor
                 )
 
                 Spacer(modifier = Modifier.height(28.dp))
@@ -142,7 +168,7 @@ fun LockScreen(
                         val isFilled = i < enteredPin.length
                         val dotColor by animateColorAsState(
                             targetValue = when {
-                                isError -> MaterialTheme.colorScheme.error
+                                isError || lockoutSeconds > 0 -> MaterialTheme.colorScheme.error
                                 isFilled -> MaterialTheme.colorScheme.primary
                                 else -> MaterialTheme.colorScheme.outlineVariant
                             },
@@ -185,17 +211,20 @@ fun LockScreen(
                         rowKeys.forEach { key ->
                             KeypadButton(
                                 key = key,
+                                enabled = lockoutSeconds <= 0,
                                 onClick = {
-                                    when (key) {
-                                        "bio" -> onBiometricRequested()
-                                        "del" -> {
-                                            if (enteredPin.isNotEmpty()) {
-                                                enteredPin = enteredPin.dropLast(1)
+                                    if (lockoutSeconds <= 0) {
+                                        when (key) {
+                                            "bio" -> onBiometricRequested()
+                                            "del" -> {
+                                                if (enteredPin.isNotEmpty()) {
+                                                    enteredPin = enteredPin.dropLast(1)
+                                                }
                                             }
-                                        }
-                                        else -> {
-                                            if (enteredPin.length < 4) {
-                                                enteredPin += key
+                                            else -> {
+                                                if (enteredPin.length < 4) {
+                                                    enteredPin += key
+                                                }
                                             }
                                         }
                                     }
@@ -212,14 +241,16 @@ fun LockScreen(
 @Composable
 private fun KeypadButton(
     key: String,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     val isAction = key == "bio" || key == "del"
-    val containerColor = if (isAction && key == "bio") {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
+    val containerColor = when {
+        !enabled -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+        isAction && key == "bio" -> MaterialTheme.colorScheme.primaryContainer
+        else -> MaterialTheme.colorScheme.surfaceVariant
     }
+    val contentAlpha = if (enabled) 1.0f else 0.38f
 
     Box(
         contentAlignment = Alignment.Center,
@@ -227,14 +258,14 @@ private fun KeypadButton(
             .size(72.dp)
             .clip(CircleShape)
             .background(containerColor)
-            .clickable { onClick() }
+            .clickable(enabled = enabled) { onClick() }
     ) {
         when (key) {
             "bio" -> {
                 Icon(
                     imageVector = Icons.Default.Fingerprint,
                     contentDescription = stringResource(R.string.lock_action_biometric),
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = contentAlpha),
                     modifier = Modifier.size(30.dp)
                 )
             }
@@ -242,7 +273,7 @@ private fun KeypadButton(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Backspace,
                     contentDescription = stringResource(R.string.lock_action_delete),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha),
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -252,7 +283,7 @@ private fun KeypadButton(
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.SansSerif,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha)
                 )
             }
         }

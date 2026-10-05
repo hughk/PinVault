@@ -181,7 +181,8 @@ object BiometricKeyManager {
     }
 
     fun verifyTokenHash(token: ByteArray, expectedHash: String): Boolean {
-        return sha256(token) == expectedHash
+        val computed = sha256(token)
+        return MessageDigest.isEqual(computed.toByteArray(Charsets.UTF_8), expectedHash.toByteArray(Charsets.UTF_8))
     }
 
     fun ensureMasterToken(context: Context): ByteArray {

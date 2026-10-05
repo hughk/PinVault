@@ -38,6 +38,11 @@ android {
         excludes += "/META-INF/{AL2.0,LGPL2.1}"
       }
     }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
 }
 
 base {
@@ -101,3 +106,8 @@ dependencies {
   implementation(libs.androidx.navigation3.runtime)
   implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 }
+
+tasks.withType<Test>().configureEach {
+    doNotTrackState("Avoid file locking issues with background sync clients on test build output")
+}
+

@@ -90,6 +90,7 @@
     <string name="lock_shield_status">Hardware Keystore Secured</string>
     <string name="lock_subtitle_normal">Authenticate with biometric or enter Master PIN</string>
     <string name="lock_subtitle_error">Incorrect PIN, try again (Default: 1234)</string>
+    <string name="lock_subtitle_locked_out">Too many failed attempts. Try again in %1$ds.</string>
     <string name="lock_action_biometric">Biometric Unlock</string>
     <string name="lock_action_delete">Delete</string>
     <string name="biometric_prompt_unlock">Unlock Pin Vault</string>
@@ -130,6 +131,7 @@
     <string name="backup_restore_success_toast">Successfully restored %1$d cards!</string>
     <string name="backup_error_empty_passphrase">Please enter a passphrase to encrypt your cards.</string>
     <string name="backup_error_empty_passphrase_short">Please enter a passphrase.</string>
+    <string name="backup_error_passphrase_too_short">Passphrase must be at least 8 characters long.</string>
     <string name="backup_error_no_file_selected">Please select a backup file from Downloads.</string>
     <string name="backup_error_empty_payload">Please paste the backup content or select a file.</string>
     <string name="backup_error_empty_import_passphrase">Please enter the passphrase used during export.</string>
