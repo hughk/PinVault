@@ -1,0 +1,21 @@
+Pin Vault protects credit card, debit card, and banking PINs using visual steganography. Instead of displaying your sensitive codes in cleartext where shoulder-surfers or security cameras can read them, Pin Vault conceals them inside randomized grids of colored number tiles.
+
+Only you know the three keys required to read your PIN:
+1. Your Secret Color
+2. Your Geometric Pattern (lines, diagonals, L-shapes, or custom fingerpainted paths)
+3. Your Reading Direction
+
+Anyone glancing over your shoulder sees only a wall of colored numbers and plausible decoy PINs.
+
+KEY FEATURES
+
+• Visual Steganography: Hide 4-to-12 digit PINs in randomized matrix grids.
+• Artist Fingerpaint Mode: Draw custom geometric paths with touch gestures across the grid.
+• Dynamic TOTP Authenticator: Scan 2FA QR codes to camouflage live rolling 6-digit one-time passcodes along your secret path.
+• Hardware KeyStore Security: Vault databases are encrypted at rest with AES-256-GCM backed by the Android KeyStore / TEE.
+• Hardened Master PIN: Secured with PBKDF2 (100,000 rounds, HMAC-SHA256, unique per-device salt) and rate-limiting lockout against brute-force attacks.
+• Biometric Authentication: Unlock the app or reveal secret pattern overlays with fingerprint or face recognition.
+• Privacy Shielding: FLAG_SECURE blocks screenshots and recents preview captures.
+• Clipboard Sanitization: Sensitive TOTP codes and backup payloads are flagged as sensitive on Android 13+ and automatically wiped from clipboard memory after 30–60 seconds.
+• Encrypted Backups: Export and restore AES-256-GCM encrypted backups directly via Android Download folders or SAF.
+• 100% Offline: Zero internet permissions requested or required. Your secrets never leave your device.

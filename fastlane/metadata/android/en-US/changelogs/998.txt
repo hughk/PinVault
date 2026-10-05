@@ -1,0 +1,7 @@
+v0.998 - Security Hardening & Compatibility Suite:
+• Hardware KeyStore AES-256-GCM database encryption at rest with automated migration for existing databases.
+• Hardened Master PIN using PBKDF2 (100k rounds) with unique salts, constant-time checks, and brute-force lockout.
+• Auto-lock lifecycle protection: vault locks on launch and after 30 seconds backgrounded.
+• Clipboard sanitization: Android 13+ sensitive content flagging and automated 30s-60s wipe.
+• Upgraded decoy engine to Cryptographically Secure PRNG (SecureRandom).
+• Minimum 8-character passphrase required for new backup exports.

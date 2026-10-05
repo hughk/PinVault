@@ -1,0 +1,21 @@
+Pin Vault schützt Debit-, Kreditkarten- und Banking-PINs durch visuelle Steganographie. Anstatt Ihre sensiblen Codes im Klartext anzuzeigen, wo neugierige Blicke oder Überwachungskameras sie ablesen können, tarnt Pin Vault sie in einem Zufallsraster aus bunten Zahlenfeldern.
+
+Nur Sie kennen die drei Schlüssel, um Ihre PIN abzulesen:
+1. Ihre geheime Farbe
+2. Ihr geometrisches Muster (Linien, Diagonalen, L-Formen oder gezeichnete Pfade)
+3. Ihre Leserichtung
+
+Jeder, der Ihnen über die Schulter schaut, sieht nur ein wirres Raster bunter Zahlen und glaubwürdige Scheinziffern.
+
+HAUPTMERKMALE
+
+• Visuelle Steganographie: Verstecken Sie 4- bis 12-stellige PINs in Rastermatrizen.
+• Artist-Fingermalmodus: Zeichnen Sie eigene geometrische Pfade per Touch-Geste auf das Raster.
+• Dynamischer TOTP-Authenticator: Scannen Sie 2FA-QR-Codes, um fortlaufende 6-stellige Einmalpasswörter auf Ihrem geheimen Pfad zu tarnen.
+• Hardware-Keystore-Sicherheit: Tresordatenbanken werden im Ruhezustand mit Hardware-gestütztem AES-256-GCM im Android KeyStore / TEE verschlüsselt.
+• Gehärtete Master-PIN: Gesichert mit PBKDF2 (100.000 Runden, HMAC-SHA256, individueller Salt) und Brute-Force-Sperre.
+• Biometrische Authentifizierung: Entsperren Sie die App oder decken Sie das geheime Muster mit Fingerabdruck oder Gesichtserkennung auf.
+• Displayschutz: FLAG_SECURE blockiert Bildschirmfotos und Vorschaubilder in den letzten Apps.
+• Sichere Zwischenablage: Sensible TOTP-Codes und Backups werden auf Android 13+ geschützt und nach 30–60 Sekunden automatisch aus dem Speicher gelöscht.
+• Verschlüsselte Backups: Exportieren und importieren Sie AES-256-GCM-verschlüsselte Sicherungen direkt über den Downloads-Ordner oder SAF.
+• 100% Offline: Keine Internetberechtigung erforderlich. Ihre Daten verlassen niemals Ihr Gerät.
