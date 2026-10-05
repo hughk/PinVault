@@ -1,7 +1,7 @@
-v0.998 - Sicherheits- & Kompatibilitäts-Update:
-• Hardware-gestützte AES-256-GCM Datenbankverschlüsselung mit automatischer Migration bestehender Daten.
-• Gehärtete Master-PIN mit PBKDF2 (100.000 Runden), individuellem Salt, Zeitangriffsschutz und Brute-Force-Sperre.
-• Automatisches Sperren beim Start und nach 30 Sekunden im Hintergrund.
-• Schutz der Zwischenablage auf Android 13+ und automatische Bereinigung nach 30–60 Sekunden.
-• Kryptographisch sicherer Zufallsgenerator (SecureRandom) für Scheinziffern.
+v0.998 - Sicherheits-Update:
+• Hardware-gestützte AES-256-GCM Datenbankverschlüsselung mit automatischer Migration.
+• Gehärtete Master-PIN mit PBKDF2 (100.000 Runden), individuellem Salt und Brute-Force-Sperre.
+• Automatisches Sperren beim Start und nach 30s im Hintergrund.
+• Schutz der Zwischenablage auf Android 13+ mit automatischer Bereinigung.
+• Kryptographisch sichere Zufallsauswahl (SecureRandom) für Scheinziffern.
 • Mindestens 8 Zeichen für neue Backup-Passwörter erforderlich.
