@@ -9,5 +9,5 @@
 
 ---
 **Repository**: [hughk/PinVault](https://github.com/hughk/PinVault)  
-**Version**: 0.997 (Beta)  
+**Version**: 0.998 (Beta)  
 **License**: GPL-3.0

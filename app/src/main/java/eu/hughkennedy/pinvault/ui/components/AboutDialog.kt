@@ -59,7 +59,7 @@ fun AboutDialog(
     val context = LocalContext.current
     val authorName = "Hugh Kennedy"
     val authorEmail = "hughk.projects@gmail.com"
-    val appVersion = "0.997"
+    val appVersion = "0.998"
     val githubUrl = "https://github.com/hughk/PinVault"
 
     AlertDialog(

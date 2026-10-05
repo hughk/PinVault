@@ -29,9 +29,12 @@ Pin Vault eliminates these attack vectors:
 
 ---
 
-## 🚀 Version 0.997 Release Highlights
+## 🚀 Version 0.998 Release Highlights
 
-The current **v0.997 (Beta)** release introduces major architectural enhancements:
-- 👆 **Artist Fingerpaint Mode**: Draw custom geometric shapes across the matrix with directional numbered chevrons.
-- ⏱️ **Dynamic TOTP Authenticator**: Scan 2FA QR codes to camouflage live rolling 6-digit one-time passcodes.
-- 🔐 **RSA-OAEP Hardware Encryption**: Upgraded cryptographic sealing to `RSA/ECB/OAEPWithSHA-256AndMGF1Padding` in the Android KeyStore / TEE, eliminating chosen-ciphertext padding oracle vulnerabilities.
+The current **v0.998 (Beta)** release introduces comprehensive security hardening:
+- 🛡️ **Hardware AES-256-GCM Storage at Rest**: Local databases (`vault_cards.json`) are encrypted using hardware KeyStore AES-256-GCM with automated transparent upwards migration for existing cards.
+- 🔑 **Hardened Master PIN (PBKDF2)**: Migrated to PBKDF2WithHmacSHA256 (100,000 iterations, unique 16-byte random salt), constant-time comparisons, and persistent brute-force rate-limiting lockout.
+- ⏱️ **Auto-Lock Lifecycle Protection**: Vault locks automatically on launch if a PIN is set and whenever backgrounded for $\ge 30$ seconds.
+- 📋 **Clipboard Sanitization**: TOTP codes and backup payloads marked as sensitive on Android 13+ and automatically wiped from RAM/clipboard after a timeout.
+- 🎲 **CSPRNG Decoy Engine**: Decoy tiles, lines, and palettes generated strictly via `java.security.SecureRandom`.
+- 👆 **Artist Fingerpaint Mode & TOTP Authenticator**: Custom path drawing and camera/photo-based 2FA TOTP import.
