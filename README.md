@@ -122,7 +122,7 @@ cd pin-vault
 ```bash
 # On Linux / macOS:
 ./gradlew assembleDebug
-**Note:** The dubug APK is built with screenshotes enabled. This is facilitate defect reporting during debugging but must not be used in production. Other Apps with privileges will be able to screen grab and if they do so at the wrong moment then the PIN is completely compromised.
+**Note:** The dubug APK is built with screenshotes enabled. This is to facilitate defect reporting during debugging but must not be used in production. Other Apps with privileges may be able to screen grab and if they do so at the wrong moment then the PIN is completely compromised.
 
 # On Windows:
 .\gradlew.bat assembleDebug
