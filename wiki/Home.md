@@ -29,9 +29,9 @@ Pin Vault eliminates these attack vectors:
 
 ---
 
-## 🚀 Version 0.998 Release Highlights
+## 🚀 Version 0.999 Release Highlights
 
-The current **v0.998 (Beta)** release introduces comprehensive security hardening:
+The current **v0.999 (Beta)** release introduces comprehensive security hardening and UX enhancements:
 - 🛡️ **Hardware AES-256-GCM Storage at Rest**: Local databases (`vault_cards.json`) are encrypted using hardware KeyStore AES-256-GCM with automated transparent upwards migration for existing cards.
 - 🔑 **Hardened Master PIN (PBKDF2)**: Migrated to PBKDF2WithHmacSHA256 (100,000 iterations, unique 16-byte random salt), constant-time comparisons, and persistent brute-force rate-limiting lockout.
 - ⏱️ **Auto-Lock Lifecycle Protection**: Vault locks automatically on launch if a PIN is set and whenever backgrounded for $\ge 30$ seconds.

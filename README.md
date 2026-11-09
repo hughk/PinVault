@@ -1,6 +1,6 @@
 # Pin Vault
 
-[![Version](https://img.shields.io/badge/Version-0.998%20(Beta)-blue.svg)](https://github.com/hughk/PinVault)
+[![Version](https://img.shields.io/badge/Version-0.999%20(Beta)-blue.svg)](https://github.com/hughk/PinVault)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://github.com/hughk/PinVault/blob/main/LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026%2B)-orange.svg)](https://android.com)
 [![Language](https://img.shields.io/badge/Kotlin-2.0%2B-purple.svg)](https://kotlinlang.org)
@@ -129,7 +129,7 @@ cd pin-vault
 ```
 The compiled APK will be generated at:
 ```
-app/build/outputs/apk/debug/PinVault-v0.99-debug.apk
+app/build/outputs/apk/debug/PinVault-v0.999-debug.apk
 ```
 
 ### Run Unit Tests
@@ -176,7 +176,7 @@ Pin Vault includes comprehensive unit test suites verifying decoy non-adjacency,
 
 ## 🗺️ Roadmap to v1.0
 
-Pin Vault is currently at **Version 0.994 (Beta / Pre-release)**.
+Pin Vault is currently at **Version 0.999 (Beta / Pre-release)**.
 
 Completed:
 - [x] Visual steganography matrix with dynamic rows/columns

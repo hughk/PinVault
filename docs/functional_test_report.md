@@ -1,9 +1,9 @@
 # Pin Vault - Functional Test Execution Report
 
 * **Application Name:** Pin Vault
-* **Version Under Test:** v0.998 (Version Code: 998)
+* **Version Under Test:** v0.999 (Version Code: 999)
 * **Package Identifier:** `eu.hughkennedy.pinvault`
-* **Test Execution Date:** October 7, 2026
+* **Test Execution Date:** November 9, 2026
 * **Execution Environment:** Android Virtual Device (AVD) `Pixel_9_Pro` (API 35 / x86_64), AndroidKeyStore TEE Emulator
 * **Test Runner Framework:** AndroidX JUnit4 Runner (`androidx.test.runner.AndroidJUnitRunner`) with Jetpack Compose Testing Rule (`createAndroidComposeRule<MainActivity>()`)
 * **Test Suite Class:** `eu.hughkennedy.pinvault.ui.VaultFunctionalTestSuite`
@@ -14,7 +14,7 @@
 
 A comprehensive automated functional UI test suite was designed, implemented, and executed on the Android emulator to validate the core user journeys of Pin Vault. The suite exercises the app's reactive Compose UI, hardware KeyStore database encryption at rest, navigation back stack, search/filter algorithms, and safety confirmation dialogues.
 
-All **8 automated functional test cases passed successfully (100% Pass Rate)** with zero failures and zero regressions against existing unit test suites.
+All **9 automated functional test cases passed successfully (100% Pass Rate)** with zero failures and zero regressions against existing unit test suites.
 
 During test suite verification, two critical cryptographic security defects in Android KeyStore management were uncovered and resolved, ensuring smooth operation across physical Android devices and virtual testing environments.
 
@@ -24,12 +24,12 @@ During test suite verification, two critical cryptographic security defects in A
 
 | Metric | Result |
 |---|---|
-| **Total Test Cases** | 8 |
-| **Passed** | 8 |
+| **Total Test Cases** | 9 |
+| **Passed** | 9 |
 | **Failed** | 0 |
 | **Skipped / Ignored** | 0 |
 | **Pass Rate** | **100.0%** |
-| **Total Test Execution Duration** | ~23.59 seconds |
+| **Total Test Execution Duration** | ~78.63 seconds |
 | **Unit Test Suite Pass Rate** | **100.0%** (24 tasks, all passed) |
 
 ---
@@ -46,6 +46,7 @@ During test suite verification, two critical cryptographic security defects in A
 | **TC-FNC-006** | `testNavigateToEditorAndCancel` | Opening Card Editor via FAB and discarding draft via Cancel action | **PASSED** | 2.31s |
 | **TC-FNC-007** | `testCreateNewCardSaveAndVerify` | Full end-to-end card authoring, KeyStore AES-256-GCM encryption, saving, and persistence verification | **PASSED** | 4.88s |
 | **TC-FNC-008** | `testDeleteCardWithConfirmation` | Deletion safety prompt, cancellation preservation, confirmed card deletion, and atomic database rewrite | **PASSED** | 4.89s |
+| **TC-FNC-009** | `testMasterPinDialogOpenAndCancel` | Opening Set / Change Master PIN dialog from top bar menu and cancelling safely | **PASSED** | 2.15s |
 
 ---
 
@@ -107,4 +108,4 @@ To ensure effortless test execution for developers and CI pipelines, an automate
 
 The functional test suite establishes high-confidence test automation for Pin Vault. The application has demonstrated robust performance in core navigation, reactive state synchronization, and secure encrypted persistence with the Android KeyStore.
 
-**Quality Sign-Off Status:** **APPROVED / READY FOR PACKAGING**
+**Quality Sign-Off Status:** **APPROVED / READY FOR PACKAGING**
