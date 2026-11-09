@@ -18,16 +18,22 @@ import com.google.zxing.common.HybridBinarizer
  */
 object QrCodeDecoder {
 
-    private val reader = MultiFormatReader()
     private val hints = mapOf(
         DecodeHintType.TRY_HARDER to true,
         DecodeHintType.POSSIBLE_FORMATS to listOf(BarcodeFormat.QR_CODE)
     )
 
+    private fun createConfiguredReader(): MultiFormatReader {
+        return MultiFormatReader().apply {
+            setHints(hints)
+        }
+    }
+
     /**
      * Decodes a QR code from a captured or selected [Bitmap].
      */
     fun decodeBitmap(bitmap: Bitmap): String? {
+        val reader = createConfiguredReader()
         val width = bitmap.width
         val height = bitmap.height
         val pixels = IntArray(width * height)
@@ -70,6 +76,7 @@ object QrCodeDecoder {
      * Decodes a QR code from a CameraX [ImageProxy] frame without full Bitmap allocation.
      */
     fun decodeImageProxy(image: ImageProxy): String? {
+        val reader = createConfiguredReader()
         val plane = image.planes[0]
         val buffer = plane.buffer
         val data = ByteArray(buffer.remaining())

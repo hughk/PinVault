@@ -5,6 +5,9 @@ import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.KeyStore
@@ -36,11 +39,17 @@ object BiometricKeyManager {
     private const val PREF_MASTER_TOKEN_HASH = "biometric_master_token_hash"
     private const val PREF_CIPHER_MODE = "biometric_cipher_mode"
 
+    @Serializable
     data class DecryptedCardSecret(
         val secretColor: String,
         val ruleHint: String,
-        val totpSecret: String?
+        val totpSecret: String? = null
     )
+
+    private val secretJson = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
 
     private var fallbackKeyPair: KeyPair? = null
 
@@ -74,7 +83,18 @@ object BiometricKeyManager {
             }
         }
 
-        return generateKeyStoreKeyPair()
+        try {
+            return generateKeyStoreKeyPair()
+        } catch (e: Exception) {
+            // Devices without biometrics enrolled cannot initialize a key requiring user authentication.
+            // Fall back to standard RSA key pair so non-biometric functionality continues safely.
+            if (fallbackKeyPair == null) {
+                val kpg = KeyPairGenerator.getInstance("RSA")
+                kpg.initialize(KEY_SIZE)
+                fallbackKeyPair = kpg.generateKeyPair()
+            }
+            return fallbackKeyPair!!
+        }
     }
 
     private fun generateKeyStoreKeyPair(): KeyPair {
@@ -225,7 +245,12 @@ object BiometricKeyManager {
     // --- Card Secret Sealing & Unsealing ---
 
     fun encryptCardSecret(secretColor: String, ruleHint: String, totpSecret: String?): String {
-        val payload = "$secretColor|$ruleHint|${totpSecret ?: ""}"
+        val secretObj = DecryptedCardSecret(
+            secretColor = secretColor,
+            ruleHint = ruleHint,
+            totpSecret = totpSecret?.ifBlank { null }
+        )
+        val payload = secretJson.encodeToString(secretObj)
         val encrypted = encryptData(payload.toByteArray(Charsets.UTF_8))
         return CryptoManager.toBase64(encrypted)
     }
@@ -234,6 +259,11 @@ object BiometricKeyManager {
         val encryptedBytes = CryptoManager.fromBase64(encryptedBase64)
         val decryptedBytes = decryptData(cipher, encryptedBytes)
         val raw = String(decryptedBytes, Charsets.UTF_8)
+        if (raw.trimStart().startsWith("{")) {
+            val parsed = secretJson.decodeFromString<DecryptedCardSecret>(raw)
+            return parsed.copy(totpSecret = parsed.totpSecret?.ifBlank { null })
+        }
+        // Backward compatibility for legacy pipe-delimited payloads
         val parts = raw.split("|")
         return DecryptedCardSecret(
             secretColor = parts[0],

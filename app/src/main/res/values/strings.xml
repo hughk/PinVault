@@ -26,6 +26,7 @@
     <string name="action_more_options">More Options</string>
     <string name="action_about_menu">About Pin Vault</string>
     <string name="action_lock_menu">Lock Vault</string>
+    <string name="action_set_master_pin_menu">Set / Change Master PIN</string>
     <string name="action_add_card">Add Card</string>
     <string name="search_placeholder">Search card, folder, account, or rule...</string>
     <string name="search_clear">Clear search</string>
@@ -86,7 +87,7 @@
     <string name="editor_tile_dialog_assign">Assign a PIN digit in %1$s:</string>
     <string name="editor_tile_dialog_reset">Reset to \'?\' Placeholder</string>
 
-    <!-- Lock Screen -->
+    <!-- Lock Screen & Master PIN Dialog -->
     <string name="lock_shield_status">Hardware Keystore Secured</string>
     <string name="lock_subtitle_normal">Authenticate with biometric or enter Master PIN</string>
     <string name="lock_subtitle_error">Incorrect PIN, try again (Default: 1234)</string>
@@ -98,6 +99,15 @@
     <string name="biometric_prompt_verify_title">Verify Identity</string>
     <string name="biometric_prompt_verify_subtitle">Biometric authentication required to reveal pattern</string>
     <string name="biometric_failed">Biometric authentication failed</string>
+    <string name="master_pin_dialog_title_set">Set Master PIN</string>
+    <string name="master_pin_dialog_title_change">Change Master PIN</string>
+    <string name="master_pin_current_label">Current 4-Digit PIN</string>
+    <string name="master_pin_new_label">New 4-Digit PIN</string>
+    <string name="master_pin_confirm_label">Confirm New 4-Digit PIN</string>
+    <string name="master_pin_error_current">Current Master PIN is incorrect.</string>
+    <string name="master_pin_error_length">Master PIN must be exactly 4 digits.</string>
+    <string name="master_pin_error_mismatch">New PIN and confirmation do not match.</string>
+    <string name="master_pin_updated_toast">Master PIN saved!</string>
 
     <!-- Backup & Restore Dialog -->
     <string name="backup_dialog_title">Encrypted Backup &amp; Transfer</string>
@@ -190,6 +200,7 @@
     <string name="about_toast_no_browser">Cannot open browser</string>
     <string name="about_toast_url_copied">URL copied to clipboard!</string>
     <string name="about_license_footer">Free and open source software released under the GNU General Public License v3.0 (GPL-3.0). Source code available at %1$s</string>
+
     <!-- Artist Fingerpainting Mode -->
     <string name="editor_mode_artist">Artist Fingerpaint</string>
     <string name="editor_mode_manual">Manual Tile Tap</string>
@@ -238,4 +249,12 @@
     <string name="editor_fill_digits_title">Incomplete PIN</string>
     <string name="editor_fill_digits_message">%1$d of %2$d digits are placed. Fill the remaining %3$d positions with random numbers?</string>
     <string name="editor_fill_digits_confirm">Fill &amp; Proceed</string>
+    <string name="totp_rolling_pin_status">Rolling PIN: %1$s • %2$ds remaining</string>
+    <string name="action_rescan_qr">Re-scan</string>
+    <string name="totp_dynamic_pin_label">Dynamic TOTP PIN (%1$ds)</string>
+    <string name="action_flashlight">Flashlight</string>
+    <string name="totp_qr_capture_error">Capture error: %1$s</string>
+    <string name="totp_manual_issuer_placeholder">e.g. GitHub, Google</string>
+    <string name="totp_manual_secret_placeholder">e.g. JBSWY3DPEHPK3PXP</string>
+    <string name="totp_manual_secret_error">Invalid Base32 Secret Key</string>
 </resources>

@@ -40,6 +40,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,7 +60,13 @@ fun AboutDialog(
     val context = LocalContext.current
     val authorName = "Hugh Kennedy"
     val authorEmail = "hughk.projects@gmail.com"
-    val appVersion = "0.998"
+    val appVersion = remember(context) {
+        try {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.999"
+        } catch (_: Exception) {
+            "0.999"
+        }
+    }
     val githubUrl = "https://github.com/hughk/PinVault"
 
     AlertDialog(

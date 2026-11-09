@@ -7,6 +7,9 @@ import android.content.Context
 import android.os.Build
 import android.os.PersistableBundle
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -14,8 +17,12 @@ import kotlinx.coroutines.launch
  * Handles secure copying of sensitive credentials (TOTP codes, backup JSON) to the Android clipboard.
  * - Flags clipboard content as sensitive on Android 13+ (API 33+) so OS preview overlays do not leak secrets on screen.
  * - Automatically wipes the copied secret from the clipboard after a configurable timeout (default: 30s) if unchanged.
+ * - Uses an application-lifetime scope by default so auto-wipe still runs even if the originating Dialog or Screen is closed.
  */
 object ClipboardSecurityHelper {
+
+    private val appClipboardScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var activeClearJob: Job? = null
 
     fun copySensitiveText(
         context: Context,
@@ -24,7 +31,8 @@ object ClipboardSecurityHelper {
         autoClearSeconds: Long = 30L,
         scope: CoroutineScope? = null
     ) {
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
+        val appContext = context.applicationContext ?: context
+        val clipboard = appContext.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
         val clip = ClipData.newPlainText(label, text).apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 description.extras = PersistableBundle().apply {
@@ -34,8 +42,9 @@ object ClipboardSecurityHelper {
         }
         clipboard.setPrimaryClip(clip)
 
-        // Schedule auto-wipe if a coroutine scope is provided
-        scope?.launch {
+        activeClearJob?.cancel()
+        val targetScope = scope ?: appClipboardScope
+        activeClearJob = targetScope.launch {
             delay(autoClearSeconds * 1000L)
             try {
                 val currentClip = clipboard.primaryClip

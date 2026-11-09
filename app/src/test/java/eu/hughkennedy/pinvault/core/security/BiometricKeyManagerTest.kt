@@ -2,7 +2,6 @@ package eu.hughkennedy.pinvault.core.security
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -61,6 +60,38 @@ class BiometricKeyManagerTest {
         assertEquals(secretColor, decrypted.secretColor)
         assertEquals(ruleHint, decrypted.ruleHint)
         assertEquals(totpSecret, decrypted.totpSecret)
+    }
+
+    @Test
+    fun testCardSecretWithPipeCharacterAndLegacyFormatCompatibility() {
+        val secretColor = "amber"
+        val ruleHintWithPipes = "Row 1 | Col 2 -> Down | Right"
+        val totpSecret = "JBSWY3DPEHPK3PXP"
+
+        // Verify JSON serialization handles '|' inside ruleHint without corrupting totpSecret
+        val encryptedBase64 = BiometricKeyManager.encryptCardSecret(
+            secretColor = secretColor,
+            ruleHint = ruleHintWithPipes,
+            totpSecret = totpSecret
+        )
+
+        val cipher = BiometricKeyManager.createDecryptionCipher()
+        val decrypted = BiometricKeyManager.decryptCardSecret(cipher, encryptedBase64)
+
+        assertEquals(secretColor, decrypted.secretColor)
+        assertEquals(ruleHintWithPipes, decrypted.ruleHint)
+        assertEquals(totpSecret, decrypted.totpSecret)
+
+        // Verify legacy pipe-delimited payload still unseals cleanly
+        val legacyRaw = "blue|Legacy rule hint|JBSWY3DPEHPK3PXP"
+        val legacyEncryptedBase64 = CryptoManager.toBase64(
+            BiometricKeyManager.encryptData(legacyRaw.toByteArray(Charsets.UTF_8))
+        )
+        val cipher2 = BiometricKeyManager.createDecryptionCipher()
+        val legacyDecrypted = BiometricKeyManager.decryptCardSecret(cipher2, legacyEncryptedBase64)
+        assertEquals("blue", legacyDecrypted.secretColor)
+        assertEquals("Legacy rule hint", legacyDecrypted.ruleHint)
+        assertEquals("JBSWY3DPEHPK3PXP", legacyDecrypted.totpSecret)
     }
 
     @Test

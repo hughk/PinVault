@@ -1,8 +1,5 @@
 package eu.hughkennedy.pinvault.ui.components
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -38,8 +35,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -48,7 +45,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,7 +69,6 @@ fun BackupRestoreDialog(
     onImportSuccess: (List<CardEntity>, Boolean) -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     var selectedTab by remember { mutableIntStateOf(0) } // 0: Export, 1: Import
 
     var exportPassphrase by remember { mutableStateOf("") }
@@ -149,7 +144,7 @@ fun BackupRestoreDialog(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                TabRow(
+                PrimaryTabRow(
                     selectedTabIndex = selectedTab,
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -313,8 +308,7 @@ fun BackupRestoreDialog(
                                         context = context,
                                         label = "Pin Vault Backup",
                                         text = backupJson,
-                                        autoClearSeconds = 60L,
-                                        scope = coroutineScope
+                                        autoClearSeconds = 60L
                                     )
                                     Toast.makeText(context, context.getString(R.string.backup_copied_toast), Toast.LENGTH_SHORT).show()
                                     onDismiss()

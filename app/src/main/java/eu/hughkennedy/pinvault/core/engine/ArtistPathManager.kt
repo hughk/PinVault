@@ -124,7 +124,7 @@ object ArtistPathManager {
                     val decoysActive = existingTiles.any { !it.isPinTile && !it.isBlank }
                     if (decoysActive) {
                         val decoyColor = DecoyRandomizer.pickDecoyColor(tile.row, tile.col, secretColor, emptyList())
-                        val randomDigit = (0..9).random().toString()
+                        val randomDigit = DecoyRandomizer.CSPRNG.nextInt(10).toString()
                         tile.copy(
                             digit = randomDigit,
                             colorId = decoyColor,

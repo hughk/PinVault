@@ -58,10 +58,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -76,7 +74,6 @@ import eu.hughkennedy.pinvault.core.security.ClipboardSecurityHelper
 import eu.hughkennedy.pinvault.core.totp.TotpManager
 import eu.hughkennedy.pinvault.ui.components.CategoryIconBadge
 import eu.hughkennedy.pinvault.ui.components.MatrixGridView
-import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -90,7 +87,6 @@ fun MatrixDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     var currentTiles by remember(card) { mutableStateOf(card.tiles) }
     val encryptedCardSecret = remember(card.id, card.secretColor, card.ruleHint, card.totpSecret) {
         BiometricKeyManager.encryptCardSecret(card.secretColor, card.ruleHint, card.totpSecret)
@@ -326,8 +322,7 @@ fun MatrixDetailScreen(
                                 context = context,
                                 label = "Pin Vault 2FA Code",
                                 text = currentTotpCode,
-                                autoClearSeconds = 30L,
-                                scope = coroutineScope
+                                autoClearSeconds = 30L
                             )
                             Toast.makeText(context, context.getString(R.string.totp_code_copied), Toast.LENGTH_SHORT).show()
                         },
@@ -400,8 +395,7 @@ fun MatrixDetailScreen(
                                 context = context,
                                 label = "Pin Vault 2FA Code",
                                 text = currentTotpCode,
-                                autoClearSeconds = 30L,
-                                scope = coroutineScope
+                                autoClearSeconds = 30L
                             )
                             Toast.makeText(context, context.getString(R.string.totp_code_copied), Toast.LENGTH_SHORT).show()
                         },
@@ -629,7 +623,7 @@ private fun RuleAndRevealCard(
                 }
             }
 
-            // Description: Does NOT interpolate the color name unless isPeeking is true
+            // Description: Conceals ruleHint and color name unless isPeeking is true
             Text(
                 text = if (isPeeking) {
                     if (card.ruleHint.isNotBlank()) {
@@ -640,9 +634,7 @@ private fun RuleAndRevealCard(
                         stringResource(R.string.detail_rule_default_peeking, stringResource(palette.nameRes))
                     }
                 } else {
-                    if (card.ruleHint.isNotBlank()) {
-                        card.ruleHint
-                    } else if (isTotp) {
+                    if (isTotp) {
                         stringResource(R.string.totp_setup_desc)
                     } else {
                         stringResource(R.string.detail_rule_default_concealed)

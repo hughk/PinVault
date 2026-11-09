@@ -1,0 +1,7 @@
+v0.999 - Sicherheits- & UX-Update:
+• Dialog zum Festlegen/Ändern der Master-PIN im Menü hinzugefügt.
+• Eigene Regelhinweise bleiben bis zur biometrischen Freigabe verborgen.
+• JSON-Kartenverschlüsselung mit voller Abwärtskompatibilität.
+• Automatische Zwischenablage-Löschung bleibt bei Navigation aktiv.
+• Unterstützung für System-Zurück-Taste und Bildschirmdrehung verbessert.
+• Vollständige deutsche Lokalisierung und F-Droid-Build-Optimierungen.

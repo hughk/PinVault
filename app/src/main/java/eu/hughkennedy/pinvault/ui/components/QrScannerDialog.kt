@@ -53,7 +53,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -67,7 +66,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -318,7 +316,7 @@ fun QrScannerDialog(
                     ) {
                         Icon(
                             imageVector = if (isFlashlightOn) Icons.Default.FlashOn else Icons.Default.FlashOff,
-                            contentDescription = "Flashlight"
+                            contentDescription = stringResource(R.string.action_flashlight)
                         )
                     }
                 }
@@ -378,7 +376,11 @@ fun QrScannerDialog(
 
                                         override fun onError(exception: ImageCaptureException) {
                                             isProcessing = false
-                                            Toast.makeText(context, "Capture error: ${exception.message}", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(
+                                                context,
+                                                context.getString(R.string.totp_qr_capture_error, exception.message ?: ""),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
                                         }
                                     }
                                 )
@@ -439,7 +441,7 @@ fun QrScannerDialog(
                         value = manualIssuer,
                         onValueChange = { manualIssuer = it },
                         label = { Text(stringResource(R.string.totp_manual_issuer_label)) },
-                        placeholder = { Text("e.g. GitHub, Google") },
+                        placeholder = { Text(stringResource(R.string.totp_manual_issuer_placeholder)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -451,10 +453,10 @@ fun QrScannerDialog(
                             isKeyError = false
                         },
                         label = { Text(stringResource(R.string.totp_manual_secret_label)) },
-                        placeholder = { Text("e.g. JBSWY3DPEHPK3PXP") },
+                        placeholder = { Text(stringResource(R.string.totp_manual_secret_placeholder)) },
                         isError = isKeyError,
                         supportingText = if (isKeyError) {
-                            { Text("Invalid Base32 Secret Key", color = MaterialTheme.colorScheme.error) }
+                            { Text(stringResource(R.string.totp_manual_secret_error), color = MaterialTheme.colorScheme.error) }
                         } else null,
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()

@@ -11,15 +11,15 @@ android {
         applicationId = "eu.hughkennedy.pinvault"
         minSdk = 26
         targetSdk = 36
-        versionCode = 998
-        versionName = "0.998"
+        versionCode = 999
+        versionName = "0.999"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -35,7 +35,7 @@ android {
 
     packaging {
       resources {
-        excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        excludes += "/META-INF/{AL2.0,LGPL2.1,LICENSE.md,LICENSE-notice.md}"
       }
     }
 
@@ -47,6 +47,11 @@ android {
 
 base {
     archivesName.set("PinVault-v${android.defaultConfig.versionName}")
+}
+
+if (System.getProperty("os.name").contains("Windows", ignoreCase = true)) {
+    val localCache = File(System.getProperty("user.home"), ".gradle-builds/PinVault")
+    layout.buildDirectory.set(File(localCache, "app"))
 }
 
 kotlin {
@@ -65,7 +70,6 @@ dependencies {
 
   // Arch Components
   implementation(libs.androidx.lifecycle.runtime.compose)
-  implementation(libs.androidx.lifecycle.viewmodel.compose)
 
   // Compose
   implementation(libs.androidx.compose.ui)
@@ -100,14 +104,8 @@ dependencies {
   androidTestImplementation(libs.androidx.test.ext.junit)
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.androidx.test.espresso.core)
-
-  // Navigation
-  implementation(libs.androidx.navigation3.ui)
-  implementation(libs.androidx.navigation3.runtime)
-  implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 }
 
 tasks.withType<Test>().configureEach {
     doNotTrackState("Avoid file locking issues with background sync clients on test build output")
 }
-

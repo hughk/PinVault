@@ -1,0 +1,7 @@
+v0.999 - Security & UX Update:
+• Added Set / Change Master PIN dialog in the Vault menu.
+• Concealed custom rule hints until biometric reveal is activated.
+• Upgraded card secret encryption to structured JSON while maintaining legacy compatibility.
+• Fixed clipboard auto-wipe timer to persist across screen navigation.
+• Added system Back button navigation and screen rotation state persistence.
+• Full German & British English localization parity and F-Droid build improvements.

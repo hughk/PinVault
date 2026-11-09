@@ -22,16 +22,18 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Undo
-import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.Brush
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Pin
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -47,6 +49,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -54,9 +57,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Timer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -84,7 +84,6 @@ import eu.hughkennedy.pinvault.core.model.CardEntity
 import eu.hughkennedy.pinvault.core.model.PaletteColor
 import eu.hughkennedy.pinvault.core.model.TileData
 import eu.hughkennedy.pinvault.core.totp.TotpManager
-import eu.hughkennedy.pinvault.core.totp.TotpUriData
 import eu.hughkennedy.pinvault.ui.components.ColorPickerRow
 import eu.hughkennedy.pinvault.ui.components.MatrixGridView
 import eu.hughkennedy.pinvault.ui.components.QrScannerDialog
@@ -353,7 +352,8 @@ fun MatrixEditorScreen(
             }
         }
         if (pinTooLong()) {
-            Toast.makeText(context, msgPinTooLong, Toast.LENGTH_LONG).show()
+            val pathCount = committedPath().size
+            Toast.makeText(context, String.format(msgPinTooLong, artistPinString.length, pathCount), Toast.LENGTH_LONG).show()
             return
         }
         if (missingPinDigits() > 0) {
@@ -548,7 +548,7 @@ fun MatrixEditorScreen(
                                 readOnly = true,
                                 label = { Text(stringResource(R.string.editor_field_category_label)) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded) },
-                                modifier = Modifier.menuAnchor()
+                                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                             )
                             ExposedDropdownMenu(
                                 expanded = categoryDropdownExpanded,
@@ -584,7 +584,7 @@ fun MatrixEditorScreen(
                                 readOnly = true,
                                 label = { Text(stringResource(R.string.editor_field_grid_size_label)) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = gridSizeDropdownExpanded) },
-                                modifier = Modifier.menuAnchor()
+                                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                             )
                             ExposedDropdownMenu(
                                 expanded = gridSizeDropdownExpanded,
@@ -729,7 +729,7 @@ fun MatrixEditorScreen(
                                                 color = MaterialTheme.colorScheme.primary
                                             )
                                             Text(
-                                                text = "Rolling PIN: $artistPinString • ${totpRemainingSeconds}s remaining",
+                                                text = stringResource(R.string.totp_rolling_pin_status, artistPinString, totpRemainingSeconds),
                                                 fontFamily = FontFamily.Monospace,
                                                 fontSize = 11.sp,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -743,7 +743,7 @@ fun MatrixEditorScreen(
                                             shape = RoundedCornerShape(8.dp),
                                             modifier = Modifier.height(32.dp)
                                         ) {
-                                            Text("Re-scan", fontSize = 11.sp)
+                                            Text(stringResource(R.string.action_rescan_qr), fontSize = 11.sp)
                                         }
                                     }
                                 }
@@ -805,257 +805,257 @@ fun MatrixEditorScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         // Mode Selector Toggle: Artist Fingerpaint vs Manual Tap
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                            .padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Button(
-                            onClick = {
-                                if (designMode != MatrixDesignMode.ARTIST) {
-                                    val currentPath = strokes.flatten() + activeStroke
-                                    val synced = ArtistPathManager.syncPathWithPinTiles(
-                                        previousPath = currentPath,
-                                        tiles = tiles
-                                    )
-                                    strokes = if (synced.isNotEmpty()) listOf(synced) else emptyList()
-                                    activeStroke = emptyList()
-                                    val syncedDigits = ArtistPathManager.pinStringFromPath(synced, tiles)
-                                    if (syncedDigits.isNotEmpty()) {
-                                        artistPinString = syncedDigits
-                                    }
-                                    designMode = MatrixDesignMode.ARTIST
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (designMode == MatrixDesignMode.ARTIST) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                contentColor = if (designMode == MatrixDesignMode.ARTIST) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.weight(1f),
-                            elevation = if (designMode == MatrixDesignMode.ARTIST) ButtonDefaults.buttonElevation(defaultElevation = 2.dp) else null
-                        ) {
-                            Icon(Icons.Default.Brush, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(stringResource(R.string.editor_mode_artist), fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        }
-
-                        Button(
-                            onClick = {
-                                if (designMode != MatrixDesignMode.MANUAL) {
-                                    tiles = tilesSyncedWithPath()
-                                    designMode = MatrixDesignMode.MANUAL
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (designMode == MatrixDesignMode.MANUAL) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                contentColor = if (designMode == MatrixDesignMode.MANUAL) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.weight(1f),
-                            elevation = if (designMode == MatrixDesignMode.MANUAL) ButtonDefaults.buttonElevation(defaultElevation = 2.dp) else null
-                        ) {
-                            Icon(Icons.Default.TouchApp, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(stringResource(R.string.editor_mode_manual), fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        }
-                    }
-
-                    if (designMode == MatrixDesignMode.ARTIST) {
-                        // Artist Mode Instructions & Digit Input
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                text = stringResource(R.string.editor_artist_instructions),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-
-                            // PIN String Input Field
-                            OutlinedTextField(
-                                value = artistPinString,
-                                onValueChange = { input ->
-                                    if (!isTotp) {
-                                        val filtered = input.filter { it.isDigit() }
-                                        artistPinString = filtered
-                                        tiles = ArtistPathManager.mapDigitsToPath(
-                                            paintedPath = paintedPath,
-                                            digitString = filtered,
-                                            secretColor = secretColor,
-                                            existingTiles = tiles
-                                        )
-                                    }
-                                },
-                                readOnly = isTotp,
-                                label = {
-                                    Text(
-                                        if (isTotp) "Dynamic TOTP PIN (${totpRemainingSeconds}s)"
-                                        else stringResource(R.string.editor_artist_pin_label)
-                                    )
-                                },
-                                placeholder = { Text(stringResource(R.string.editor_artist_pin_placeholder)) },
-                                leadingIcon = {
-                                    Icon(
-                                        if (isTotp) Icons.Default.Timer else Icons.Default.Pin,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                },
-                                trailingIcon = {
-                                    if (!isTotp) {
-                                        if (artistPinString.isNotEmpty()) {
-                                            IconButton(onClick = {
-                                                artistPinString = ""
-                                                tiles = ArtistPathManager.mapDigitsToPath(
-                                                    paintedPath = paintedPath,
-                                                    digitString = "",
-                                                    secretColor = secretColor,
-                                                    existingTiles = tiles
-                                                )
-                                            }) {
-                                                Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.action_cancel))
-                                            }
-                                        } else {
-                                            IconButton(onClick = {
-                                                val currentCells = strokes.flatten() + activeStroke
-                                                val count = if (currentCells.isNotEmpty()) currentCells.size else 4
-                                                val rnd = java.security.SecureRandom()
-                                                val generated = (1..count).map { rnd.nextInt(10) }.joinToString("")
-                                                artistPinString = generated
-                                                tiles = ArtistPathManager.mapDigitsToPath(
-                                                    paintedPath = currentCells,
-                                                    digitString = generated,
-                                                    secretColor = secretColor,
-                                                    existingTiles = tiles
-                                                )
-                                            }) {
-                                                Icon(
-                                                    Icons.Default.Casino,
-                                                    contentDescription = stringResource(R.string.action_randomize_decoys),
-                                                    tint = MaterialTheme.colorScheme.primary
-                                                )
-                                            }
-                                        }
-                                    }
-                                },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                                singleLine = true,
-                                textStyle = LocalTextStyle.current.copy(
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace,
-                                    letterSpacing = 2.sp
-                                ),
-                                modifier = Modifier.fillMaxWidth()
-                            )
-
-                            // Status Indicator
-                            val statusText = when {
-                                paintedPath.isEmpty() -> stringResource(R.string.editor_artist_status_empty)
-                                artistPinString.isEmpty() -> stringResource(R.string.editor_artist_status_enter_pin, paintedPath.size)
-                                artistPinString.length < paintedPath.size -> stringResource(R.string.editor_artist_status_partial, artistPinString.length, paintedPath.size)
-                                artistPinString.length > paintedPath.size -> stringResource(R.string.editor_artist_status_need_more_tiles, artistPinString.length - paintedPath.size)
-                                else -> stringResource(R.string.editor_artist_status_complete, paintedPath.size)
-                            }
-
-                            val statusColor = when {
-                                artistPinString.isNotEmpty() && artistPinString.length == paintedPath.size -> MaterialTheme.colorScheme.primary
-                                artistPinString.isNotEmpty() && artistPinString.length != paintedPath.size -> MaterialTheme.colorScheme.error
-                                else -> MaterialTheme.colorScheme.onSurfaceVariant
-                            }
-
-                            Text(
-                                text = statusText,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = statusColor,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-
-                        // Artist Action Toolbar
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                .padding(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            // Undo Last Stroke
-                            OutlinedButton(
+                            Button(
                                 onClick = {
-                                    if (strokes.isNotEmpty()) {
-                                        strokes = strokes.dropLast(1)
-                                        val remainingCells = strokes.flatten()
-                                        tiles = ArtistPathManager.mapDigitsToPath(
-                                            paintedPath = remainingCells,
-                                            digitString = artistPinString,
-                                            secretColor = secretColor,
-                                            existingTiles = tiles
+                                    if (designMode != MatrixDesignMode.ARTIST) {
+                                        val currentPath = strokes.flatten() + activeStroke
+                                        val synced = ArtistPathManager.syncPathWithPinTiles(
+                                            previousPath = currentPath,
+                                            tiles = tiles
                                         )
+                                        strokes = if (synced.isNotEmpty()) listOf(synced) else emptyList()
+                                        activeStroke = emptyList()
+                                        val syncedDigits = ArtistPathManager.pinStringFromPath(synced, tiles)
+                                        if (syncedDigits.isNotEmpty()) {
+                                            artistPinString = syncedDigits
+                                        }
+                                        designMode = MatrixDesignMode.ARTIST
                                     }
                                 },
-                                enabled = strokes.isNotEmpty(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (designMode == MatrixDesignMode.ARTIST) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                    contentColor = if (designMode == MatrixDesignMode.ARTIST) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
                                 shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.height(34.dp)
+                                modifier = Modifier.weight(1f),
+                                elevation = if (designMode == MatrixDesignMode.ARTIST) ButtonDefaults.buttonElevation(defaultElevation = 2.dp) else null
                             ) {
-                                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(stringResource(R.string.editor_artist_undo_stroke), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Icon(Icons.Default.Brush, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(stringResource(R.string.editor_mode_artist), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
 
-                            // Clear Path
-                            OutlinedButton(
+                            Button(
                                 onClick = {
-                                    strokes = emptyList()
-                                    activeStroke = emptyList()
-                                    tiles = DecoyRandomizer.createBlankMatrix(cols, rows, secretColor)
+                                    if (designMode != MatrixDesignMode.MANUAL) {
+                                        tiles = tilesSyncedWithPath()
+                                        designMode = MatrixDesignMode.MANUAL
+                                    }
                                 },
-                                enabled = paintedPath.isNotEmpty(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (designMode == MatrixDesignMode.MANUAL) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                    contentColor = if (designMode == MatrixDesignMode.MANUAL) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
                                 shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.height(34.dp)
+                                modifier = Modifier.weight(1f),
+                                elevation = if (designMode == MatrixDesignMode.MANUAL) ButtonDefaults.buttonElevation(defaultElevation = 2.dp) else null
                             ) {
-                                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(stringResource(R.string.editor_artist_clear_path), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            }
-
-                            // Randomize Decoys
-                            OutlinedButton(
-                                onClick = { requestAction(PendingFillAction.RANDOMIZE) },
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.height(34.dp)
-                            ) {
-                                Icon(Icons.Default.Casino, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(stringResource(R.string.action_randomize_decoys), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Icon(Icons.Default.TouchApp, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(stringResource(R.string.editor_mode_manual), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
                         }
-                    } else {
-                        // Manual Mode Header with Randomize
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = stringResource(R.string.editor_grid_subtitle),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
 
-                            OutlinedButton(
-                                onClick = { requestAction(PendingFillAction.RANDOMIZE) },
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.height(34.dp)
+                        if (designMode == MatrixDesignMode.ARTIST) {
+                            // Artist Mode Instructions & Digit Input
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    text = stringResource(R.string.editor_artist_instructions),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                // PIN String Input Field
+                                OutlinedTextField(
+                                    value = artistPinString,
+                                    onValueChange = { input ->
+                                        if (!isTotp) {
+                                            val filtered = input.filter { it.isDigit() }
+                                            artistPinString = filtered
+                                            tiles = ArtistPathManager.mapDigitsToPath(
+                                                paintedPath = paintedPath,
+                                                digitString = filtered,
+                                                secretColor = secretColor,
+                                                existingTiles = tiles
+                                            )
+                                        }
+                                    },
+                                    readOnly = isTotp,
+                                    label = {
+                                        Text(
+                                            if (isTotp) stringResource(R.string.totp_dynamic_pin_label, totpRemainingSeconds)
+                                            else stringResource(R.string.editor_artist_pin_label)
+                                        )
+                                    },
+                                    placeholder = { Text(stringResource(R.string.editor_artist_pin_placeholder)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            if (isTotp) Icons.Default.Timer else Icons.Default.Pin,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    },
+                                    trailingIcon = {
+                                        if (!isTotp) {
+                                            if (artistPinString.isNotEmpty()) {
+                                                IconButton(onClick = {
+                                                    artistPinString = ""
+                                                    tiles = ArtistPathManager.mapDigitsToPath(
+                                                        paintedPath = paintedPath,
+                                                        digitString = "",
+                                                        secretColor = secretColor,
+                                                        existingTiles = tiles
+                                                    )
+                                                }) {
+                                                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.action_cancel))
+                                                }
+                                            } else {
+                                                IconButton(onClick = {
+                                                    val currentCells = strokes.flatten() + activeStroke
+                                                    val count = if (currentCells.isNotEmpty()) currentCells.size else 4
+                                                    val rnd = java.security.SecureRandom()
+                                                    val generated = (1..count).map { rnd.nextInt(10) }.joinToString("")
+                                                    artistPinString = generated
+                                                    tiles = ArtistPathManager.mapDigitsToPath(
+                                                        paintedPath = currentCells,
+                                                        digitString = generated,
+                                                        secretColor = secretColor,
+                                                        existingTiles = tiles
+                                                    )
+                                                }) {
+                                                    Icon(
+                                                        Icons.Default.Casino,
+                                                        contentDescription = stringResource(R.string.action_randomize_decoys),
+                                                        tint = MaterialTheme.colorScheme.primary
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                    singleLine = true,
+                                    textStyle = LocalTextStyle.current.copy(
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        fontFamily = FontFamily.Monospace,
+                                        letterSpacing = 2.sp
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                // Status Indicator
+                                val statusText = when {
+                                    paintedPath.isEmpty() -> stringResource(R.string.editor_artist_status_empty)
+                                    artistPinString.isEmpty() -> stringResource(R.string.editor_artist_status_enter_pin, paintedPath.size)
+                                    artistPinString.length < paintedPath.size -> stringResource(R.string.editor_artist_status_partial, artistPinString.length, paintedPath.size)
+                                    artistPinString.length > paintedPath.size -> stringResource(R.string.editor_artist_status_need_more_tiles, artistPinString.length - paintedPath.size)
+                                    else -> stringResource(R.string.editor_artist_status_complete, paintedPath.size)
+                                }
+
+                                val statusColor = when {
+                                    artistPinString.isNotEmpty() && artistPinString.length == paintedPath.size -> MaterialTheme.colorScheme.primary
+                                    artistPinString.isNotEmpty() && artistPinString.length != paintedPath.size -> MaterialTheme.colorScheme.error
+                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+
+                                Text(
+                                    text = statusText,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = statusColor,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+
+                            // Artist Action Toolbar
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(Icons.Default.Casino, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(stringResource(R.string.action_randomize_decoys), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                // Undo Last Stroke
+                                OutlinedButton(
+                                    onClick = {
+                                        if (strokes.isNotEmpty()) {
+                                            strokes = strokes.dropLast(1)
+                                            val remainingCells = strokes.flatten()
+                                            tiles = ArtistPathManager.mapDigitsToPath(
+                                                paintedPath = remainingCells,
+                                                digitString = artistPinString,
+                                                secretColor = secretColor,
+                                                existingTiles = tiles
+                                            )
+                                        }
+                                    },
+                                    enabled = strokes.isNotEmpty(),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.height(34.dp)
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(stringResource(R.string.editor_artist_undo_stroke), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+
+                                // Clear Path
+                                OutlinedButton(
+                                    onClick = {
+                                        strokes = emptyList()
+                                        activeStroke = emptyList()
+                                        tiles = DecoyRandomizer.createBlankMatrix(cols, rows, secretColor)
+                                    },
+                                    enabled = paintedPath.isNotEmpty(),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.height(34.dp)
+                                ) {
+                                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(stringResource(R.string.editor_artist_clear_path), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+
+                                // Randomize Decoys
+                                OutlinedButton(
+                                    onClick = { requestAction(PendingFillAction.RANDOMIZE) },
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.height(34.dp)
+                                ) {
+                                    Icon(Icons.Default.Casino, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(stringResource(R.string.action_randomize_decoys), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        } else {
+                            // Manual Mode Header with Randomize
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.editor_grid_subtitle),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                OutlinedButton(
+                                    onClick = { requestAction(PendingFillAction.RANDOMIZE) },
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.height(34.dp)
+                                ) {
+                                    Icon(Icons.Default.Casino, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(stringResource(R.string.action_randomize_decoys), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
-                    }
                     }
 
                     // Matrix View inside Editor

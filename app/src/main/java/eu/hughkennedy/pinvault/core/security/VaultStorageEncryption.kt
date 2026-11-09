@@ -81,6 +81,7 @@ object VaultStorageEncryption {
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setKeySize(256)
             .setUserAuthenticationRequired(false) // Storage at rest key is accessible to the app process
+            .setRandomizedEncryptionRequired(false)
             .build()
 
         keyGenerator.init(spec)
@@ -100,11 +101,18 @@ object VaultStorageEncryption {
      */
     fun encrypt(plaintext: String): String {
         val key = getOrCreateStorageKey()
-        val iv = CryptoManager.generateRandomBytes(IV_LENGTH_BYTES)
-
         val cipher = Cipher.getInstance(AES_GCM_CIPHER)
-        val spec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
-        cipher.init(Cipher.ENCRYPT_MODE, key, spec)
+        val iv = try {
+            cipher.init(Cipher.ENCRYPT_MODE, key)
+            cipher.iv ?: CryptoManager.generateRandomBytes(IV_LENGTH_BYTES).also { fallbackIv ->
+                cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(GCM_TAG_LENGTH, fallbackIv))
+            }
+        } catch (e: Exception) {
+            val generatedIv = CryptoManager.generateRandomBytes(IV_LENGTH_BYTES)
+            val paramSpec = GCMParameterSpec(GCM_TAG_LENGTH, generatedIv)
+            cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec)
+            generatedIv
+        }
 
         val ciphertext = cipher.doFinal(plaintext.toByteArray(Charsets.UTF_8))
 

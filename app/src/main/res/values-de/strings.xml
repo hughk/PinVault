@@ -7,6 +7,7 @@
     <string name="category_debit">Debitkarte</string>
     <string name="category_banking">Telefon-Banking</string>
     <string name="category_safe">Tresor- &amp; Türcodes</string>
+    <string name="category_authenticator">Authenticator (2FA / TOTP)</string>
     <string name="category_other">Sonstiger PIN</string>
 
     <!-- Palette Colors -->
@@ -25,6 +26,7 @@
     <string name="action_more_options">Weitere Optionen</string>
     <string name="action_about_menu">Über Pin Vault</string>
     <string name="action_lock_menu">Tresor sperren</string>
+    <string name="action_set_master_pin_menu">Master-PIN festlegen / ändern</string>
     <string name="action_add_card">Karte hinzufügen</string>
     <string name="search_placeholder">Karte, Ordner, Konto oder Regel suchen...</string>
     <string name="search_clear">Suche löschen</string>
@@ -85,7 +87,7 @@
     <string name="editor_tile_dialog_assign">PIN-Ziffer in %1$s zuweisen:</string>
     <string name="editor_tile_dialog_reset">Auf \'?\' Platzhalter zurücksetzen</string>
 
-    <!-- Lock Screen -->
+    <!-- Lock Screen & Master PIN Dialog -->
     <string name="lock_shield_status">Durch Hardware-Keystore geschützt</string>
     <string name="lock_subtitle_normal">Mit Biometrie bestätigen oder Master-PIN eingeben</string>
     <string name="lock_subtitle_error">Falsche PIN, bitte erneut versuchen (Standard: 1234)</string>
@@ -97,6 +99,15 @@
     <string name="biometric_prompt_verify_title">Identität bestätigen</string>
     <string name="biometric_prompt_verify_subtitle">Biometrische Bestätigung erforderlich, um das Muster aufzudecken</string>
     <string name="biometric_failed">Biometrische Authentifizierung fehlgeschlagen</string>
+    <string name="master_pin_dialog_title_set">Master-PIN festlegen</string>
+    <string name="master_pin_dialog_title_change">Master-PIN ändern</string>
+    <string name="master_pin_current_label">Aktuelle 4-stellige PIN</string>
+    <string name="master_pin_new_label">Neue 4-stellige PIN</string>
+    <string name="master_pin_confirm_label">Neue 4-stellige PIN bestätigen</string>
+    <string name="master_pin_error_current">Die aktuelle Master-PIN ist falsch.</string>
+    <string name="master_pin_error_length">Die Master-PIN muss genau 4 Ziffern haben.</string>
+    <string name="master_pin_error_mismatch">Neue PIN und Bestätigung stimmen nicht überein.</string>
+    <string name="master_pin_updated_toast">Master-PIN gespeichert!</string>
 
     <!-- Backup & Restore Dialog -->
     <string name="backup_dialog_title">Verschlüsselte Sicherung &amp; Übertragung</string>
@@ -189,6 +200,7 @@
     <string name="about_toast_no_browser">Browser konnte nicht geöffnet werden</string>
     <string name="about_toast_url_copied">URL in die Zwischenablage kopiert!</string>
     <string name="about_license_footer">Freie und quelloffene Software unter der GNU General Public License v3.0 (GPL-3.0). Quellcode verfügbar unter %1$s</string>
+
     <!-- Artist Fingerpainting Mode -->
     <string name="editor_mode_artist">Künstler-Malmodus</string>
     <string name="editor_mode_manual">Manuelles Antippen</string>
@@ -237,4 +249,12 @@
     <string name="editor_fill_digits_title">Unvollständige PIN</string>
     <string name="editor_fill_digits_message">%1$d von %2$d Ziffern sind platziert. Verbleibende %3$d Positionen mit Zufallszahlen füllen?</string>
     <string name="editor_fill_digits_confirm">Auffüllen &amp; Fortfahren</string>
+    <string name="totp_rolling_pin_status">Wechsel-PIN: %1$s • %2$ds verbleibend</string>
+    <string name="action_rescan_qr">Neu scannen</string>
+    <string name="totp_dynamic_pin_label">Dynamischer TOTP-PIN (%1$ds)</string>
+    <string name="action_flashlight">Taschenlampe</string>
+    <string name="totp_qr_capture_error">Aufnahmefehler: %1$s</string>
+    <string name="totp_manual_issuer_placeholder">z. B. GitHub, Google</string>
+    <string name="totp_manual_secret_placeholder">z. B. JBSWY3DPEHPK3PXP</string>
+    <string name="totp_manual_secret_error">Ungültiger Base32-Geheimschlüssel</string>
 </resources>
