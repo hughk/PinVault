@@ -146,6 +146,40 @@ class MasterPinAndStorageSecurityTest {
     }
 
     @Test
+    fun testMonotonicClockPreventsWallClockJumpBypass() {
+        var fakeWallClock = 1_000_000L
+        var fakeMonotonicClock = 50_000L
+        val clockPinManager = MasterPinManager(
+            prefs = fakePrefs,
+            wallClockMillis = { fakeWallClock },
+            monotonicClockMillis = { fakeMonotonicClock }
+        )
+
+        clockPinManager.setMasterPin("2468")
+
+        // Trigger 5 failed attempts -> 30s lockout
+        repeat(5) {
+            assertFalse(clockPinManager.verifyMasterPin("0000"))
+        }
+        assertTrue(clockPinManager.isLockedOut())
+        assertEquals(30L, clockPinManager.getRemainingLockoutSeconds())
+
+        // Attacker jumps the wall clock forward by 10 minutes, but monotonic clock only advanced 2 seconds
+        fakeWallClock += 600_000L
+        fakeMonotonicClock += 2_000L
+
+        // Still locked out because monotonic clock has 28 seconds remaining!
+        assertTrue(clockPinManager.isLockedOut())
+        assertEquals(28L, clockPinManager.getRemainingLockoutSeconds())
+        assertFalse(clockPinManager.verifyMasterPin("2468"))
+
+        // Advance monotonic clock past the 30s window
+        fakeMonotonicClock += 29_000L
+        assertFalse(clockPinManager.isLockedOut())
+        assertTrue(clockPinManager.verifyMasterPin("2468"))
+    }
+
+    @Test
     fun testPassphraseLengthValidationForExportVsImport() {
         val card = CardEntity(name = "Test Card", category = CardCategory.OTHER)
 

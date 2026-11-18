@@ -28,7 +28,7 @@
     <string name="action_lock_menu">Lock Vault</string>
     <string name="action_set_master_pin_menu">Set / Change Master PIN</string>
     <string name="action_add_card">Add Card</string>
-    <string name="search_placeholder">Search card, folder, account, or rule...</string>
+    <string name="search_placeholder">Search card, folder, or category...</string>
     <string name="search_clear">Clear search</string>
     <string name="vault_empty_no_cards">No cards in vault yet</string>
     <string name="vault_empty_no_search">No cards match \"%1$s\"</string>

@@ -161,6 +161,7 @@ fun PinVaultAppRoot(
     var showBackupDialog by rememberSaveable { mutableStateOf(false) }
     var showAboutDialog by rememberSaveable { mutableStateOf(false) }
     var showMasterPinDialog by rememberSaveable { mutableStateOf(false) }
+    var lockAfterSettingMasterPin by rememberSaveable { mutableStateOf(false) }
 
     if (isLocked) {
         LockScreen(
@@ -197,8 +198,19 @@ fun PinVaultAppRoot(
                     onEditCard = { cardId -> navigateTo(AppScreen.Editor(cardId)) },
                     onDeleteCard = { cardId -> repository.deleteCard(cardId) },
                     onAddCard = { navigateTo(AppScreen.Editor(null)) },
-                    onLockApp = { isLocked = true },
-                    onOpenMasterPinSettings = { showMasterPinDialog = true },
+                    onLockApp = {
+                        // SEC-002: If no custom Master PIN is set yet, prompt the user to configure one before locking
+                        if (!repository.isMasterPinSet()) {
+                            lockAfterSettingMasterPin = true
+                            showMasterPinDialog = true
+                        } else {
+                            isLocked = true
+                        }
+                    },
+                    onOpenMasterPinSettings = {
+                        lockAfterSettingMasterPin = false
+                        showMasterPinDialog = true
+                    },
                     onOpenBackup = { showBackupDialog = true },
                     onOpenHelp = { navigateTo(AppScreen.Help) },
                     onOpenAbout = { showAboutDialog = true }
@@ -280,8 +292,17 @@ fun PinVaultAppRoot(
             MasterPinDialog(
                 isPinAlreadySet = repository.isMasterPinSet(),
                 onVerifyCurrentPin = { current -> repository.verifyMasterPin(current) },
-                onSaveNewPin = { newPin -> repository.setMasterPin(newPin) },
-                onDismiss = { showMasterPinDialog = false }
+                onSaveNewPin = { newPin ->
+                    repository.setMasterPin(newPin)
+                    if (lockAfterSettingMasterPin) {
+                        lockAfterSettingMasterPin = false
+                        isLocked = true
+                    }
+                },
+                onDismiss = {
+                    lockAfterSettingMasterPin = false
+                    showMasterPinDialog = false
+                }
             )
         }
     }

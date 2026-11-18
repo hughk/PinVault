@@ -28,7 +28,7 @@
     <string name="action_lock_menu">Tresor sperren</string>
     <string name="action_set_master_pin_menu">Master-PIN festlegen / ändern</string>
     <string name="action_add_card">Karte hinzufügen</string>
-    <string name="search_placeholder">Karte, Ordner, Konto oder Regel suchen...</string>
+    <string name="search_placeholder">Karte, Ordner oder Kategorie suchen...</string>
     <string name="search_clear">Suche löschen</string>
     <string name="vault_empty_no_cards">Noch keine Karten im Tresor</string>
     <string name="vault_empty_no_search">Keine Karten stimmen mit „%1$s“ überein</string>

@@ -133,7 +133,7 @@ fun VaultScreen(
                 card.name.lowercase().contains(q) ||
                     card.category.displayName.lowercase().contains(q) ||
                     card.folder.lowercase().contains(q) ||
-                    card.ruleHint.lowercase().contains(q)
+                    (card.totpIssuer?.lowercase()?.contains(q) == true)
             }
         }
     }

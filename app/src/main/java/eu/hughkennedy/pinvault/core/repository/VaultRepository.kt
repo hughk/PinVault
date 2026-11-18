@@ -7,8 +7,6 @@ import eu.hughkennedy.pinvault.core.engine.DecoyRandomizer
 import eu.hughkennedy.pinvault.core.engine.PaintedCell
 import eu.hughkennedy.pinvault.core.model.CardCategory
 import eu.hughkennedy.pinvault.core.model.CardEntity
-import eu.hughkennedy.pinvault.core.model.TileData
-import eu.hughkennedy.pinvault.core.security.CryptoManager
 import eu.hughkennedy.pinvault.core.security.MasterPinManager
 import eu.hughkennedy.pinvault.core.security.VaultStorageEncryption
 import eu.hughkennedy.pinvault.core.totp.TotpManager
@@ -17,7 +15,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.encodeToString
 import java.io.File
-import java.security.MessageDigest
 
 class VaultRepository(private val context: Context) {
 
@@ -32,11 +29,11 @@ class VaultRepository(private val context: Context) {
     }
 
     private fun loadCards() {
-        val legacyCandidates = listOf(
-            vaultFile,
+        val legacyFiles = listOf(
             File(context.filesDir, "cards.json"),
             File(context.filesDir, "pin_keeper_cards.json")
         )
+        val legacyCandidates = listOf(vaultFile) + legacyFiles
 
         val targetFile = legacyCandidates.firstOrNull { it.exists() && it.length() > 0 }
 
@@ -57,8 +54,16 @@ class VaultRepository(private val context: Context) {
                 if (targetFile != vaultFile || !vaultFile.exists() || !VaultStorageEncryption.isEncrypted(rawContent)) {
                     saveCards(loaded)
                 }
+                // SEC-003: Securely purge any leftover legacy plaintext database files once encrypted vaultFile is saved
+                if (vaultFile.exists() && vaultFile.length() > 0) {
+                    legacyFiles.forEach { legacy ->
+                        if (legacy.exists()) {
+                            runCatching { legacy.delete() }
+                        }
+                    }
+                }
             } else {
-                // Preserve the corrupt file before sample cards overwrite
+                // Preserve the corrupt file in encrypted form before sample cards overwrite
                 createCorruptBackup(targetFile)
                 val initialCards = createSampleCards()
                 saveCards(initialCards)
@@ -76,7 +81,14 @@ class VaultRepository(private val context: Context) {
     private fun createCorruptBackup(file: File) {
         try {
             val backup = File(context.filesDir, "vault_cards.json.corrupt_bak")
-            file.copyTo(backup, overwrite = true)
+            val raw = file.readText(Charsets.UTF_8)
+            // SEC-003: Ensure corrupt backup file is encrypted at rest even if originating from a legacy plaintext file
+            val encryptedPayload = if (VaultStorageEncryption.isEncrypted(raw)) {
+                raw
+            } else {
+                VaultStorageEncryption.encrypt(raw)
+            }
+            backup.writeText(encryptedPayload, Charsets.UTF_8)
         } catch (e: Exception) {
             e.printStackTrace()
         }

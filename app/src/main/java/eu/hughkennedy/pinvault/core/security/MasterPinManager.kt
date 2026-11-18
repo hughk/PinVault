@@ -6,9 +6,13 @@ import java.security.MessageDigest
 
 /**
  * Manages Master PIN security with key stretching, unique per-device salting, constant-time verification,
- * brute-force rate limiting, and seamless upwards migration for existing PIN hashes.
+ * brute-force rate limiting (wall-clock + monotonic clock), and seamless upwards migration for existing PIN hashes.
  */
-class MasterPinManager(private val prefs: SharedPreferences) {
+class MasterPinManager(
+    private val prefs: SharedPreferences,
+    private val wallClockMillis: () -> Long = { System.currentTimeMillis() },
+    private val monotonicClockMillis: () -> Long = { defaultMonotonicMillis() }
+) {
 
     constructor(context: Context) : this(context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE))
 
@@ -19,10 +23,20 @@ class MasterPinManager(private val prefs: SharedPreferences) {
         private const val PREF_MASTER_PIN_KDF = "master_pin_kdf"
         private const val PREF_FAILED_ATTEMPTS = "master_pin_failed_attempts"
         private const val PREF_LOCKED_UNTIL = "master_pin_locked_until"
+        private const val PREF_LOCKED_UNTIL_MONOTONIC = "master_pin_locked_until_monotonic"
 
         private const val KDF_PBKDF2 = "PBKDF2WithHmacSHA256"
         private const val LEGACY_STATIC_SALT = "pin_keeper_local_salt"
         const val DEFAULT_INITIAL_PIN = "1234"
+
+        private fun defaultMonotonicMillis(): Long {
+            return try {
+                val elapsed = android.os.SystemClock.elapsedRealtime()
+                if (elapsed > 0L) elapsed else System.nanoTime() / 1_000_000L
+            } catch (_: Throwable) {
+                System.nanoTime() / 1_000_000L
+            }
+        }
     }
 
     /**
@@ -34,12 +48,23 @@ class MasterPinManager(private val prefs: SharedPreferences) {
 
     /**
      * Returns remaining lockout seconds if the user is currently locked out due to failed attempts.
+     * Combines wall-clock time and monotonic elapsed time so advancing the OS system clock cannot bypass lockout.
      */
     fun getRemainingLockoutSeconds(): Long {
-        val lockedUntil = prefs.getLong(PREF_LOCKED_UNTIL, 0L)
-        val now = System.currentTimeMillis()
-        val diff = (lockedUntil - now) / 1000L
-        return if (diff > 0) diff else 0L
+        val lockedUntilWall = prefs.getLong(PREF_LOCKED_UNTIL, 0L)
+        val wallDiff = (lockedUntilWall - wallClockMillis()) / 1000L
+
+        val lockedUntilMono = prefs.getLong(PREF_LOCKED_UNTIL_MONOTONIC, 0L)
+        val nowMono = monotonicClockMillis()
+        // Enforce monotonic lockout when within a 1-hour window (handles device reboots gracefully)
+        val monoDiff = if (lockedUntilMono > 0L && (lockedUntilMono - nowMono) <= 3_600_000L) {
+            (lockedUntilMono - nowMono) / 1000L
+        } else {
+            0L
+        }
+
+        val maxRemaining = maxOf(wallDiff, monoDiff)
+        return if (maxRemaining > 0) maxRemaining else 0L
     }
 
     fun isLockedOut(): Boolean = getRemainingLockoutSeconds() > 0
@@ -65,6 +90,7 @@ class MasterPinManager(private val prefs: SharedPreferences) {
             .putString(PREF_MASTER_PIN_KDF, KDF_PBKDF2)
             .putInt(PREF_FAILED_ATTEMPTS, 0)
             .putLong(PREF_LOCKED_UNTIL, 0L)
+            .putLong(PREF_LOCKED_UNTIL_MONOTONIC, 0L)
             .apply()
     }
 
@@ -159,6 +185,7 @@ class MasterPinManager(private val prefs: SharedPreferences) {
         prefs.edit()
             .putInt(PREF_FAILED_ATTEMPTS, 0)
             .putLong(PREF_LOCKED_UNTIL, 0L)
+            .putLong(PREF_LOCKED_UNTIL_MONOTONIC, 0L)
             .apply()
     }
 
@@ -174,7 +201,8 @@ class MasterPinManager(private val prefs: SharedPreferences) {
         }
 
         if (lockoutMillis > 0) {
-            editor.putLong(PREF_LOCKED_UNTIL, System.currentTimeMillis() + lockoutMillis)
+            editor.putLong(PREF_LOCKED_UNTIL, wallClockMillis() + lockoutMillis)
+            editor.putLong(PREF_LOCKED_UNTIL_MONOTONIC, monotonicClockMillis() + lockoutMillis)
         }
         editor.apply()
     }
